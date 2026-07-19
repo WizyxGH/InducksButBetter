@@ -255,5 +255,10 @@
     "error": "Échec du chargement de la base de données ISV.",
     "already_imported": "Attention : Vous avez déjà importé une base de données. Importer de nouveaux fichiers remplacera la base actuelle.",
     "imported_stats": "Fichiers actuellement chargés : {{count}} (Poids total : {{size}})"
+  },
+  "legal": {
+    "link": "Mentions légales",
+    "title": "Mentions légales",
+    "content": "Ce site utilise des données issues de la base de données INDUCKS (les mentions exactes seront complétées ultérieurement lorsque la base sera de nouveau active)."
   }
 }

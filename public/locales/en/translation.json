@@ -244,5 +244,10 @@
     "error": "Failed to load ISV database.",
     "already_imported": "Warning: You have already imported a local database. Importing new files will replace the current one.",
     "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})"
+  },
+  "legal": {
+    "link": "Legal mentions",
+    "title": "Legal mentions",
+    "content": "This site uses data from the INDUCKS database (exact mentions will be completed later when the database is active again)."
   }
 }

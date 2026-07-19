@@ -39,6 +39,7 @@ jobs:
         env:
           VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
           VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
+          VITE_GA_MEASUREMENT_ID: "G-YDE0FS0VYY"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

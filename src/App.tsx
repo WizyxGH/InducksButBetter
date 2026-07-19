@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LocalDbUploader } from "@/components/LocalDbUploader"
+import { GoogleAnalytics } from "@/components/GoogleAnalytics"
+import { LegalModal } from "@/components/LegalModal"
 import { BookOpen, LibraryBig, User, Cat, Database as DbIcon, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "@/hooks/useTheme"
@@ -35,8 +37,10 @@ function App() {
 
   return (
     <TooltipProvider>
-      <div id="main-content" className="flex flex-col h-screen overflow-hidden bg-background text-foreground">
-        {/* Main Header */}
+      <GoogleAnalytics activeTab={activeTab} />
+      <div id="main-content" className="h-screen overflow-y-auto overflow-x-hidden bg-background text-foreground">
+        <div className="flex flex-col h-screen shrink-0">
+          {/* Main Header */}
         <header className="px-4 lg:px-12 py-4 shrink-0 border-b border-border-subtle bg-background">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col gap-0.5">
@@ -158,11 +162,17 @@ function App() {
             </TabsContent>
           </div>
         </Tabs>
-        {activeTab === "sql" && (
-          <Suspense fallback={null}>
-            <AiAssistant onCopyToEditor={(q) => setSqlQuery(q)} />
-          </Suspense>
-        )}
+          {activeTab === "sql" && (
+            <Suspense fallback={null}>
+              <AiAssistant onCopyToEditor={(q) => setSqlQuery(q)} />
+            </Suspense>
+          )}
+        </div>
+        
+        {/* Global Footer for legal mentions */}
+        <footer className="px-4 py-4 shrink-0 border-t border-border-subtle bg-surface flex justify-center items-center text-xs text-text-hint">
+          <LegalModal />
+        </footer>
       </div>
       <Toaster position="top-center" richColors />
     </TooltipProvider>
