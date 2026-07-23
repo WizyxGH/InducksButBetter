@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { executeQuery } from "@/lib/db";
+import { handleDbError } from "@/lib/utils";
 import { useMetadata } from "@/hooks/useMetadata";
 import { PublicationsSearchForm } from "./PublicationsSearchForm";
 import { SearchResults } from "@/components/Search/SearchResults";
@@ -37,15 +38,13 @@ interface PublicationsSearchProps {
   setSelectedStorycode: (code: string | null) => void;
   selectedIssuecode: string | null;
   setSelectedIssuecode: (code: string | null) => void;
-  setSelectedCountrycode: (code: string | null) => void;
 }
 
 export function PublicationsSearch({
   selectedStorycode,
   setSelectedStorycode,
   selectedIssuecode,
-  setSelectedIssuecode,
-  setSelectedCountrycode
+  setSelectedIssuecode
 }: PublicationsSearchProps) {
   const { t, i18n } = useTranslation();
   const { meta } = useMetadata();
@@ -69,8 +68,7 @@ export function PublicationsSearch({
         setResults((prev) => [...prev, newRow]);
       });
     } catch (err) {
-      console.error(err);
-      toast.error(t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
+      handleDbError(err, t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
       setResults([]);
       setTotalCount(0);
     } finally {
@@ -97,6 +95,18 @@ export function PublicationsSearch({
       performSearch(lastFilters);
     }
   }, [i18n.language]);
+
+  useEffect(() => {
+    const handleSearchEvent = (e: any) => {
+      if (e.detail?.publisherid) {
+        const newFilters = { ...initialFilters, publisherid: e.detail.publisherid };
+        setFilters(newFilters);
+        handleSearch(null, newFilters);
+      }
+    };
+    window.addEventListener("search-publications", handleSearchEvent);
+    return () => window.removeEventListener("search-publications", handleSearchEvent);
+  }, []);
 
   const sortOptions = [
     { value: "country_code", labelKey: "sort.country_code" },
@@ -133,36 +143,10 @@ export function PublicationsSearch({
     );
   }
 
-  const [browseMode, setBrowseMode] = useState<"search" | "countries">("search");
-
   return (
     <div className="h-full flex flex-col overflow-auto lg:overflow-hidden bg-background">
-      {/* View Toggle Toolbar */}
-      <div className="px-4 lg:px-12 py-3 shrink-0 flex items-center gap-2 border-b border-border-subtle bg-surface-2/10">
-        <Button
-          variant={browseMode === "search" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setBrowseMode("search")}
-          className="rounded-xl font-semibold text-xs h-9 px-4"
-        >
-          Formulaire de recherche
-        </Button>
-        <Button
-          variant={browseMode === "countries" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setBrowseMode("countries")}
-          className="rounded-xl font-semibold text-xs h-9 px-4"
-        >
-          Parcourir par pays
-        </Button>
-      </div>
-
-      <div className="flex-1 flex flex-col min-h-0">
-        {browseMode === "countries" ? (
-          <CountryList onSelectCountry={setSelectedCountrycode} />
-        ) : (
-          <div className="flex-1 flex flex-col lg:flex-row min-h-0 p-4 lg:p-8 gap-8 px-4 lg:px-12 overflow-y-auto lg:overflow-hidden">
-            <PublicationsSearchForm
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 p-4 lg:p-8 gap-8 px-4 lg:px-12 overflow-y-auto lg:overflow-hidden">
+        <PublicationsSearchForm
               filters={filters}
               setFilters={setFilters}
               handleSearch={handleSearch}
@@ -184,8 +168,6 @@ export function PublicationsSearch({
               foundLabel={t("search.publications_found", { count: totalCount, defaultValue: `${totalCount} publications trouvées` })}
               onSelect={(code) => setSelectedIssuecode(code)}
             />
-          </div>
-        )}
       </div>
     </div>
   );

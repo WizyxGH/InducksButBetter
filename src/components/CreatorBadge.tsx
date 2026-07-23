@@ -16,9 +16,7 @@ export function CreatorBadge({ code, name, size = "md" }: CreatorBadgeProps) {
     <Tooltip delayDuration={300}>
       <TooltipTrigger asChild>
         <a
-          href={`https://inducks.org/creator.php?c=${code}`}
-          target="_blank"
-          rel="noreferrer"
+          href={`#/authors/${code}`}
           onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1 bg-surface border border-border-subtle px-1.5 py-0.5 rounded-md shadow-sm hover:border-blue-300 dark:hover:border-blue-700 hover:bg-surface-2 transition-all cursor-pointer"
         >

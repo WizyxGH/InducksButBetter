@@ -57,13 +57,7 @@ export function useSearchFilters() {
   const saveCookie = async () => {
     setIsSavingCookie(true);
     try {
-      if (!window.location.hostname.includes("github.io")) {
-        await fetch("/api/settings/cookie", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cookie: cookieValue }),
-        });
-      }
+      localStorage.setItem("inducks_cookie", cookieValue);
       setIsSettingsOpen(false);
     } catch (err) {
       console.error(err);

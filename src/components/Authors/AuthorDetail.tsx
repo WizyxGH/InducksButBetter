@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, ExternalLink, Calendar, MapPin, Award, BookOpen, Users, Cat, Globe } from "lucide-react";
+import { Loader2, ExternalLink, Calendar, MapPin, Award, BookOpen, Users, User, Cat, Globe } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getFlagUrl } from "@/lib/utils";
 
 interface AuthorDetailData {
   personcode: string;
@@ -100,6 +101,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                   JOIN inducks_character c ON sc.charactercode = c.charactercode
                   LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
                   WHERE sc.personcode = ?
+                  GROUP BY sc.charactercode
                   ORDER BY CAST(sc.total AS INTEGER) DESC
                   LIMIT 5`,
             args: [currentLang, personcode],
@@ -150,16 +152,37 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Header Info */}
       <div className="flex flex-col md:flex-row gap-6 items-start justify-between bg-surface-2/30 border border-border-subtle p-6 rounded-3xl">
-        <div className="space-y-3 min-w-0">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">{author.fullname}</h2>
-            {author.birthname && author.birthname !== author.fullname && (
-              <p className="text-xs text-muted-foreground">
-                <span className="font-semibold">{t("authors.birth_name") || "Nom de naissance"}:</span> {author.birthname}
-              </p>
-            )}
-            <p className="text-[10px] text-muted-foreground font-mono">{author.personcode}</p>
+        <div className="flex gap-6 items-start min-w-0">
+          <div className="w-24 h-32 shrink-0 bg-surface border border-border-subtle rounded-2xl overflow-hidden shadow-sm flex items-center justify-center relative group">
+            <img
+              src={`/api/proxy-image?url=${encodeURIComponent('https://inducks.org/b/creator/' + author.personcode + '.jpg')}`}
+              alt={author.fullname}
+              className="w-full h-full object-cover transition-opacity duration-300"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+              }}
+            />
+            <User className="w-10 h-10 text-muted-foreground/30 hidden fallback-icon absolute" />
           </div>
+          
+          <div className="space-y-3 min-w-0">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">{author.fullname}</h2>
+              {author.birthname && author.birthname !== author.fullname && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-semibold">{t("authors.birth_name") || "Nom de naissance"}:</span> {author.birthname}
+                </p>
+              )}
+              <div className="flex items-center gap-2">
+                <img
+                  src={getFlagUrl(author.nationalitycountrycode)}
+                  className="w-5 h-3.5 rounded-sm object-cover shrink-0"
+                  alt=""
+                />
+                <p className="text-[10px] text-muted-foreground font-mono">{author.personcode}</p>
+              </div>
+            </div>
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-secondary">
             {author.borndate && (
@@ -195,8 +218,9 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
             </div>
           )}
         </div>
+      </div>
 
-        <div className="flex flex-col items-start md:items-end shrink-0 text-left md:text-right space-y-1 bg-surface/85 p-4 rounded-2xl border border-border-subtle shadow-sm w-full md:w-auto">
+      <div className="flex flex-col items-start md:items-end shrink-0 text-left md:text-right space-y-1 bg-surface/85 p-4 rounded-2xl border border-border-subtle shadow-sm w-full md:w-auto">
           <p className="text-xs font-semibold text-muted-foreground">{t("authors.number_of_stories")}</p>
           <p className="text-3xl font-extrabold text-primary">{author.numberofindexedissues || 0}</p>
           {author.nationalitycountrycode && (
@@ -284,9 +308,23 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                 <CardContent className="space-y-2">
                   {coAuthors.map((coa) => (
                     <div key={coa.copersoncode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
-                      <div>
-                        <p className="font-semibold text-foreground">{coa.fullname}</p>
-                        <p className="text-[10px] text-muted-foreground">{coa.yearrange}</p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
+                           <img
+                             src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${coa.copersoncode.replace(/ /g, "_")}.jpg`)}`}
+                             alt={coa.fullname}
+                             className="w-full h-full object-cover"
+                             onError={(e) => {
+                               e.currentTarget.style.display = 'none';
+                               e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                             }}
+                           />
+                           <User className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground truncate">{coa.fullname}</p>
+                          <p className="text-[10px] text-muted-foreground">{coa.yearrange}</p>
+                        </div>
                       </div>
                       <Badge variant="secondary" className="font-bold text-[10px]">
                         {coa.total}
@@ -309,9 +347,23 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                 <CardContent className="space-y-2">
                   {favCharacters.map((char) => (
                     <div key={char.charactercode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
-                      <div>
-                        <p className="font-semibold text-foreground">{char.charactername}</p>
-                        <p className="text-[10px] text-muted-foreground">{char.yearrange}</p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
+                           <img
+                             src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${char.charactercode}`)}`}
+                             alt={char.charactername}
+                             className="w-full h-full object-cover"
+                             onError={(e) => {
+                               e.currentTarget.style.display = 'none';
+                               e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                             }}
+                           />
+                           <Cat className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground truncate">{char.charactername}</p>
+                          <p className="text-[10px] text-muted-foreground">{char.yearrange}</p>
+                        </div>
                       </div>
                       <Badge variant="secondary" className="font-bold text-[10px]">
                         {char.total}

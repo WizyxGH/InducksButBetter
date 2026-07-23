@@ -101,6 +101,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                   JOIN inducks_character c ON scc.cocharactercode = c.charactercode
                   LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
                   WHERE scc.charactercode = ?
+                  GROUP BY scc.cocharactercode
                   ORDER BY CAST(scc.total AS INTEGER) DESC
                   LIMIT 5`,
             args: [currentLang, charactercode],
@@ -171,8 +172,21 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Header Info */}
       <div className="flex flex-col md:flex-row gap-6 items-start justify-between bg-surface-2/30 border border-border-subtle p-6 rounded-3xl">
-        <div className="space-y-3 min-w-0">
-          <div className="space-y-1">
+        <div className="flex gap-6 items-start min-w-0">
+          <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-surface border border-border-subtle rounded-full overflow-hidden shadow-sm flex items-center justify-center relative group">
+            <img
+              src={`/api/proxy-image?url=${encodeURIComponent('https://inducks.org/characterthumb.php?c=' + character.charactercode)}`}
+              alt={displayName}
+              className="w-full h-full object-cover transition-opacity duration-300"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+              }}
+            />
+            <Cat className="w-10 h-10 text-muted-foreground/30 hidden fallback-icon absolute" />
+          </div>
+          <div className="space-y-3 min-w-0">
+            <div className="space-y-1">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold tracking-tight text-foreground">{displayName}</h2>
               <div className="flex gap-1">
@@ -221,6 +235,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               </span>
             </div>
           )}
+        </div>
         </div>
       </div>
 
@@ -289,9 +304,23 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                 <CardContent className="space-y-2">
                   {creators.map((c) => (
                     <div key={c.personcode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
-                      <div>
-                        <p className="font-semibold text-foreground">{c.fullname}</p>
-                        <p className="text-[10px] text-muted-foreground">{c.yearrange}</p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
+                           <img
+                             src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${c.personcode.replace(/ /g, "_")}.jpg`)}`}
+                             alt={c.fullname}
+                             className="w-full h-full object-cover"
+                             onError={(e) => {
+                               e.currentTarget.style.display = 'none';
+                               e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                             }}
+                           />
+                           <User className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground truncate">{c.fullname}</p>
+                          <p className="text-[10px] text-muted-foreground">{c.yearrange}</p>
+                        </div>
                       </div>
                       <Badge variant="secondary" className="font-bold text-[10px]">
                         {c.total}
@@ -314,9 +343,23 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                 <CardContent className="space-y-2">
                   {coCharacters.map((cc) => (
                     <div key={cc.cocharactercode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
-                      <div>
-                        <p className="font-semibold text-foreground">{cc.cocharactername}</p>
-                        <p className="text-[10px] text-muted-foreground">{cc.yearrange}</p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
+                           <img
+                             src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${cc.cocharactercode}`)}`}
+                             alt={cc.cocharactername}
+                             className="w-full h-full object-cover"
+                             onError={(e) => {
+                               e.currentTarget.style.display = 'none';
+                               e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                             }}
+                           />
+                           <Cat className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground truncate">{cc.cocharactername}</p>
+                          <p className="text-[10px] text-muted-foreground">{cc.yearrange}</p>
+                        </div>
                       </div>
                       <Badge variant="secondary" className="font-bold text-[10px]">
                         {cc.total}

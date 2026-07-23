@@ -12,7 +12,7 @@ import { useMetadata } from "@/hooks/useMetadata";
 import { COUNTRY_CONTINENTS } from "@/lib/types";
 import { executeQuery } from "@/lib/db";
 import AuthorDetail from "./AuthorDetail";
-import { getFlagUrl } from "@/lib/utils";
+import { getFlagUrl, handleDbError } from "@/lib/utils";
 import { Autocomplete } from "@/components/Autocomplete";
 import { autocompletePerson } from "@/lib/turso";
 import { SearchResults } from "@/components/Search/SearchResults";
@@ -180,7 +180,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
       const mainResult = await executeQuery({ sql: query, args: params });
       setResults(mainResult.rows as Author[]);
     } catch (err) {
-      console.error(err);
+      handleDbError(err, t("authors.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
       setResults([]);
       setTotalCount(0);
     } finally {

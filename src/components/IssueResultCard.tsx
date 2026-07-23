@@ -129,7 +129,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
             </div>
           )}
 
-          {thumbData && (
+          {thumbData && !imageError && imageLoaded && (
             <Button
               variant="secondary"
               size="icon"

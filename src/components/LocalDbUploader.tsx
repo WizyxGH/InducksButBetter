@@ -41,9 +41,12 @@ export function LocalDbUploader() {
     
     const toastId = "db-upload-toast"
     toast.loading(
-      <div className="flex flex-col gap-2 w-full min-w-[200px] mt-1">
-        <span className="text-sm font-medium">{t('localDb.progress_start')}</span>
-        <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+      <div className="flex flex-col gap-2 w-[280px] mt-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-sm font-medium truncate">{t('localDb.progress_start')}</span>
+          <span className="text-xs font-mono font-bold text-primary shrink-0">0%</span>
+        </div>
+        <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden shrink-0">
           <div className="h-full bg-primary transition-all duration-300" style={{ width: '0%' }}></div>
         </div>
       </div>, 
@@ -57,9 +60,12 @@ export function LocalDbUploader() {
         const percent = Math.round((progress.current / progress.total) * 100)
         
         toast.loading(
-          <div className="flex flex-col gap-2 w-full min-w-[200px] mt-1">
-            <span className="text-sm font-medium">{msg}</span>
-            <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+          <div className="flex flex-col gap-2 w-[280px] mt-1">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-medium truncate" title={msg}>{msg}</span>
+              <span className="text-xs font-mono font-bold text-primary shrink-0">{percent}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden shrink-0">
               <div className="h-full bg-primary transition-all duration-300" style={{ width: `${percent}%` }}></div>
             </div>
           </div>,

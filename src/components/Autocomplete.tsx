@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getApiUrl } from "@/lib/api"
+import { handleDbError } from "@/lib/utils"
 import {
   Command,
   CommandEmpty,
@@ -62,6 +63,7 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
         if (isActive) setItems(data)
       } catch (err) {
         console.error(err)
+        handleDbError(err, "Erreur lors de l'autocomplétion.")
       } finally {
         if (isActive) setLoading(false)
       }
@@ -158,8 +160,9 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
                     imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${formattedCode}.jpg`)}`;
                   }
                   else if (item.charactercode) {
-                    if (item.imageUrl) {
-                      const [site, path] = item.imageUrl.split('|');
+                    const rawImageUrl = item.imageUrl || item.imageurl;
+                    if (rawImageUrl) {
+                      const [site, path] = rawImageUrl.split('|');
                       if (site === 'webusers') {
                         const cleanPath = path.startsWith('/') ? path.substring(1) : path;
                         const finalPath = cleanPath.startsWith('webusers/') ? cleanPath : `webusers/${cleanPath}`;

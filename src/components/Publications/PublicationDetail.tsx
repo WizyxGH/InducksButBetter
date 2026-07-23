@@ -5,16 +5,19 @@ import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { IssueResultCard } from "@/components/IssueResultCard";
 import { getFlagUrl } from "@/lib/utils";
+import { useMetadata } from "@/hooks/useMetadata";
 
 interface PublicationDetailData {
   publicationcode: string;
   title: string;
   countrycode: string;
   languagecode: string;
+  category?: string;
   publicationcomment?: string;
   publishername?: string;
+  publisherid?: string;
+  publishers?: { id: string; name: string }[];
 }
 
 interface PublicationDetailProps {
@@ -25,6 +28,7 @@ interface PublicationDetailProps {
 
 export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: PublicationDetailProps) {
   const { t } = useTranslation();
+  const { meta } = useMetadata();
   const [publication, setPublication] = useState<PublicationDetailData | null>(null);
   const [issues, setIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +62,14 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                       JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid 
                       JOIN inducks_issue i ON pj.issuecode = i.issuecode
                       WHERE i.publicationcode = p.publicationcode 
-                      LIMIT 1) as publishername
+                      LIMIT 1) as publishername,
+                     (SELECT pub.publisherid 
+                      FROM inducks_publishingjob pj 
+                      JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid 
+                      JOIN inducks_issue i ON pj.issuecode = i.issuecode
+                      WHERE i.publicationcode = p.publicationcode 
+                      LIMIT 1) as publisherid,
+                     (SELECT GROUP_CONCAT(category, ', ') FROM inducks_publicationcategory WHERE publicationcode = p.publicationcode) as category
               FROM inducks_publication p
               WHERE p.publicationcode = ?
             `,
@@ -66,6 +77,27 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
           });
           if (pubResult.rows.length > 0) {
             pubData = pubResult.rows[0] as PublicationDetailData;
+            
+            try {
+              const publishersResult = await executeQuery({
+                sql: `
+                  SELECT DISTINCT pub.publisherid, pub.publishername 
+                  FROM inducks_publishingjob pj 
+                  JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid 
+                  JOIN inducks_issue i ON pj.issuecode = i.issuecode
+                  WHERE i.publicationcode = ?
+                `,
+                args: [publicationcode]
+              });
+              if (publishersResult.rows && publishersResult.rows.length > 0) {
+                pubData.publishers = publishersResult.rows.map((r: any) => ({
+                  id: r.publisherid,
+                  name: r.publishername
+                }));
+              }
+            } catch (pubErr) {
+              console.warn("Could not fetch multiple publishers", pubErr);
+            }
           }
         } catch (e) {
           console.warn("Could not fetch publication details (missing table?):", e);
@@ -150,7 +182,9 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
     );
   }
 
-  const flagUrl = getFlagUrl(publication.countrycode);
+  const flagUrl = publication ? getFlagUrl(publication.countrycode) : null;
+  const countryName = meta.countries.find(c => c.countrycode === publication?.countrycode)?.countryname || publication?.countrycode.toUpperCase();
+  const languageName = meta.languages.find(l => l.languagecode === publication?.languagecode)?.languagename || publication?.languagecode.toUpperCase();
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-5xl mx-auto h-full flex flex-col">
@@ -197,18 +231,51 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                       className="w-4 h-3 rounded object-cover shadow-xs border border-border-subtle/10 shrink-0"
                     />
                   )}
-                  {publication.countrycode.toUpperCase()}
+                  {countryName}
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-border-subtle/30">
                 <span className="font-bold text-muted-foreground">{t("publication.language") || "Langue"}</span>
-                <span className="font-semibold text-foreground uppercase">{publication.languagecode}</span>
+                <span className="font-semibold text-foreground capitalize">{languageName}</span>
               </div>
-              {publication.publishername && (
+              {publication.publishers && publication.publishers.length > 0 ? (
+                <div className="flex justify-between py-1 border-b border-border-subtle/30">
+                  <span className="font-bold text-muted-foreground">{t("publication.publisher") || "Éditeur(s)"}</span>
+                  <div className="flex flex-col items-end gap-1">
+                    {publication.publishers.map((pub, idx) => (
+                      <span 
+                        key={pub.id || idx}
+                        className="font-semibold text-foreground text-right cursor-pointer hover:text-primary transition-colors hover:underline"
+                        onClick={() => {
+                          if (pub.id) {
+                            window.location.hash = `#/publishers/${encodeURIComponent(pub.id)}`;
+                          }
+                        }}
+                      >
+                        {pub.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : publication.publishername ? (
                 <div className="flex justify-between py-1 border-b border-border-subtle/30">
                   <span className="font-bold text-muted-foreground">{t("publication.publisher") || "Éditeur"}</span>
-                  <span className="font-semibold text-foreground text-right">{publication.publishername}</span>
+                  <span 
+                    className="font-semibold text-foreground text-right cursor-pointer hover:text-primary transition-colors hover:underline"
+                    onClick={() => {
+                      if (publication.publisherid) {
+                        window.location.hash = `#/publishers/${encodeURIComponent(publication.publisherid)}`;
+                      }
+                    }}
+                  >
+                    {publication.publishername}
+                  </span>
                 </div>
+              ) : null}
+              {publication.category && (
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none text-[10px] rounded-lg">
+                  {publication.category}
+                </Badge>
               )}
               {publication.publicationcomment && (
                 <div className="pt-2 leading-relaxed text-text-secondary italic">

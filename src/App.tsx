@@ -12,6 +12,8 @@ import { useTheme } from "@/hooks/useTheme"
 import { Button } from "@/components/ui/button"
 import { Toaster } from "sonner"
 import { useRouteMetadata } from "@/hooks/useRouteMetadata"
+import { incrementHistoryCount, navigateBack } from "@/lib/utils"
+import { OnboardingModal } from "@/components/OnboardingModal"
 
 // Lazy load heavy components to code-split the application
 const AdvancedSearch = lazy(() => import("@/components/AdvancedSearch").then(module => ({ default: module.AdvancedSearch })))
@@ -22,7 +24,9 @@ const Settings = lazy(() => import("@/components/Settings").then(module => ({ de
 const AuthorsSearch = lazy(() => import("@/components/Authors/AuthorsSearch").then(module => ({ default: module.AuthorsSearch })))
 const CharactersSearch = lazy(() => import("@/components/Characters/CharactersSearch").then(module => ({ default: module.CharactersSearch })))
 const CountryPublications = lazy(() => import("@/components/Publications/CountryPublications").then(module => ({ default: module.CountryPublications })))
+const CountryList = lazy(() => import("@/components/Publications/CountryList").then(module => ({ default: module.CountryList })))
 const PublicationDetail = lazy(() => import("@/components/Publications/PublicationDetail").then(module => ({ default: module.PublicationDetail })))
+const PublisherDetail = lazy(() => import("@/components/Publications/PublisherDetail").then(module => ({ default: module.PublisherDetail })))
 const IssueDetail = lazy(() => import("@/components/Publications/IssueDetail").then(module => ({ default: module.IssueDetail })))
 
 // Reusable loading fallback
@@ -45,6 +49,7 @@ function App() {
   const [selectedCharactercode, setSelectedCharactercode] = useState<string | null>(null);
   const [selectedCountrycode, setSelectedCountrycode] = useState<string | null>(null);
   const [selectedPublicationcode, setSelectedPublicationcode] = useState<string | null>(null);
+  const [selectedPublisherid, setSelectedPublisherid] = useState<string | null>(null);
 
   // Call route metadata hook to update page title and description
   useRouteMetadata({
@@ -59,6 +64,7 @@ function App() {
 
   useEffect(() => {
     const handleUrlRouting = () => {
+      incrementHistoryCount();
       const hash = window.location.hash;
       
       // Reset all codes
@@ -93,6 +99,7 @@ function App() {
         }
       } else if (rootPart === "publications") {
         setActiveTab("publications");
+        setSelectedPublisherid(null);
         if (parts[1] === "publication" && parts[2]) {
           const code = parts.slice(2).join("/");
           setSelectedPublicationcode(code);
@@ -114,6 +121,12 @@ function App() {
       } else if (rootPart === "countries") {
         setActiveTab("countries");
         if (parts[1]) setSelectedCountrycode(parts.slice(1).join("/"));
+      } else if (rootPart === "publishers") {
+        setActiveTab("publications");
+        setSelectedPublicationcode(null);
+        setSelectedStorycode(null);
+        setSelectedIssuecode(null);
+        if (parts[1]) setSelectedPublisherid(parts.slice(1).join("/"));
       } else if (rootPart === "sql") {
         setActiveTab("sql");
       } else {
@@ -124,9 +137,19 @@ function App() {
     handleUrlRouting();
     window.addEventListener("popstate", handleUrlRouting);
     window.addEventListener("hashchange", handleUrlRouting);
+    
+    const handleSwitchTab = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        handleTabChange(customEvent.detail);
+      }
+    };
+    window.addEventListener("switch-tab", handleSwitchTab);
+    
     return () => {
       window.removeEventListener("popstate", handleUrlRouting);
       window.removeEventListener("hashchange", handleUrlRouting);
+      window.removeEventListener("switch-tab", handleSwitchTab);
     };
   }, []);
 
@@ -158,6 +181,8 @@ function App() {
       pushHashState(`#/authors/${encodeURI(selectedPersoncode)}`);
     } else if (selectedCharactercode) {
       pushHashState(`#/characters/${encodeURI(selectedCharactercode)}`);
+    } else if (selectedPublisherid) {
+      pushHashState(`#/publishers/${encodeURI(selectedPublisherid)}`);
     } else if (selectedCountrycode) {
       pushHashState(`#/countries/${encodeURI(selectedCountrycode)}`);
     } else if (selectedPublicationcode) {
@@ -172,6 +197,7 @@ function App() {
     selectedPersoncode, 
     selectedCharactercode, 
     selectedCountrycode, 
+    selectedPublisherid,
     selectedPublicationcode
   ]);
 
@@ -182,6 +208,7 @@ function App() {
     setSelectedPersoncode(null);
     setSelectedCharactercode(null);
     setSelectedCountrycode(null);
+    setSelectedPublisherid(null);
     setSelectedPublicationcode(null);
   };
 
@@ -210,12 +237,30 @@ function App() {
             <div className="flex flex-row items-center gap-2">
               <Button
                 variant="ghost"
+                onClick={() => {
+                  if (activeTab === "countries") {
+                    setActiveTab(prevTab);
+                  } else {
+                    if (activeTab !== "settings") setPrevTab(activeTab);
+                    setActiveTab("countries");
+                  }
+                }}
+                className={cn(
+                  "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
+                  activeTab === "countries" && "border-border-subtle bg-surface-2 text-primary"
+                )}
+              >
+                <LibraryBig className="w-5 h-5" />
+                <span className="hidden sm:inline">{t('tabs.publications') || "Publications"}</span>
+              </Button>
+              <Button
+                variant="ghost"
                 size="icon"
                 onClick={() => {
                   if (activeTab === "settings") {
                     setActiveTab(prevTab);
                   } else {
-                    setPrevTab(activeTab);
+                    if (activeTab !== "countries") setPrevTab(activeTab);
                     setActiveTab("settings");
                   }
                 }}
@@ -233,7 +278,7 @@ function App() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0">
-          {activeTab !== "settings" && (
+          {activeTab !== "settings" && activeTab !== "countries" && (
             <div className="px-4 lg:px-12 shrink-0 flex w-full bg-surface border-b border-border-subtle py-2">
               <TabsList className="bg-surface-2/90 gap-1 h-12 p-1.5 rounded-2xl border border-border-subtle shadow-inner w-full flex justify-between items-center overflow-x-auto overflow-y-hidden">
                 <TabsTrigger
@@ -294,33 +339,60 @@ function App() {
             <TabsContent value="publications" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
               <Suspense fallback={<TabFallback />}>
                 {selectedIssuecode ? (
-                  <IssueDetail
-                    issuecode={selectedIssuecode}
-                    onBack={() => setSelectedIssuecode(null)}
-                    onSelectStory={(code) => setSelectedStorycode(code)}
-                  />
+                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                    <IssueDetail
+                      issuecode={selectedIssuecode}
+                      onBack={() => navigateBack(() => setSelectedIssuecode(null))}
+                      onSelectStory={(code) => {
+                        setSelectedStorycode(code)
+                        setActiveTab("stories")
+                      }}
+                    />
+                  </div>
                 ) : selectedPublicationcode ? (
-                  <PublicationDetail
-                    publicationcode={selectedPublicationcode}
-                    onBack={() => setSelectedPublicationcode(null)}
-                    onSelectIssue={(code) => setSelectedIssuecode(code)}
-                  />
-                ) : selectedCountrycode ? (
-                  <CountryPublications
-                    countrycode={selectedCountrycode}
-                    onBack={() => setSelectedCountrycode(null)}
-                    onSelectPublication={(code) => {
-                      setSelectedPublicationcode(code);
-                    }}
-                  />
+                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                    <PublicationDetail
+                      publicationcode={selectedPublicationcode}
+                      onBack={() => navigateBack(() => setSelectedPublicationcode(null))}
+                      onSelectIssue={(code) => setSelectedIssuecode(code)}
+                    />
+                  </div>
+                ) : selectedPublisherid ? (
+                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                    <PublisherDetail
+                      publisherid={selectedPublisherid}
+                      onBack={() => navigateBack(() => setSelectedPublisherid(null))}
+                      onSelectPublication={(code) => setSelectedPublicationcode(code)}
+                    />
+                  </div>
                 ) : (
                   <PublicationsSearch
                     selectedStorycode={selectedStorycode}
                     setSelectedStorycode={setSelectedStorycode}
                     selectedIssuecode={selectedIssuecode}
                     setSelectedIssuecode={setSelectedIssuecode}
-                    setSelectedCountrycode={setSelectedCountrycode}
                   />
+                )}
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="countries" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
+              <Suspense fallback={<TabFallback />}>
+                {selectedCountrycode ? (
+                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                    <CountryPublications
+                      countrycode={selectedCountrycode}
+                      onBack={() => navigateBack(() => setSelectedCountrycode(null))}
+                      onSelectPublication={(code) => {
+                        setSelectedPublicationcode(code);
+                        setActiveTab("publications"); // go back to publications to show details
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-full overflow-y-auto w-full">
+                    <CountryList onSelectCountry={setSelectedCountrycode} />
+                  </div>
                 )}
               </Suspense>
             </TabsContent>
@@ -364,6 +436,7 @@ function App() {
         */}
       </div>
       <Toaster position="top-center" richColors />
+      <OnboardingModal />
     </TooltipProvider>
   )
 }

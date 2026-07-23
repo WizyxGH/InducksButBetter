@@ -92,6 +92,17 @@ export function PublicationsSearchForm({
               />
             </div>
 
+            {/* Category */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">{t("search.category") || "Catégorie"}</Label>
+              <Input
+                variant="search"
+                placeholder={t("search.category_placeholder") || "Ex: comic book, magazine..."}
+                value={filters.category || ""}
+                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+              />
+            </div>
+
             {/* Issue Number */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.issue_number") || "Numéro de parution"}</Label>

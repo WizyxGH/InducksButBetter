@@ -12,20 +12,21 @@ interface PublicationInfo {
   publicationcode: string;
   title: string;
   languagecode: string;
+  countrycode: string;
   publicationcomment?: string;
   issueCount: number;
-  publishername?: string;
 }
 
-interface CountryPublicationsProps {
-  countrycode: string;
+interface PublisherDetailProps {
+  publisherid: string;
   onBack: () => void;
   onSelectPublication: (code: string) => void;
 }
 
-export function CountryPublications({ countrycode, onBack, onSelectPublication }: CountryPublicationsProps) {
+export function PublisherDetail({ publisherid, onBack, onSelectPublication }: PublisherDetailProps) {
   const { t } = useTranslation();
-  const [countryName, setCountryName] = useState("");
+  const [publisherName, setPublisherName] = useState("");
+  const [publisherCountry, setPublisherCountry] = useState(publisherid.includes("/") ? publisherid.split("/")[0] : "");
   const [publications, setPublications] = useState<PublicationInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
@@ -35,46 +36,44 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch country name
-        const countryRes = await executeQuery({
-          sql: "SELECT countryname FROM inducks_country WHERE countrycode = ?",
-          args: [countrycode]
+        // Fetch publisher details
+        const pubRes = await executeQuery({
+          sql: "SELECT publishername FROM inducks_publisher WHERE publisherid = ?",
+          args: [publisherid]
         });
-        if (countryRes.rows.length > 0) {
-          setCountryName(countryRes.rows[0].countryname);
+        if (pubRes.rows.length > 0) {
+          setPublisherName(pubRes.rows[0].publishername as string);
         } else {
-          setCountryName(countrycode.toUpperCase());
+          setPublisherName(publisherid);
         }
 
-        // Fetch publications
+        // Fetch publications edited by this publisher
         const result = await executeQuery({
           sql: `
             SELECT p.publicationcode, 
                    COALESCE((SELECT pn.publicationname FROM inducks_publicationname pn WHERE pn.publicationcode = p.publicationcode LIMIT 1), p.title) as title, 
-                   p.languagecode, p.publicationcomment,
-                   (SELECT COUNT(*) FROM inducks_issue WHERE publicationcode = p.publicationcode) as issueCount,
-                   (SELECT pub.publishername 
-                    FROM inducks_publishingjob pj 
-                    JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid 
-                    JOIN inducks_issue i ON pj.issuecode = i.issuecode
-                    WHERE i.publicationcode = p.publicationcode 
-                    LIMIT 1) as publishername
-            FROM inducks_publication p
-            WHERE p.countrycode = ?
+                   p.languagecode, p.countrycode, p.publicationcomment,
+                   COUNT(DISTINCT i.issuecode) as issueCount
+            FROM inducks_publishingjob pj
+            JOIN inducks_issue i ON pj.issuecode = i.issuecode
+            JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+            WHERE pj.publisherid = ?
+            GROUP BY p.publicationcode, title, p.languagecode, p.countrycode, p.publicationcomment
           `,
-          args: [countrycode]
+          args: [publisherid]
         });
-        // Filter out publications that have 0 issues to avoid clutter
+        
+        // Filter out publications that have 0 issues for this publisher
         const filtered = (result.rows as PublicationInfo[]).filter(p => p.issueCount > 0);
         setPublications(filtered);
       } catch (err) {
-        console.error("Error fetching country publications:", err);
+        console.error("Error fetching publisher details:", err);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [countrycode]);
+  }, [publisherid]);
 
   const filteredPublications = React.useMemo(() => {
     let filtered = publications.filter(p => 
@@ -93,7 +92,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
     return filtered;
   }, [publications, filterText, sortOrder]);
 
-  const flagUrl = getFlagUrl(countrycode);
+  const flagUrl = getFlagUrl(publisherCountry);
 
   if (loading) {
     return (
@@ -120,14 +119,14 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
               {flagUrl && (
                 <img
                   src={flagUrl}
-                  alt={countrycode}
+                  alt={publisherCountry}
                   className="w-6 h-4.5 rounded object-cover shadow-xs border border-border-subtle/10 shrink-0"
                 />
               )}
-              {t("countries.publications_title", { country: countryName }) || `Publications de : ${countryName}`}
+              {t("publisher.title", { publisher: publisherName }) || `Éditeur : ${publisherName}`}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Explorez les magazines et séries Disney publiés dans ce pays.
+              Explorez les magazines et séries édités par cette maison d'édition.
             </p>
           </div>
         </div>
@@ -164,12 +163,12 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
                 <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors leading-tight">
                   {p.title || "Sans titre"}
                 </h3>
-                <p className="text-[10px] text-muted-foreground font-mono">{p.publicationcode}</p>
-                {p.publishername && (
-                  <p className="text-[10px] text-primary/80 font-medium mt-1">
-                    {p.publishername}
-                  </p>
-                )}
+                <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1.5">
+                  {getFlagUrl(p.countrycode) && (
+                    <img src={getFlagUrl(p.countrycode)} alt={p.countrycode} className="w-3.5 h-2.5 rounded object-cover shadow-xs opacity-80" />
+                  )}
+                  {p.publicationcode}
+                </p>
                 {p.publicationcomment && (
                   <p className="text-[10.5px] text-text-secondary italic line-clamp-2 mt-1.5 pt-0.5">
                     "{p.publicationcomment}"

@@ -331,6 +331,7 @@ export async function getIssueDetail(issuecode: string) {
         e.entrycode,
         e.position,
         sv.entirepages,
+        sv.kind,
         e.title as entry_title,
         s.storycode,
         s.title as original_title,

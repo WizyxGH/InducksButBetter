@@ -17,7 +17,7 @@ interface CountryListProps {
 }
 
 export function CountryList({ onSelectCountry }: CountryListProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [countries, setCountries] = useState<CountryInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
@@ -28,11 +28,13 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
       try {
         const result = await executeQuery({
           sql: `
-            SELECT c.countrycode, c.countryname, 
+            SELECT c.countrycode, 
+                   COALESCE((SELECT cn.countryname FROM inducks_countryname cn WHERE cn.countrycode = c.countrycode AND cn.languagecode = ? LIMIT 1), c.countryname) as countryname,
                    (SELECT COUNT(*) FROM inducks_publication WHERE countrycode = c.countrycode) as pubCount
             FROM inducks_country c
-            ORDER BY c.countryname ASC
-          `
+            ORDER BY countryname ASC
+          `,
+          args: [i18n.language]
         });
         // Filter out countries that have 0 publications to avoid clutter
         const filtered = (result.rows as CountryInfo[]).filter(c => c.pubCount > 0);
@@ -48,13 +50,10 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
 
   const filteredCountries = React.useMemo(() => {
     return countries.filter(c => {
-      const translatedName = t(`nationalities.${c.countrycode.toLowerCase()}`) !== `nationalities.${c.countrycode.toLowerCase()}` 
-        ? t(`nationalities.${c.countrycode.toLowerCase()}`) 
-        : c.countryname;
-      return translatedName.toLowerCase().includes(filterText.toLowerCase()) ||
+      return c.countryname.toLowerCase().includes(filterText.toLowerCase()) ||
              c.countrycode.toLowerCase().includes(filterText.toLowerCase());
     });
-  }, [countries, filterText, t]);
+  }, [countries, filterText]);
 
   if (loading) {
     return (
@@ -65,7 +64,7 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-5xl mx-auto h-full flex flex-col">
+    <div className="p-6 lg:p-8 space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -84,7 +83,7 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2">
+      <div className="pr-2">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {filteredCountries.map((c) => {
             const flagUrl = getFlagUrl(c.countrycode);
@@ -104,8 +103,8 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
                   <Globe className="w-8 h-8 text-muted-foreground/30 shrink-0" />
                 )}
                 <div className="min-w-0 space-y-0.5">
-                  <h3 className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
-                    {t(`nationalities.${c.countrycode.toLowerCase()}`) !== `nationalities.${c.countrycode.toLowerCase()}` ? t(`nationalities.${c.countrycode.toLowerCase()}`) : c.countryname}
+                  <h3 className="font-semibold text-foreground truncate">
+                    {c.countryname}
                   </h3>
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <LibraryBig className="w-3 h-3 text-primary shrink-0" />

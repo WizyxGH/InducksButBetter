@@ -214,7 +214,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
             </div>
           )}
 
-          {thumbData && (
+          {thumbData && !imageError && imageLoaded && (
             <Button
               variant="secondary"
               size="icon"

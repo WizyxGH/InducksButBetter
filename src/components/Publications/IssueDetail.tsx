@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, User } from "lucide-react"
+import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, User, ChevronDown, ChevronUp } from "lucide-react"
 import { getIssueDetail } from "@/lib/turso"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -17,6 +17,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   const { t, i18n } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [issue, setIssue] = useState<any>(null)
+  const [isContentExpanded, setIsContentExpanded] = useState(true)
 
   useEffect(() => {
     async function fetchDetails() {
@@ -200,68 +201,95 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
 
           {/* Index of Stories */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-foreground">Index des histoires</h3>
-            <div className="space-y-3">
-              {issue.stories && issue.stories.length > 0 ? (
-                issue.stories.map((story: any, idx: number) => (
-                  <Card
-                    key={story.storycode || idx}
-                    onClick={() => story.storycode && onSelectStory && onSelectStory(story.storycode)}
-                    className="group rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs cursor-pointer border hover:border-primary/20"
-                  >
-                    <CardContent className="p-4 flex items-start gap-4">
-                      {/* Position / Index badge */}
-                      <span className="w-6 h-6 flex items-center justify-center rounded-lg bg-surface-2 text-[10px] font-bold font-mono text-text-secondary group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
-                        {story.position || idx + 1}
-                      </span>
-                      
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4">
-                          <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                            {story.entry_title || story.original_title || "Sans titre"}
-                          </p>
-                          {story.entirepages && (
-                            <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono shrink-0">
-                              {story.entirepages} p.
-                            </span>
-                          )}
-                        </div>
-
-                        {story.original_title && story.original_title !== story.entry_title && (
-                          <p className="text-[10px] text-muted-foreground italic truncate">
-                            Titre original : {story.original_title}
-                          </p>
-                        )}
-
-                        {/* Credits */}
-                        {(story.writers || story.artists) && (
-                          <div className="text-[10px] text-text-secondary space-y-0.5">
-                            {story.writers && (
-                              <p className="truncate">
-                                <span className="font-semibold">Scénario :</span> {story.writers}
-                              </p>
+            <button 
+              onClick={() => setIsContentExpanded(!isContentExpanded)} 
+              className="flex items-center justify-between w-full group"
+            >
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                Contenu 
+                <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
+                  {issue.stories?.length || 0} entrée{(issue.stories?.length || 0) > 1 ? "s" : ""}
+                </span>
+              </h3>
+              <div className="p-1 rounded-md hover:bg-surface-2 transition-colors">
+                {isContentExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
+                )}
+              </div>
+            </button>
+            
+            {isContentExpanded && (
+              <div className="space-y-3 pt-1">
+                {issue.stories && issue.stories.length > 0 ? (
+                  issue.stories.map((story: any, idx: number) => (
+                    <Card
+                      key={story.storycode || idx}
+                      onClick={() => story.storycode && onSelectStory && onSelectStory(story.storycode)}
+                      className="group rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs cursor-pointer border hover:border-primary/20"
+                    >
+                      <CardContent className="p-4 flex items-start gap-4">
+                        {/* Position / Index badge */}
+                        <span className="w-6 h-6 flex items-center justify-center rounded-lg bg-surface-2 text-[10px] font-bold font-mono text-text-secondary group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
+                          {story.position || idx + 1}
+                        </span>
+                        
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4">
+                            <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                              {story.entry_title || story.original_title || "Sans titre"}
+                            </p>
+                            {story.entirepages && (
+                              <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono shrink-0">
+                                {story.entirepages} p.
+                              </span>
                             )}
-                            {story.artists && (
-                              <p className="truncate">
-                                <span className="font-semibold">Dessin :</span> {story.artists}
+                          </div>
+
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            {story.kind && (
+                              <span className="text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-1.5 py-0.5 rounded shrink-0">
+                                {t(`kinds.${story.kind}`, { defaultValue: story.kind })}
+                              </span>
+                            )}
+                            {story.original_title && story.original_title !== story.entry_title && (
+                              <p className="text-[10px] text-muted-foreground italic truncate">
+                                Titre original : {story.original_title}
                               </p>
                             )}
                           </div>
-                        )}
 
-                        {story.storycode && (
-                          <p className="text-[9px] font-mono font-bold text-primary truncate pt-1">
-                            {story.storycode}
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <p className="text-sm text-text-secondary italic">Aucune histoire référencée pour ce numéro.</p>
-              )}
-            </div>
+                          {/* Credits */}
+                          {(story.writers || story.artists) && (
+                            <div className="text-[10px] text-text-secondary space-y-0.5">
+                              {story.writers && (
+                                <p className="truncate">
+                                  <span className="font-semibold">Scénario :</span> {story.writers}
+                                </p>
+                              )}
+                              {story.artists && (
+                                <p className="truncate">
+                                  <span className="font-semibold">Dessin :</span> {story.artists}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {story.storycode && (
+                            <p className="text-[9px] font-mono font-bold text-primary truncate pt-1">
+                              {story.storycode}
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-sm text-text-secondary italic">Aucun contenu référencé pour ce numéro.</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

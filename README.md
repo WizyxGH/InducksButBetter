@@ -78,7 +78,7 @@ This project is fully automated for deployment on GitHub Pages using GitHub Acti
 
 ## Credits
 
-- **Luis Bärenfaller**: German, Italian, and Portuguese translations.
+- **Luis Bärenfaller**: German, Italian, Portuguese and Spanish translation contributions.
 
 ---
 

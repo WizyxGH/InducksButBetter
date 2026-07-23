@@ -249,7 +249,11 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                   {writers.length > 0 ? (
                     <ul className="space-y-1">
                       {writers.map((c: any) => (
-                        <li key={`${c.personcode}-${c.role}`} className="text-sm font-semibold text-foreground">
+                        <li 
+                          key={`${c.personcode}-${c.role}`} 
+                          className="text-sm font-semibold text-foreground cursor-pointer hover:text-primary transition-colors hover:underline"
+                          onClick={() => window.location.hash = `#/authors/${c.personcode}`}
+                        >
                           {c.fullname}
                         </li>
                       ))}
@@ -270,7 +274,11 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                   {artists.length > 0 ? (
                     <ul className="space-y-1">
                       {artists.map((c: any) => (
-                        <li key={`${c.personcode}-${c.role}`} className="text-sm font-semibold text-foreground">
+                        <li 
+                          key={`${c.personcode}-${c.role}`} 
+                          className="text-sm font-semibold text-foreground cursor-pointer hover:text-primary transition-colors hover:underline"
+                          onClick={() => window.location.hash = `#/authors/${c.personcode}`}
+                        >
                           {c.fullname}
                         </li>
                       ))}
@@ -352,67 +360,73 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
             </Card>
           </div>
 
-          {/* Publications by Country (Collapsible Accordion!) */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-foreground">Publications par pays</h3>
-            <div className="space-y-2">
-              {Object.keys(publicationsByCountry).map((country) => {
-                const pubs = publicationsByCountry[country]
-                const flagCode = pubs[0]?.countrycode || "un"
-                const isExpanded = !!expandedCountries[country]
-                return (
-                  <div
-                    key={country}
-                    className="border border-border-subtle bg-surface rounded-2xl overflow-hidden transition-all shadow-xs"
-                  >
-                    <button
-                      onClick={() => toggleCountry(country)}
-                      className="w-full flex items-center justify-between p-3 px-4 hover:bg-surface-2 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={getFlagUrl(flagCode)}
-                          className="w-4 h-3 rounded-xs shrink-0 object-cover"
-                          alt=""
-                        />
-                        <span className="text-xs font-bold text-text-body">{country}</span>
-                        <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded-md font-bold font-mono">
-                          {pubs.length}
-                        </span>
-                      </div>
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-text-secondary" /> : <ChevronDown className="w-4 h-4 text-text-secondary" />}
-                    </button>
+      </div>
+      </div>
 
-                    {isExpanded && (
-                      <div className="border-t border-border-subtle bg-surface-2/30 p-2 space-y-1.5 animate-fadeIn">
-                        {pubs.map((pub: any) => (
-                          <div
-                            key={pub.entrycode}
-                            onClick={() => onSelectIssue && onSelectIssue(pub.issuecode)}
-                            className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-2 transition-colors cursor-pointer border border-transparent hover:border-border-subtle"
-                          >
-                            <div className="space-y-0.5">
-                              <p className="text-xs font-bold text-foreground">{pub.publication_title}</p>
-                              <p className="text-[10px] text-muted-foreground font-medium">
-                                Numéro : {pub.issuenumber} {pub.position && `• Pos. ${pub.position}`}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              {pub.entirepages && (
-                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">
-                                  {pub.entirepages} p.
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+      {/* Publications by Country (Full Width) */}
+      <div className="space-y-3 pt-6 border-t border-border-subtle mt-8">
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+          Publications par pays
+          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
+            {Object.values(publicationsByCountry).flat().length}
+          </span>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.keys(publicationsByCountry).map((country) => {
+            const pubs = publicationsByCountry[country]
+            const flagCode = pubs[0]?.countrycode || "un"
+            const isExpanded = !!expandedCountries[country]
+            return (
+              <div
+                key={country}
+                className="border border-border-subtle bg-surface rounded-2xl overflow-hidden transition-all shadow-xs h-fit"
+              >
+                <button
+                  onClick={() => toggleCountry(country)}
+                  className="w-full flex items-center justify-between p-3 px-4 hover:bg-surface-2 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={getFlagUrl(flagCode)}
+                      className="w-4 h-3 rounded-xs shrink-0 object-cover"
+                      alt=""
+                    />
+                    <span className="text-xs font-bold text-text-body">{country}</span>
+                    <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded-md font-bold font-mono">
+                      {pubs.length}
+                    </span>
                   </div>
-                )
-              })}
-            </div>
-          </div>
+                  {isExpanded ? <ChevronUp className="w-4 h-4 text-text-secondary" /> : <ChevronDown className="w-4 h-4 text-text-secondary" />}
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-border-subtle bg-surface-2/30 p-2 space-y-1.5 animate-fadeIn">
+                    {pubs.map((pub: any) => (
+                      <div
+                        key={pub.entrycode}
+                        onClick={() => onSelectIssue && onSelectIssue(pub.issuecode)}
+                        className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-2 transition-colors cursor-pointer border border-transparent hover:border-border-subtle"
+                      >
+                        <div className="space-y-0.5 min-w-0 flex-1">
+                          <p className="text-xs font-bold text-foreground truncate">{pub.publication_title}</p>
+                          <p className="text-[10px] text-muted-foreground font-medium">
+                            Numéro : {pub.issuenumber} {pub.position && `• Pos. ${pub.position}`}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          {pub.entirepages && (
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">
+                              {pub.entirepages} p.
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

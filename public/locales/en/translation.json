@@ -83,7 +83,9 @@
     "rows_per_page": "Results per page",
     "title_pub_label": "Series or issue title",
     "title_pub_placeholder": "Ex: Four Color, US/FC...",
-    "publications_found": "{{count}} publications found"
+    "publications_found": "{{count}} publications found",
+    "category": "Category",
+    "category_placeholder": "Ex: comic book, magazine..."
   },
   "roles": {
     "any": "Any",
@@ -409,10 +411,28 @@
     "country": "Country",
     "language": "Language",
     "publisher": "Publisher",
+    "category": "Category",
     "issues": "Issues list",
     "issue_no": "Issue #",
     "date": "Date",
     "pages": "Pages",
     "empty": "No issues found."
+  },
+  "publisher": {
+    "title": "Publisher: {{publisher}}"
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Explore the Inducks database",
+      "desc": "Search through thousands of stories, explore publications by country, and discover your favorite Disney authors and characters."
+    },
+    "step2": {
+      "title": "Offline Consultation",
+      "desc": "InducksButBetter uses a local database. No waiting and no connection required! You can update this database at any time from the settings."
+    },
+    "step3": {
+      "title": "Your collection",
+      "desc": "Add the comics you own to your personal collection to be able to filter your searches later."
+    }
   }
 }

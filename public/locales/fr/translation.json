@@ -15,6 +15,8 @@
     "to": "à",
     "publisher": "Éditeur",
     "publisher_placeholder": "Rechercher un éditeur...",
+    "category": "Catégorie",
+    "category_placeholder": "Ex : comic book, magazine...",
     "only_collection": "Uniquement dans ma collection",
     "publication_country": "Pays de publication",
     "any_country": "N'importe",
@@ -103,13 +105,20 @@
     "published_least": "Le moins publié",
     "country_code": "Pays & Code",
     "date_asc": "Date (anciennes)",
-    "date_desc": "Date (récentes)"
+    "date_desc": "Date (récentes)",
+    "stories_desc": "Plus d'histoires",
+    "stories_asc": "Moins d'histoires",
+    "name_asc": "Nom A-Z",
+    "name_desc": "Nom Z-A",
+    "appearances_desc": "Plus d'apparitions",
+    "appearances_asc": "Moins d'apparitions"
   },
   "common": {
     "loading": "Chargement...",
     "no_data": "Aucune donnée trouvée",
     "error": "Une erreur est survenue",
-    "back": "Retour"
+    "back": "Retour",
+    "save": "Sauvegarder"
   },
   "story": {
     "no_title": "Sans titre",
@@ -314,7 +323,7 @@
     "deceased_range": "Année de décès",
     "born_place": "Lieu de naissance",
     "deceased_place": "Lieu de décès",
-    "min_stories": "Nb. min d'histoires",
+    "min_stories": "Nb. numéros indexés (min)",
     "main_role": "Rôle principal",
     "role_writer": "Scénariste",
     "role_artist": "Dessinateur",
@@ -323,7 +332,7 @@
     "full_name": "Nom complet",
     "full_name_placeholder": "Rechercher un auteur...",
     "nationality": "Nationalité",
-    "number_of_stories": "Nombre d'histoires",
+    "number_of_stories": "Numéros indexés (site Inducks)",
     "roles": "Rôles",
     "all_roles": "Tous les rôles",
     "results_per_page": "Résultats par page",
@@ -349,7 +358,8 @@
     "no_description": "Aucune description disponible pour cet auteur."
   },
   "characters": {
-    "character_code": "Code de personnage",
+    "code": "Code de personnage",
+    "code_placeholder": "Ex: MM, DD...",
     "hero_only": "Héros principal uniquement",
     "one_time": "Apparition unique uniquement",
     "min_appearances": "Apparitions min.",
@@ -393,6 +403,7 @@
   },
   "countries": {
     "title": "Liste des pays",
+    "publications_title": "Publications de : {{country}}",
     "country_name": "Pays",
     "publications_count": "Publications",
     "search_placeholder": "Filtrer les pays..."
@@ -410,10 +421,28 @@
     "country": "Pays",
     "language": "Langue",
     "publisher": "Éditeur",
+    "category": "Catégorie",
     "issues": "Liste des numéros",
     "issue_no": "Numéro",
     "date": "Date",
     "pages": "Pages",
     "empty": "Aucun numéro trouvé."
+  },
+  "publisher": {
+    "title": "Éditeur : {{publisher}}"
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Explorez la base de données Inducks",
+      "desc": "Recherchez parmi des milliers d'histoires, explorez les publications par pays, et découvrez les fiches de vos auteurs et personnages Disney favoris."
+    },
+    "step2": {
+      "title": "Consultation hors-ligne",
+      "desc": "InducksButBetter utilise une base de données locale. Plus d'attente et aucune connexion requise ! Vous pouvez mettre à jour cette base à tout moment depuis les paramètres."
+    },
+    "step3": {
+      "title": "Votre collection",
+      "desc": "Ajoutez les bandes dessinées que vous possédez à votre collection personnelle pour pouvoir filtrer vos recherches par la suite."
+    }
   }
 }

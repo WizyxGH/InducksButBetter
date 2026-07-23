@@ -584,6 +584,7 @@ export interface PublicationsSearchFilters {
   page?: number | string;
   rowsperpage?: string;
   lang?: string;
+  category?: string;
 }
 
 export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters): SearchQueryResponse {
@@ -597,6 +598,11 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
   if (filters.country) {
     where.push("p.countrycode = ?");
     p.push(filters.country);
+  }
+
+  if (filters.category) {
+    where.push("EXISTS (SELECT 1 FROM inducks_publicationcategory pc WHERE pc.publicationcode = p.publicationcode AND pc.category = ?)");
+    p.push(filters.category);
   }
 
   if (filters.title) {

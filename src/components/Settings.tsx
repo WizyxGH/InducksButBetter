@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { loadFromIsvFiles, hasLocalDb, getLocalDbStats } from "@/lib/localDb"
 import { LegalModal } from "@/components/LegalModal"
+import { DiscordIcon } from "@/components/icons/DiscordIcon"
 
 export function Settings() {
   const { t, i18n } = useTranslation()
@@ -21,44 +22,22 @@ export function Settings() {
 
   useEffect(() => {
     // Load existing cookie from localStorage or retrieve from API
-    const loadCookie = async () => {
-      try {
-        const saved = localStorage.getItem("inducks_cookie")
-        if (saved) {
-          setCookieValue(saved)
-        } else {
-          const res = await fetch("/api/settings/cookie")
-          if (res.ok) {
-            const data = await res.json()
-            if (data.cookie) {
-              setCookieValue(data.cookie)
-              localStorage.setItem("inducks_cookie", data.cookie)
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load cookie", e)
+    const loadCookie = () => {
+      const saved = localStorage.getItem("inducks_cookie")
+      if (saved) {
+        setCookieValue(saved)
       }
     }
     loadCookie()
   }, [])
 
-  const handleSaveCookie = async () => {
+  const handleSaveCookie = () => {
     setIsSavingCookie(true)
     try {
       localStorage.setItem("inducks_cookie", cookieValue)
-      const res = await fetch("/api/settings/cookie", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cookie: cookieValue }),
-      })
-      if (res.ok) {
-        toast.success(t("settings.cookie_saved") || "Cookie enregistré avec succès !")
-      } else {
-        toast.error("Erreur serveur lors de la sauvegarde.")
-      }
+      toast.success(t("settings.cookie_saved") || "Cookie enregistré avec succès !")
     } catch (e) {
-      toast.error("Impossible de sauvegarder le cookie.")
+      toast.error("Erreur lors de la sauvegarde du cookie.")
     } finally {
       setIsSavingCookie(false)
     }
@@ -89,8 +68,11 @@ export function Settings() {
     
     const toastId = "settings-db-upload"
     toast.loading(
-      <div className="flex flex-col gap-2 w-full min-w-[200px] mt-1">
-        <span className="text-sm font-medium">{t("localDb.progress_start")}</span>
+      <div className="flex flex-col gap-2 w-[280px] mt-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-sm font-medium truncate">{t("localDb.progress_start")}</span>
+          <span className="text-xs font-mono font-bold text-primary shrink-0">0%</span>
+        </div>
         <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
           <div className="h-full bg-primary transition-all duration-300" style={{ width: '0%' }}></div>
         </div>
@@ -105,8 +87,11 @@ export function Settings() {
         const percent = Math.round((progress.current / progress.total) * 100)
         
         toast.loading(
-          <div className="flex flex-col gap-2 w-full min-w-[200px] mt-1">
-            <span className="text-sm font-medium">{msg}</span>
+          <div className="flex flex-col gap-2 w-[280px] mt-1">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-medium truncate" title={msg}>{msg}</span>
+              <span className="text-xs font-mono font-bold text-primary shrink-0">{percent}%</span>
+            </div>
             <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
               <div className="h-full bg-primary transition-all duration-300" style={{ width: `${percent}%` }}></div>
             </div>
@@ -193,7 +178,7 @@ export function Settings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card 1: Language & Theme */}
-        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm flex flex-col h-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Globe className="w-4 h-4 text-primary" />
@@ -203,7 +188,7 @@ export function Settings() {
               {t("settings.general_desc") || "Langue de l'interface et thème d'affichage."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 flex flex-col">
             <div className="space-y-2">
               <Label className="text-xs font-semibold">{t("settings.language") || "Langue"}</Label>
               <Select value={i18n.language} onValueChange={(lang) => i18n.changeLanguage(lang)}>
@@ -250,7 +235,7 @@ export function Settings() {
         </Card>
 
         {/* Card 2: Inducks Cookie */}
-        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm flex flex-col h-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Monitor className="w-4 h-4 text-primary" />
@@ -260,7 +245,7 @@ export function Settings() {
               {t("settings.cookie_desc") || "Nécessaire pour charger les images en haute résolution depuis Inducks."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 flex flex-col">
             <div className="space-y-2">
               <Label htmlFor="inducks-cookie" className="text-xs font-semibold">
                 Cookie (coa-session, etc.)
@@ -277,15 +262,17 @@ export function Settings() {
                   "Ce cookie permet d'accéder aux images haute résolution. Récupérez-le dans l'inspecteur du navigateur sur inducks.org."}
               </p>
             </div>
-            <Button onClick={handleSaveCookie} disabled={isSavingCookie} className="w-full gap-2 rounded-xl">
-              {isSavingCookie ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {t("common.save") || "Enregistrer"}
-            </Button>
+            <div className="mt-auto pt-4">
+              <Button onClick={handleSaveCookie} disabled={isSavingCookie} className="w-full gap-2 rounded-xl">
+                {isSavingCookie ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {t("common.save") || "Enregistrer"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         {/* Card 4: Local Database */}
-        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm flex flex-col h-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Database className="w-4 h-4 text-primary" />
@@ -296,7 +283,7 @@ export function Settings() {
                 "Chargez les fichiers .isv extraits de la base de données Inducks officielle pour travailler hors ligne."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 flex flex-col">
             <div className="text-xs text-muted-foreground space-y-2 leading-relaxed bg-surface-2/60 p-4 rounded-xl border border-border-subtle">
               <p>
                 {t("localDb.desc_2") ||
@@ -327,7 +314,7 @@ export function Settings() {
               </div>
             )}
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 mt-auto pt-4">
               <input
                 type="file"
                 multiple
@@ -356,7 +343,7 @@ export function Settings() {
         </Card>
 
         {/* Card 3: Personal Collection */}
-        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+        <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm flex flex-col h-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Database className="w-4 h-4 text-primary" />
@@ -367,10 +354,10 @@ export function Settings() {
                 "Collez ici la liste de vos numéros possédés (un code par ligne, ex: FR/MP 300)."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 flex flex-col">
             <textarea
               className="flex min-h-[120px] w-full rounded-xl border border-border-subtle bg-surface/50 px-3 py-2 text-sm placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary font-mono"
-              placeholder="FR/MP 300&#10;FR/PM 2000&#10;US/WDC 100"
+              placeholder={t("collection.placeholder") || "FR/MP 300^1\nFR/PM 2000^1\nUS/WDC 100^1"}
               value={collectionText}
               onChange={(e) => setCollectionText(e.target.value)}
             />
@@ -380,10 +367,12 @@ export function Settings() {
                   `Vous avez actuellement ${collectionCount} numéros enregistrés.`}
               </div>
             )}
-            <Button onClick={handleSaveCollection} className="w-full gap-2 rounded-xl">
-              <Save className="w-4 h-4" />
-              {t("collection.save") || "Sauvegarder la collection"}
-            </Button>
+            <div className="mt-auto pt-4">
+              <Button onClick={handleSaveCollection} className="w-full gap-2 rounded-xl">
+                <Save className="w-4 h-4" />
+                {t("collection.save") || "Sauvegarder la collection"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -406,9 +395,7 @@ export function Settings() {
               className="flex items-center justify-between p-4 rounded-xl border border-border-subtle bg-surface/50 hover:bg-surface-2 hover:-translate-y-0.5 active:scale-98 hover:shadow-xs transition-all duration-300 group"
             >
               <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-[#5865F2] shrink-0 group-hover:scale-105 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c3.028 2.2275 6.0194 3.5953 8.9599 4.5079a.0775.0775 0 00.0833-.0277c.7063-.9663 1.324-1.9967 1.8385-3.0867a.0808.0808 0 00-.0441-.1105c-.9583-.3645-1.8726-.8154-2.729-1.336a.0792.0792 0 01-.0078-.1308c.1844-.138.3626-.2822.531-.4306a.0754.0754 0 01.0788-.0105c5.829 2.6719 12.1818 2.6719 17.944 0a.0747.0747 0 01.0794.0095c.1684.1494.3476.2936.532.4316a.0797.0797 0 01-.0075.1308 11.453 11.453 0 01-2.729 1.336.0792.0792 0 00-.044.1105c.5144 1.09 1.132 2.1204 1.8385 3.0867a.077.077 0 00.0833.0277c2.9493-.9126 5.9407-2.2804 8.97-4.5078a.0784.0784 0 00.0311-.056c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.095 2.1568 2.419 0 1.3332-.9555 2.419-2.157 2.419zm7.975 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.095 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z"/>
-                </svg>
+                <DiscordIcon className="w-5 h-5 text-[#5865F2] shrink-0 group-hover:scale-105 transition-transform" />
                 <div className="space-y-0.5">
                   <p className="text-xs font-bold text-foreground">Discord</p>
                   <p className="text-[10px] text-muted-foreground">Discord de Inducks</p>

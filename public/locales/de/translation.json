@@ -83,7 +83,9 @@
     "rows_per_page": "Ergebnisse pro Seite",
     "title_pub_label": "Serien- oder Ausgabentitel",
     "title_pub_placeholder": "Bsp: Four Color, US/FC...",
-    "publications_found": "{{count}} Veröffentlichungen gefunden"
+    "publications_found": "{{count}} Veröffentlichungen gefunden",
+    "category": "Kategorie",
+    "category_placeholder": "Bsp: comic book, magazine..."
   },
   "roles": {
     "any": "Beliebig",
@@ -416,4 +418,4 @@
     "pages": "Seiten",
     "empty": "Keine Ausgaben gefunden."
   }
-}
+}\n

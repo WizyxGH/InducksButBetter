@@ -6,6 +6,7 @@ import { useSearchExecution } from "@/hooks/useSearchExecution";
 import { SearchForm } from "./Search/SearchForm";
 import { SearchResults } from "./Search/SearchResults";
 import { StoryDetail } from "./Search/StoryDetail";
+import { navigateBack } from "@/lib/utils";
 import { IssueDetail } from "./Publications/IssueDetail";
 
 interface AdvancedSearchProps {
@@ -54,16 +55,7 @@ export function AdvancedSearch({
   });
 
   const handleSelectCharacter = (code: string, name: string) => {
-    setSelectedStorycode(null);
-    setSelectedIssuecode(null);
-    addSelection("charactercode", code, name);
-    const newFilters = {
-      ...filters,
-      charactercode: Array.from(new Set([...(filters.charactercode || []), code])),
-      page: 1
-    };
-    setFilters(newFilters);
-    handleSearch(null, newFilters);
+    window.location.hash = `#/characters/${encodeURIComponent(code)}`;
   };
 
   if (selectedIssuecode) {
@@ -86,7 +78,7 @@ export function AdvancedSearch({
       <div className="h-full overflow-auto bg-surface-2/20">
         <StoryDetail
           storycode={selectedStorycode}
-          onBack={() => setSelectedStorycode(null)}
+          onBack={() => navigateBack(() => setSelectedStorycode(null))}
           onSelectIssue={(code) => setSelectedIssuecode(code)}
           onSelectCharacter={handleSelectCharacter}
         />

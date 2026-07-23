@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { executeQuery } from "@/lib/db";
 import { buildAdvancedSearchQuery, SearchFilters } from "@/lib/searchService";
+import { handleDbError } from "@/lib/utils";
 
 interface UseSearchExecutionProps {
   filters: SearchFilters;
@@ -69,8 +69,7 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
 
       setTotalCount(Number(countResult.rows[0]?.total || countResult.rows[0]?.COUNT || 0));
     } catch (err) {
-      console.error(err);
-      toast.error(t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
+      handleDbError(err, t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
       setResults([]);
       setTotalCount(0);
     } finally {
