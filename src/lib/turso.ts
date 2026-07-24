@@ -61,7 +61,21 @@ export async function autocompletePerson(q: string) {
       FROM inducks_person 
       WHERE fullname LIKE ? OR personcode LIKE ? 
       GROUP BY personcode
-      ORDER BY MAX(numberofindexedissues) DESC 
+      LIMIT 10
+    `,
+    args: [`%${q}%`, `%${q}%`]
+  });
+  return result.rows;
+}
+
+export async function autocompleteIndexer(q: string) {
+  if (!q || q.length < 2) return [];
+  const result = await executeQuery({
+    sql: `
+      SELECT indexer as personcode, fullname, fullname as displayname 
+      FROM inducks_indexer 
+      WHERE fullname LIKE ? OR indexer LIKE ? 
+      ORDER BY fullname ASC
       LIMIT 10
     `,
     args: [`%${q}%`, `%${q}%`]

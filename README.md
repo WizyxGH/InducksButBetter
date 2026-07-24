@@ -85,6 +85,15 @@ This project is fully automated for deployment on GitHub Pages using GitHub Acti
 <div align="center">
   <h3>🌟 Support the project</h3>
   <p>If you find this project useful or simply love Disney comics, please consider <strong>giving it a star</strong>! It helps the project grow and motivates me to add more features. ⭐</p>
+  
+  <a href="https://star-history.com/#WizyxGH/InducksButBetter&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=WizyxGH/InducksButBetter&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=WizyxGH/InducksButBetter&type=Date" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=WizyxGH/InducksButBetter&type=Date" />
+    </picture>
+  </a>
+  <br />
   <br />
   <i>Built with ❤️ for Inducks contributors,Disney comics fans and collectors.</i>
 </div>

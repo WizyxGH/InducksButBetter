@@ -12,7 +12,7 @@ import { parseISO, format } from "date-fns";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { PublicationsSearchFilters } from "@/lib/searchService";
 import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
-import { autocompletePublisher, autocompletePerson, autocompletePublicationTitle } from "@/lib/turso";
+import { autocompletePublisher, autocompletePerson, autocompletePublicationTitle, autocompleteIndexer } from "@/lib/turso";
 
 import { getFlagUrl } from "@/lib/utils";
 
@@ -156,7 +156,7 @@ export function PublicationsSearchForm({
                 value={filters.indexer}
                 placeholder={t("search.indexer_placeholder") || "Nom de l'indexeur..."}
                 emptyMessage={t("common.no_data")}
-                fetchOptions={autocompletePerson}
+                fetchOptions={autocompleteIndexer}
                 onSelect={(val) => setFilters({ ...filters, indexer: val })}
                 onInputChange={(val) => setFilters({ ...filters, indexer: val })}
                 onClear={() => setFilters({ ...filters, indexer: "" })}

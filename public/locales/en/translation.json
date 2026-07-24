@@ -14,25 +14,25 @@
     "all_periods": "All periods",
     "to": "to",
     "publisher": "Publisher",
-    "publisher_placeholder": "Search for a publisher...",
+    "publisher_placeholder": "Ex: Disney, Egmont...",
     "only_collection": "Only in my collection",
     "publication_country": "Publication Country",
     "any_country": "Any",
-    "search_country": "Search for a country...",
+    "search_country": "Ex: us, fr, it...",
     "publication_language": "Publication language",
     "all_languages": "All languages",
-    "search_language": "Search for a language...",
+    "search_language": "Ex: en, fr, de...",
     "authors": "Authors",
-    "author_placeholder": "Search for an author...",
+    "author_placeholder": "Ex: Carl Barks, Don Rosa...",
     "role": "Role",
     "not_author": "Is not the author",
-    "exclude_author_placeholder": "Exclude an author...",
+    "exclude_author_placeholder": "Ex: Carl Barks, Don Rosa...",
     "author_nationality": "Author nationality",
     "heroes": "Heroes",
     "heroes_placeholder": "Donald, Mickey...",
     "universe": "Universe",
     "all_universes": "All universes",
-    "search_universe": "Search for a universe...",
+    "search_universe": "Ex: Donald Duck, Mickey Mouse...",
     "series": "Series",
     "all_series": "All series",
     "search_series": "Search for a series...",
@@ -85,7 +85,11 @@
     "title_pub_placeholder": "Ex: Four Color, US/FC...",
     "publications_found": "{{count}} publications found",
     "category": "Category",
-    "category_placeholder": "Ex: comic book, magazine..."
+    "category_placeholder": "Ex: comic book, magazine...",
+    "display": "Display",
+    "all_stories": "All stories",
+    "with_image_only": "With image only",
+    "without_image": "Without image only"
   },
   "roles": {
     "any": "Any",
@@ -110,7 +114,13 @@
   "common": {
     "loading": "Loading...",
     "no_data": "No data found",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "error_quota": "The online database is currently overloaded. To continue searching, please import the local database (.isv files) in the settings.",
+    "quota_banner": "The online database is overloaded. Please import the local database in the settings to continue your searches without any limits.",
+    "go_to_settings": "Go to settings",
+    "back": "Back",
+    "save": "Save",
+    "or": "or"
   },
   "story": {
     "no_title": "Untitled",
@@ -277,7 +287,7 @@
     "general": "General",
     "general_desc": "Interface language and theme preferences.",
     "language": "Language",
-    "theme": "Display Theme",
+    "theme": "Display theme",
     "inducks_cookie": "Inducks cookie",
     "cookie_desc": "This cookie allows you to load high-resolution cover images from Inducks.",
     "cookie_saved": "Cookie saved!",
@@ -288,11 +298,13 @@
   },
   "localDb": {
     "title": "Import Inducks database",
-    "desc_1": "By default, InducksButBetter uses a remote public database which has usage limits. You can bypass these limits by using the raw Inducks ISV files locally!",
-    "desc_2": "Please download the official Inducks dump, extract the ZIP, and select all the <1>.isv</1> files here. We will generate the database in your browser's memory.",
-    "btn_import": "Import DB",
+    "desc_1": "By default, InducksButBetter uses a remote hosting service which has usage limits. You can bypass these limits by loading your own local database!",
+    "desc_2": "Step 1: Download all the ISV files from the link below to your computer or phone.\nStep 2: Click the import area below and select all those files (ending in .isv).",
+    "instructions_title": "How to install the local database?",
+    "btn_import": "Import",
     "btn_local": "Local DB",
-    "btn_select": "Select .isv files",
+    "btn_select": "Click here to import the files",
+    "btn_select_sub": "Select all the extracted .isv files",
     "tooltip_active": "Using local database",
     "tooltip_upload": "Upload local database",
     "progress_start": "Starting import...",
@@ -300,7 +312,8 @@
     "success": "Local ISV database loaded successfully!",
     "error": "Failed to load ISV database.",
     "already_imported": "Warning: You have already imported a local database. Importing new files will replace the current one.",
-    "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})"
+    "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})",
+    "btn_cloud": "Import automatically (Recommended)"
   },
   "authors": {
     "born": "Born",
@@ -310,6 +323,7 @@
     "links": "Links",
     "coauthors": "Frequent co-authors",
     "frequent_characters": "Frequent characters",
+    "favorite_characters": "Favorite characters",
     "place_in": "in",
     "born_range": "Birth year",
     "deceased_range": "Decease year",
@@ -359,8 +373,10 @@
     "co_characters": "Frequent Companions",
     "stories_featuring": "Stories featuring {{name}}",
     "title": "Search parameters",
+    "code": "Character code",
+    "code_placeholder": "Ex: DD, MM...",
     "name": "Character name",
-    "name_placeholder": "Search for a character...",
+    "name_placeholder": "Ex: Donald, Mickey Mouse...",
     "universe": "Universe",
     "all_universes": "All universes",
     "first_appearance": "First appearance",
@@ -396,14 +412,16 @@
     "title": "Countries list",
     "country_name": "Country",
     "publications_count": "Publications",
-    "search_placeholder": "Filter countries..."
+    "search_placeholder": "Filter countries...",
+    "desc": "Select a country to explore its Disney publications."
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
     "pub_title": "Title",
     "pub_code": "Code",
     "issues_count": "Issues count",
-    "search_placeholder": "Filter publications..."
+    "search_placeholder": "Filter publications...",
+    "desc": "Explore Disney magazines and series published in this country."
   },
   "publication": {
     "title": "Magazine: {{title}}",
@@ -416,7 +434,10 @@
     "issue_no": "Issue #",
     "date": "Date",
     "pages": "Pages",
-    "empty": "No issues found."
+    "empty": "No issues found.",
+    "content": "Content",
+    "entry_one": "{{count}} entry",
+    "entry_other": "{{count}} entries"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}"
@@ -427,8 +448,8 @@
       "desc": "Search through thousands of stories, explore publications by country, and discover your favorite Disney authors and characters."
     },
     "step2": {
-      "title": "Offline Consultation",
-      "desc": "InducksButBetter uses a local database. No waiting and no connection required! You can update this database at any time from the settings."
+      "title": "Local database",
+      "desc": "Since the online database is limited, we highly recommend using the local database. Go to the settings to download and import the (.isv) files for unlimited access."
     },
     "step3": {
       "title": "Your collection",

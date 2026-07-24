@@ -30,6 +30,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
   const [sortOrder, setSortOrder] = useState("title_asc");
+  const [visibleCount, setVisibleCount] = useState(30);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,6 +68,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
         // Filter out publications that have 0 issues to avoid clutter
         const filtered = (result.rows as PublicationInfo[]).filter(p => p.issueCount > 0);
         setPublications(filtered);
+        setVisibleCount(30); // reset visible count on new country load
       } catch (err) {
         console.error("Error fetching country publications:", err);
       } finally {
@@ -92,6 +94,15 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
     }
     return filtered;
   }, [publications, filterText, sortOrder]);
+
+  // Reset pagination limit when filter or sort changes
+  useEffect(() => {
+    setVisibleCount(30);
+  }, [filterText, sortOrder]);
+
+  const displayedPublications = React.useMemo(() => {
+    return filteredPublications.slice(0, visibleCount);
+  }, [filteredPublications, visibleCount]);
 
   const flagUrl = getFlagUrl(countrycode);
 
@@ -127,7 +138,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
               {t("countries.publications_title", { country: countryName }) || `Publications de : ${countryName}`}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Explorez les magazines et séries Disney publiés dans ce pays.
+              {t("countryPubs.desc") || "Explorez les magazines et séries Disney publiés dans ce pays."}
             </p>
           </div>
         </div>
@@ -154,7 +165,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
 
       <div className="pr-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredPublications.map((p) => (
+          {displayedPublications.map((p) => (
             <Card
               key={p.publicationcode}
               onClick={() => onSelectPublication(p.publicationcode)}
@@ -186,6 +197,18 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
             </Card>
           ))}
         </div>
+
+        {filteredPublications.length > visibleCount && (
+          <div className="flex justify-center mt-6">
+            <Button
+              onClick={() => setVisibleCount(prev => prev + 30)}
+              variant="outline"
+              className="rounded-xl border-border-subtle hover:bg-surface-2 font-medium px-6"
+            >
+              Afficher plus
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

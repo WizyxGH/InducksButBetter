@@ -3,16 +3,16 @@ import DbWorker from './dbWorker?worker';
 let worker: Worker | null = null;
 let queryIdCounter = 0;
 const pendingQueries = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void, onRow?: (row: any) => void }>();
-let onProgressCallback: ((progress: any) => void) | null = null;
+let onProgressCallback: ((progress: { table: string; current: number; total: number; percent: number }) => void) | null = null;
 
 function getWorker(): Worker {
   if (!worker) {
     worker = new DbWorker();
     worker.onmessage = (e) => {
-      const { id, type, error, row, rows, count, table, current, total } = e.data;
+      const { id, type, error, row, rows, count, table, current, total, percent } = e.data;
       
       if (type === 'progress' && onProgressCallback) {
-        onProgressCallback({ table, current, total });
+        onProgressCallback({ table, current, total, percent: percent || 0 });
         return;
       }
       
@@ -49,7 +49,7 @@ export function getLocalDbStats() {
   return localDbStats;
 }
 
-export async function loadFromIsvFiles(files: File[], onProgress?: (progress: {table: string, current: number, total: number}) => void): Promise<void> {
+export async function loadFromIsvFiles(files: File[], onProgress?: (progress: {table: string, current: number, total: number, percent: number}) => void): Promise<void> {
   const w = getWorker();
   onProgressCallback = onProgress || null;
   
@@ -68,6 +68,36 @@ export async function loadFromIsvFiles(files: File[], onProgress?: (progress: {t
     });
   });
 }
+
+/**
+ * Loads the Inducks database by downloading ISV files from cloud URLs (e.g. GitHub Releases).
+ * Each asset is an object `{ name, url }` which the worker will fetch() and stream on-the-fly.
+ * @param assets - Array of { name: string, url: string } objects pointing to .isv files
+ * @param onProgress - Optional callback for progress updates
+ */
+export async function loadFromCloud(
+  assets: { name: string; url: string; size?: number }[],
+  onProgress?: (progress: {table: string, current: number, total: number, percent: number}) => void
+): Promise<void> {
+  const w = getWorker();
+  onProgressCallback = onProgress || null;
+
+  localDbStats = {
+    count: assets.length,
+    size: assets.reduce((acc, a) => acc + (a.size || 0), 0)
+  };
+
+  return new Promise((resolve, reject) => {
+    const id = ++queryIdCounter;
+    pendingQueries.set(id, { resolve, reject });
+    w.postMessage({
+      id,
+      action: "loadIsv",
+      payload: { files: assets, baseUrl: import.meta.env.BASE_URL }
+    });
+  });
+}
+
 
 export function unloadLocalDb() {
   if (worker) {

@@ -278,7 +278,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
                   selected={filters.nationality}
                   onChange={(vals) => setFilters({ ...filters, nationality: vals })}
                   placeholder={t("nationalities.any") || "Toutes nationalités"}
-                  searchPlaceholder={t("search.search_country") || "Rechercher..."}
+                  searchPlaceholder={t("search.search_country")}
                   emptyMessage={t("common.no_data") || "Aucun résultat"}
                 />
               </div>

@@ -23,8 +23,9 @@ self.onmessage = async (e: MessageEvent) => {
         db.run("PRAGMA temp_store = MEMORY;");
         let processed = 0;
         
-        for (const file of files as File[]) {
-          const fileName = file.name;
+        for (const file of files as any[]) {
+          const fileName = file.name || file.name;
+          const isUrl = !!file.url;
           const tableName = fileName.replace(/\.isv$/i, '').toLowerCase();
           
           const columns = DEFAULT_DB_SCHEMA[tableName];
@@ -35,20 +36,36 @@ self.onmessage = async (e: MessageEvent) => {
           
           self.postMessage({ type: 'progress', table: tableName, current: processed + 1, total: files.length });
           
+          let stream;
+          if (isUrl) {
+            // Fetch directly from our local path or CDN deployment (no proxy needed)
+            const res = await fetch(file.url);
+            if (!res.ok || !res.body) {
+              throw new Error(`Failed to download ${fileName} (status ${res.status})`);
+            }
+            stream = res.body.pipeThrough(new TextDecoderStream());
+          } else {
+            stream = file.stream().pipeThrough(new TextDecoderStream());
+          }
+          
           db.run(`CREATE TABLE ${tableName} (${columns.map(c => `"${c}" TEXT`).join(", ")});`);
           db.run("BEGIN TRANSACTION;");
           
           const stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
           const colCount = columns.length;
           
-          const stream = file.stream().pipeThrough(new TextDecoderStream());
           const reader = stream.getReader();
           let partialLine = "";
           let isFirstLine = true;
+          let bytesRead = 0;
+          let lastReportedPercent = -1;
+          const fileSize = file.size || 0;
           
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
+            
+            bytesRead += value.length; // value is decoded string, length is approx bytes
             
             const lines = (partialLine + value).split('\n');
             partialLine = lines.pop() || "";
@@ -69,6 +86,21 @@ self.onmessage = async (e: MessageEvent) => {
                 boundValues[i] = values[i] !== undefined ? values[i] : null;
               }
               stmt.run(boundValues);
+            }
+
+            // Report progress within the current file every 5% to keep UI responsive
+            if (fileSize > 0) {
+              const percent = Math.min(99, Math.round((bytesRead / fileSize) * 100));
+              if (percent >= lastReportedPercent + 5) {
+                lastReportedPercent = percent;
+                self.postMessage({
+                  type: 'progress',
+                  table: tableName,
+                  percent: percent,
+                  current: processed + 1,
+                  total: files.length
+                });
+              }
             }
           }
           
@@ -127,6 +159,10 @@ self.onmessage = async (e: MessageEvent) => {
           }
         }
         db.run("COMMIT;");
+        
+        if (processed < files.length) {
+          throw new Error(`Seulement ${processed}/${files.length} fichiers ont pu être importés. L'importation a échoué.`);
+        }
         
         self.postMessage({ id, type: "success" });
         break;

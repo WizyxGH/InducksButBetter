@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { toast } from "sonner"
+import i18n from '@/i18n'
 
 let internalHistoryCount = 0;
 
@@ -25,9 +26,18 @@ export function handleDbError(err: any, customMessage?: string) {
   const errMsg = err?.message || "";
   
   if (errMsg.includes("SQL read operations are forbidden") || errMsg.includes("BLOCKED") || errMsg.includes("Quota Exceeded")) {
-    toast.error("La base de données distante est surchargée (quota atteint). Veuillez importer la base de données locale dans les paramètres pour continuer sans limite.", { duration: 10000 });
+    window.dispatchEvent(new Event('db-quota-error'));
+    toast.error(i18n.t("common.error_quota", "La base de données en ligne est actuellement surchargée. Pour continuer à faire des recherches, veuillez importer la base de données locale (fichiers .isv) dans les paramètres."), {
+      duration: 10000,
+      action: {
+        label: i18n.t("common.go_to_settings", "Aller aux paramètres"),
+        onClick: () => {
+          window.location.hash = '#/settings';
+        }
+      }
+    });
   } else {
-    toast.error(customMessage || "Erreur lors de la récupération des données.");
+    toast.error(customMessage || i18n.t("common.error", "Une erreur est survenue"));
   }
 }
 

@@ -1,14 +1,13 @@
-import React from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Loader2, Plus, Settings, X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { parseISO, format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { Autocomplete } from "@/components/Autocomplete";
@@ -16,11 +15,26 @@ import { MultiAutocomplete } from "@/components/MultiAutocomplete";
 import { SearchableMultiSelect } from "@/components/SearchableMultiSelect";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { SearchFilters } from "@/lib/searchService";
-import { initialFilters } from "@/hooks/useSearchFilters";
 import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
 import { AUTHOR_NATIONALITIES, KIND_LABELS } from "@/lib/constants";
 import { autocompleteStorycode, autocompletePublisher, autocompletePerson, autocompleteCharacter } from "@/lib/turso";
 import { getFlagUrl } from "@/lib/utils";
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+/** Numeric options shared by both strips-per-page and panels-per-strip selects. */
+const LAYOUT_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+
+/** Display filter options for the "Affichage" (image presence) select. */
+const IMAGE_OPTIONS = [
+  { value: "all",  labelKey: "search.all_stories"    },
+  { value: "yes",  labelKey: "search.with_image_only" },
+  { value: "no",   labelKey: "search.without_image"   },
+] as const;
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type CharacterKey = "charactercode" | "herocode" | "excludeCharactercode";
 
 interface SearchFormProps {
   filters: SearchFilters;
@@ -35,8 +49,8 @@ interface SearchFormProps {
   setCookieValue: (value: string) => void;
   isSavingCookie: boolean;
   saveCookie: () => Promise<void>;
-  addSelection: (key: "charactercode" | "herocode" | "excludeCharactercode", value: string, label: string) => void;
-  removeSelection: (key: "charactercode" | "herocode" | "excludeCharactercode", value: string) => void;
+  addSelection: (key: CharacterKey, value: string, label: string) => void;
+  removeSelection: (key: CharacterKey, value: string) => void;
   handleClearFilters: () => void;
   handleSearch: (e?: React.FormEvent | null, overrideFilters?: SearchFilters) => Promise<void>;
   loading: boolean;
@@ -44,6 +58,8 @@ interface SearchFormProps {
   setResults: React.Dispatch<React.SetStateAction<any[]>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function SearchForm({
   filters,
@@ -69,6 +85,156 @@ export function SearchForm({
 }: SearchFormProps) {
   const { t, i18n } = useTranslation();
 
+  // ── Stable filter updater (functional form avoids stale closure issues) ────
+
+  /**
+   * Merges a partial update into the current filters without capturing a
+   * stale `filters` snapshot in a closure.
+   */
+  const updateFilters = useCallback(
+    (patch: Partial<SearchFilters>) => setFilters((prev) => ({ ...prev, ...patch })),
+    [setFilters]
+  );
+
+  // ── Memoised option arrays (prevent recomputation on every render) ─────────
+
+  /** Options for the content-type (kind) multi-select. */
+  const kindOptions = useMemo(
+    () => Object.entries(KIND_LABELS).map(([code, label]) => ({ value: code, label })),
+    [] // KIND_LABELS is a static constant — never changes
+  );
+
+  /** Options for the publication country multi-select, grouped by continent. */
+  const countryOptions = useMemo(
+    () =>
+      meta.countries.map((c: any) => ({
+        value: c.countrycode,
+        label:
+          t(`nationalities.${c.countrycode.toLowerCase()}`) !==
+          `nationalities.${c.countrycode.toLowerCase()}`
+            ? t(`nationalities.${c.countrycode.toLowerCase()}`)
+            : c.countryname,
+        group: t(`continents.${COUNTRY_CONTINENTS[c.countrycode.toLowerCase()] || "other"}`),
+        icon: <img src={getFlagUrl(c.countrycode)} className="w-4 h-3 rounded-xs" alt="" />,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [meta.countries, i18n.language] // re-derive when language changes (translated labels)
+  );
+
+  /** Options for the publication language multi-select. */
+  const languageOptions = useMemo(
+    () => meta.languages.map((l: any) => ({ value: l.languagecode, label: t(`languages.${l.languagecode}`) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [meta.languages, i18n.language]
+  );
+
+  /** Options for the author nationality multi-select, grouped by continent. */
+  const nationalityOptions = useMemo(
+    () =>
+      AUTHOR_NATIONALITIES.filter((n) => n.code !== "any").map((n) => ({
+        value: n.code,
+        label: t(`nationalities.${n.code}`),
+        group: t(`continents.${COUNTRY_CONTINENTS[n.code] || "other"}`),
+        icon: (
+          <img
+            src={getFlagUrl(n.code)}
+            className="w-4 h-3 rounded-xs object-cover"
+            alt=""
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
+        ),
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [i18n.language]
+  );
+
+  /** Options for the universe multi-select. */
+  const universeOptions = useMemo(
+    () => meta.universes.map((u) => ({ value: u.universecode, label: u.universename })),
+    [meta.universes]
+  );
+
+  // ── Stable collection-checkbox handler ────────────────────────────────────
+
+  const handleCollectionChange = useCallback(
+    (checked: boolean | "indeterminate") => {
+      const isChecked = checked === true;
+      updateFilters({ onlyCollection: isChecked });
+      if (isChecked) {
+        try {
+          const saved = localStorage.getItem("inducks_collection_issues");
+          const parsed = saved ? JSON.parse(saved) : [];
+          if (!Array.isArray(parsed) || parsed.length === 0) {
+            toast.error(t("collection.alert_unavailable"));
+          }
+        } catch {
+          toast.error(t("collection.alert_unavailable"));
+        }
+      }
+    },
+    [updateFilters, t]
+  );
+
+  // ── Stable person-role handlers ────────────────────────────────────────────
+
+  const handleRoleCodeChange = useCallback(
+    (idx: number, val: string, label?: string) => {
+      setFilters((prev) => {
+        const roles = [...(prev.personRoles ?? [])];
+        roles[idx] = { ...roles[idx], code: val };
+        return { ...prev, personRoles: roles };
+      });
+      if (label) setSelectedLabels((prev) => ({ ...prev, [val]: label }));
+    },
+    [setFilters, setSelectedLabels]
+  );
+
+  const handleRoleClear = useCallback(
+    (idx: number) => handleRoleCodeChange(idx, ""),
+    [handleRoleCodeChange]
+  );
+
+  const handleRoleTypeChange = useCallback(
+    (idx: number, val: string) => {
+      setFilters((prev) => {
+        const roles = [...(prev.personRoles ?? [])];
+        roles[idx] = { ...roles[idx], role: val };
+        return { ...prev, personRoles: roles };
+      });
+    },
+    [setFilters]
+  );
+
+  const handleRemoveRole = useCallback(
+    (idx: number) => {
+      setFilters((prev) => ({
+        ...prev,
+        personRoles: (prev.personRoles ?? []).filter((_, i) => i !== idx),
+      }));
+    },
+    [setFilters]
+  );
+
+  const handleAddRole = useCallback(() => {
+    setFilters((prev) => ({
+      ...prev,
+      personRoles: [
+        ...(prev.personRoles ?? []),
+        { id: Date.now().toString(), code: "", role: "any" },
+      ],
+    }));
+  }, [setFilters]);
+
+  // ── Reset handler ─────────────────────────────────────────────────────────
+
+  const handleReset = useCallback(() => {
+    handleClearFilters();
+    setResults([]);
+    setTotalCount(0);
+  }, [handleClearFilters, setResults, setTotalCount]);
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
   return (
     <div className="flex-1 flex flex-col border-border-subtle/60 dark:border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl overflow-hidden bg-surface min-h-[600px] lg:min-h-0">
       <div className="px-8 py-5 border-b border-border-subtle bg-surface flex items-center justify-between shrink-0">
@@ -80,7 +246,8 @@ export function SearchForm({
       <ScrollArea className="flex-1">
         <div className="p-8">
           <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-8 gap-y-4 md:gap-y-7">
-            {/* Row: Code & Keywords */}
+
+            {/* ── Inducks code & Keywords ───────────────────────────────────── */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.inducks_code")}</Label>
               <Autocomplete
@@ -88,9 +255,9 @@ export function SearchForm({
                 placeholder={t("search.inducks_code_placeholder")}
                 emptyMessage={t("common.no_data")}
                 fetchOptions={(q) => autocompleteStorycode(q, i18n.language)}
-                onSelect={(val) => setFilters({ ...filters, storycode: val })}
-                onInputChange={(val) => setFilters({ ...filters, storycode: val })}
-                onClear={() => setFilters({ ...filters, storycode: "" })}
+                onSelect={(val) => updateFilters({ storycode: val })}
+                onInputChange={(val) => updateFilters({ storycode: val })}
+                onClear={() => updateFilters({ storycode: "" })}
                 type="stories"
                 hideSearchIcon={true}
               />
@@ -102,14 +269,14 @@ export function SearchForm({
                 variant="search"
                 placeholder={t("search.keywords_placeholder")}
                 value={filters.title}
-                onChange={(e) => setFilters({ ...filters, title: e.target.value })}
+                onChange={(e) => updateFilters({ title: e.target.value })}
               />
               <div className="flex flex-col gap-2 pt-1">
                 <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
                   <Checkbox
                     id="comments"
                     checked={filters.includeComments === true}
-                    onCheckedChange={(checked) => setFilters({ ...filters, includeComments: checked === true })}
+                    onCheckedChange={(checked) => updateFilters({ includeComments: checked === true })}
                   />
                   <label htmlFor="comments" className="text-xs text-text-secondary cursor-pointer leading-snug">
                     {t("search.include_comments")}
@@ -119,7 +286,7 @@ export function SearchForm({
                   <Checkbox
                     id="multiple-parts"
                     checked={filters.multipleParts === true}
-                    onCheckedChange={(checked) => setFilters({ ...filters, multipleParts: checked === true })}
+                    onCheckedChange={(checked) => updateFilters({ multipleParts: checked === true })}
                   />
                   <label htmlFor="multiple-parts" className="text-xs text-text-secondary cursor-pointer leading-snug">
                     {t("search.multiple_parts")}
@@ -128,38 +295,38 @@ export function SearchForm({
               </div>
             </div>
 
+            {/* ── Content type & Image presence ─────────────────────────────── */}
             <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">{t("search.content_type")}</Label>
                 <SearchableMultiSelect
-                  options={Object.entries(KIND_LABELS).map(([code, label]) => ({
-                    value: code,
-                    label: label,
-                  }))}
+                  options={kindOptions}
                   selected={(filters.kind || []) as string[]}
-                  onChange={(val) => setFilters({ ...filters, kind: val })}
+                  onChange={(val) => updateFilters({ kind: val })}
                   placeholder={t("search.all_types")}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">Affichage</Label>
+                <Label className="text-sm font-medium text-foreground">{t("search.display")}</Label>
                 <Select
                   value={filters.hasImage || "all"}
-                  onValueChange={(val) => setFilters({ ...filters, hasImage: val as any })}
+                  onValueChange={(val) => updateFilters({ hasImage: val as any })}
                 >
                   <SelectTrigger className="h-10 border-border-subtle rounded-xl bg-surface shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all hover:bg-surface-2">
-                    <SelectValue placeholder="Toutes les histoires" />
+                    <SelectValue placeholder={t("search.all_stories")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes les histoires</SelectItem>
-                    <SelectItem value="yes">Avec image uniquement</SelectItem>
-                    <SelectItem value="no">Sans image uniquement</SelectItem>
+                    {IMAGE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {t(opt.labelKey)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Row: Date Range Picker */}
+            {/* ── Date range ────────────────────────────────────────────────── */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.publication_period")}</Label>
               <DateRangePicker
@@ -167,17 +334,16 @@ export function SearchForm({
                   from: filters.dateAfter ? parseISO(filters.dateAfter) : undefined,
                   to: filters.dateBefore ? parseISO(filters.dateBefore) : undefined,
                 }}
-                setDate={(range) => {
-                  setFilters({
-                    ...filters,
+                setDate={(range) =>
+                  updateFilters({
                     dateAfter: range?.from ? format(range.from, "yyyy-MM-dd") : "",
                     dateBefore: range?.to ? format(range.to, "yyyy-MM-dd") : "",
-                  });
-                }}
+                  })
+                }
               />
             </div>
 
-            {/* Row: Publisher & Country */}
+            {/* ── Publisher & Country ───────────────────────────────────────── */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.publisher")}</Label>
               <Autocomplete
@@ -185,9 +351,9 @@ export function SearchForm({
                 placeholder={t("search.publisher_placeholder")}
                 emptyMessage={t("common.no_data")}
                 fetchOptions={autocompletePublisher}
-                onSelect={(val) => setFilters({ ...filters, publisherid: val })}
-                onInputChange={(val) => setFilters({ ...filters, publisherid: val })}
-                onClear={() => setFilters({ ...filters, publisherid: "" })}
+                onSelect={(val) => updateFilters({ publisherid: val })}
+                onInputChange={(val) => updateFilters({ publisherid: val })}
+                onClear={() => updateFilters({ publisherid: "" })}
                 type="publishers"
                 hideIcon={true}
                 hideSearchIcon={true}
@@ -196,21 +362,7 @@ export function SearchForm({
                 <Checkbox
                   id="collection"
                   checked={filters.onlyCollection === true}
-                  onCheckedChange={(checked) => {
-                    const isChecked = checked === true;
-                    setFilters({ ...filters, onlyCollection: isChecked });
-                    if (isChecked) {
-                      try {
-                        const saved = localStorage.getItem("inducks_collection_issues");
-                        const parsed = saved ? JSON.parse(saved) : [];
-                        if (!Array.isArray(parsed) || parsed.length === 0) {
-                          toast.error("Votre collection est vide. Vous pouvez l'importer dans les Paramètres (icône engrenage en haut à droite).");
-                        }
-                      } catch (e) {
-                        toast.error("Votre collection est vide. Vous pouvez l'importer dans les Paramètres (icône engrenage en haut à droite).");
-                      }
-                    }
-                  }}
+                  onCheckedChange={handleCollectionChange}
                 />
                 <label htmlFor="collection" className="text-[12px] text-text-secondary cursor-pointer flex-1">
                   {t("search.only_collection")}
@@ -221,42 +373,29 @@ export function SearchForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.publication_country")}</Label>
               <SearchableMultiSelect
-                options={meta.countries.map((c: any) => ({
-                  value: c.countrycode,
-                  label: t(`nationalities.${c.countrycode.toLowerCase()}`) !== `nationalities.${c.countrycode.toLowerCase()}` ? t(`nationalities.${c.countrycode.toLowerCase()}`) : c.countryname,
-                  group: t(`continents.${COUNTRY_CONTINENTS[c.countrycode.toLowerCase()] || "other"}`),
-                  icon: (
-                    <img
-                      src={getFlagUrl(c.countrycode)}
-                      className="w-4 h-3 rounded-xs"
-                      alt=""
-                    />
-                  ),
-                }))}
+                options={countryOptions}
                 selected={(filters.country || []) as string[]}
-                onChange={(vals) => setFilters({ ...filters, country: vals })}
+                onChange={(vals) => updateFilters({ country: vals })}
                 placeholder={t("search.any_country")}
                 searchPlaceholder={t("search.search_country")}
                 emptyMessage={t("common.no_data")}
               />
             </div>
 
-            {/* Row: Language */}
+            {/* ── Language ──────────────────────────────────────────────────── */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.publication_language")}</Label>
               <SearchableMultiSelect
-                options={meta.languages.map((l: any) => ({
-                  value: l.languagecode,
-                  label: t(`languages.${l.languagecode}`),
-                }))}
+                options={languageOptions}
                 selected={(filters.language || []) as string[]}
-                onChange={(vals) => setFilters({ ...filters, language: vals })}
+                onChange={(vals) => updateFilters({ language: vals })}
                 placeholder={t("search.all_languages")}
                 searchPlaceholder={t("search.search_language")}
                 emptyMessage={t("common.no_data")}
               />
             </div>
 
+            {/* ── Authors (dynamic list) ────────────────────────────────────── */}
             <div className="col-span-1 md:col-span-2 space-y-3 pt-2">
               <Label className="text-sm font-medium text-foreground">{t("search.authors")}</Label>
               <div className="flex flex-col gap-3">
@@ -270,11 +409,7 @@ export function SearchForm({
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 rounded-full"
-                            onClick={() => {
-                              const newRoles = [...filters.personRoles!];
-                              newRoles[idx].code = "";
-                              setFilters({ ...filters, personRoles: newRoles });
-                            }}
+                            onClick={() => handleRoleClear(idx)}
                           >
                             <X className="w-3 h-3" />
                           </Button>
@@ -285,12 +420,7 @@ export function SearchForm({
                           placeholder={t("search.author_placeholder")}
                           emptyMessage={t("common.no_data")}
                           fetchOptions={autocompletePerson}
-                          onSelect={(val, label) => {
-                            const newRoles = [...filters.personRoles!];
-                            newRoles[idx].code = val;
-                            setFilters({ ...filters, personRoles: newRoles });
-                            setSelectedLabels({ ...selectedLabels, [val]: label });
-                          }}
+                          onSelect={(val, label) => handleRoleCodeChange(idx, val, label)}
                           type="authors"
                         />
                       )}
@@ -298,11 +428,7 @@ export function SearchForm({
                     <div className="w-full sm:w-auto flex flex-wrap sm:flex-nowrap items-center gap-2">
                       <Select
                         value={pr.role}
-                        onValueChange={(val) => {
-                          const newRoles = [...filters.personRoles!];
-                          newRoles[idx].role = val;
-                          setFilters({ ...filters, personRoles: newRoles });
-                        }}
+                        onValueChange={(val) => handleRoleTypeChange(idx, val)}
                       >
                         <SelectTrigger className="flex-1 sm:w-[140px] h-10 border-border-subtle rounded-xl bg-surface shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all hover:bg-surface-2">
                           <SelectValue placeholder={t("search.role")} />
@@ -316,7 +442,6 @@ export function SearchForm({
                         </SelectContent>
                       </Select>
 
-                      {/* Actions */}
                       <div className="flex items-center gap-1">
                         {filters.personRoles!.length > 1 && (
                           <Button
@@ -324,12 +449,7 @@ export function SearchForm({
                             variant="ghost"
                             size="icon"
                             className="h-10 w-10 text-text-secondary hover:text-red-500 shrink-0"
-                            onClick={() => {
-                              setFilters({
-                                ...filters,
-                                personRoles: filters.personRoles!.filter((_, i) => i !== idx),
-                              });
-                            }}
+                            onClick={() => handleRemoveRole(idx)}
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -340,15 +460,7 @@ export function SearchForm({
                             variant="outline"
                             size="icon"
                             className="h-10 w-10 rounded-xl shrink-0"
-                            onClick={() => {
-                              setFilters({
-                                ...filters,
-                                personRoles: [
-                                  ...filters.personRoles!,
-                                  { id: Date.now().toString(), code: "", role: "any" },
-                                ],
-                              });
-                            }}
+                            onClick={handleAddRole}
                           >
                             <Plus className="w-4 h-4" />
                           </Button>
@@ -360,7 +472,7 @@ export function SearchForm({
               </div>
             </div>
 
-            {/* Excluded Author & Nationality */}
+            {/* ── Excluded Author & Nationality ─────────────────────────────── */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.not_author")}</Label>
               <Autocomplete
@@ -368,8 +480,8 @@ export function SearchForm({
                 placeholder={t("search.exclude_author_placeholder")}
                 emptyMessage={t("common.no_data")}
                 fetchOptions={autocompletePerson}
-                onSelect={(val) => setFilters({ ...filters, excludePersoncode: [val] })}
-                onClear={() => setFilters({ ...filters, excludePersoncode: [] })}
+                onSelect={(val) => updateFilters({ excludePersoncode: [val] })}
+                onClear={() => updateFilters({ excludePersoncode: [] })}
                 hideIcon={true}
                 hideSearchIcon={true}
               />
@@ -378,28 +490,16 @@ export function SearchForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.author_nationality")}</Label>
               <SearchableMultiSelect
-                options={AUTHOR_NATIONALITIES.filter((n) => n.code !== "any").map((n) => ({
-                  value: n.code,
-                  label: t(`nationalities.${n.code}`),
-                  group: t(`continents.${COUNTRY_CONTINENTS[n.code] || "other"}`),
-                  icon: (
-                    <img
-                      src={getFlagUrl(n.code)}
-                      className="w-4 h-3 rounded-xs object-cover"
-                      alt=""
-                      onError={(e) => (e.currentTarget.style.display = "none")}
-                    />
-                  ),
-                }))}
+                options={nationalityOptions}
                 selected={Array.isArray(filters.nationality) ? filters.nationality : []}
-                onChange={(vals) => setFilters({ ...filters, nationality: vals })}
+                onChange={(vals) => updateFilters({ nationality: vals })}
                 placeholder={t("search.any_country")}
                 searchPlaceholder={t("search.search_country")}
                 emptyMessage={t("common.no_data")}
               />
             </div>
 
-            {/* Characters & Universe Row */}
+            {/* ── Heroes, Universe & Series ─────────────────────────────────── */}
             <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 pt-4 border-t border-border-subtle">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">{t("search.heroes")}</Label>
@@ -411,7 +511,7 @@ export function SearchForm({
                   selectedLabels={selectedLabels}
                   onSelect={(val, label) => addSelection("herocode", val, label)}
                   onRemove={(val) => removeSelection("herocode", val)}
-                  onClear={() => setFilters({ ...filters, herocode: [] })}
+                  onClear={() => updateFilters({ herocode: [] })}
                   type="characters"
                 />
               </div>
@@ -419,12 +519,9 @@ export function SearchForm({
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">{t("search.universe")}</Label>
                 <SearchableMultiSelect
-                  options={meta.universes.map((u) => ({
-                    value: u.universecode,
-                    label: u.universename,
-                  }))}
+                  options={universeOptions}
                   selected={Array.isArray(filters.universes) ? filters.universes : []}
-                  onChange={(vals) => setFilters({ ...filters, universes: vals })}
+                  onChange={(vals) => updateFilters({ universes: vals })}
                   placeholder={t("search.all_universes")}
                   searchPlaceholder={t("search.search_universe")}
                   emptyMessage={t("common.no_data")}
@@ -436,7 +533,7 @@ export function SearchForm({
                 <SearchableMultiSelect
                   options={meta.subseries || []}
                   selected={(filters.subseriescode || []) as string[]}
-                  onChange={(vals) => setFilters({ ...filters, subseriescode: vals })}
+                  onChange={(vals) => updateFilters({ subseriescode: vals })}
                   placeholder={t("search.all_series")}
                   searchPlaceholder={t("search.search_series")}
                   emptyMessage={t("common.no_data")}
@@ -444,7 +541,7 @@ export function SearchForm({
               </div>
             </div>
 
-            {/* Character Presence Details */}
+            {/* ── Characters (include / exclude) ────────────────────────────── */}
             <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 py-2">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">{t("search.characters")}</Label>
@@ -456,7 +553,7 @@ export function SearchForm({
                   selectedLabels={selectedLabels}
                   onSelect={(val, label) => addSelection("charactercode", val, label)}
                   onRemove={(val) => removeSelection("charactercode", val)}
-                  onClear={() => setFilters({ ...filters, charactercode: [] })}
+                  onClear={() => updateFilters({ charactercode: [] })}
                   type="characters"
                 />
                 <div className="flex flex-col gap-2 pt-2">
@@ -464,7 +561,7 @@ export function SearchForm({
                     <Checkbox
                       id="no-others"
                       checked={filters.noOtherCharacters === true}
-                      onCheckedChange={(checked) => setFilters({ ...filters, noOtherCharacters: checked === true })}
+                      onCheckedChange={(checked) => updateFilters({ noOtherCharacters: checked === true })}
                     />
                     <label htmlFor="no-others" className="text-xs text-text-secondary cursor-pointer leading-snug">
                       {t("search.no_other_characters")}
@@ -474,7 +571,7 @@ export function SearchForm({
                     <Checkbox
                       id="incomplete-indexing"
                       checked={filters.indexingIncomplete === true}
-                      onCheckedChange={(checked) => setFilters({ ...filters, indexingIncomplete: checked === true })}
+                      onCheckedChange={(checked) => updateFilters({ indexingIncomplete: checked === true })}
                     />
                     <label htmlFor="incomplete-indexing" className="text-xs text-text-secondary cursor-pointer">
                       {t("search.indexing_incomplete")}
@@ -495,26 +592,26 @@ export function SearchForm({
                   selectedLabels={selectedLabels}
                   onSelect={(val, label) => addSelection("excludeCharactercode", val, label)}
                   onRemove={(val) => removeSelection("excludeCharactercode", val)}
-                  onClear={() => setFilters({ ...filters, excludeCharactercode: [] })}
+                  onClear={() => updateFilters({ excludeCharactercode: [] })}
                   type="characters"
                 />
               </div>
             </div>
 
-            {/* Layout Row: Strips per page & Panels per strip */}
+            {/* ── Layout: strips & panels per page ─────────────────────────── */}
             <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-border-subtle">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">{t("search.strips_per_page")}</Label>
                 <Select
                   value={filters.stripsperpage || "all"}
-                  onValueChange={(val) => setFilters({ ...filters, stripsperpage: val })}
+                  onValueChange={(val) => updateFilters({ stripsperpage: val })}
                 >
                   <SelectTrigger className="h-10 border-border-subtle rounded-xl bg-surface shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all hover:bg-surface-2">
                     <SelectValue placeholder={t("search.any")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">N'importe</SelectItem>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((v) => (
+                    <SelectItem value="all">{t("search.any")}</SelectItem>
+                    {LAYOUT_VALUES.map((v) => (
                       <SelectItem key={v} value={String(v)}>
                         {v} {t("search.strips_per_page").toLowerCase()}
                       </SelectItem>
@@ -527,16 +624,16 @@ export function SearchForm({
                 <Label className="text-sm font-medium text-foreground">{t("search.panels_per_strip")}</Label>
                 <Select
                   value={filters.panelsperstrip || "all"}
-                  onValueChange={(val) => setFilters({ ...filters, panelsperstrip: val })}
+                  onValueChange={(val) => updateFilters({ panelsperstrip: val })}
                 >
                   <SelectTrigger className="h-10 border-border-subtle rounded-xl bg-surface shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all hover:bg-surface-2">
                     <SelectValue placeholder={t("search.any")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("search.any")}</SelectItem>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((v) => (
+                    {LAYOUT_VALUES.map((v) => (
                       <SelectItem key={v} value={String(v)}>
-                        {v} vignettes
+                        {v} {t("search.panels_per_strip").toLowerCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -544,7 +641,7 @@ export function SearchForm({
               </div>
             </div>
 
-            {/* Pages Slider */}
+            {/* ── Pages slider ─────────────────────────────────────────────── */}
             <div className="col-span-1 md:col-span-2 space-y-3 pt-4">
               <div className="flex justify-between items-end">
                 <div className="space-y-1">
@@ -554,7 +651,7 @@ export function SearchForm({
                       variant="search"
                       placeholder={t("search.pages_exact")}
                       value={filters.pagesExact}
-                      onChange={(e) => setFilters({ ...filters, pagesExact: e.target.value })}
+                      onChange={(e) => updateFilters({ pagesExact: e.target.value })}
                       className="w-24"
                     />
                     <span className="text-[10px] font-medium text-muted-foreground tracking-tight">
@@ -575,7 +672,7 @@ export function SearchForm({
                   className="flex-1"
                   onValueChange={([min, max]) => {
                     setPagesSliderMoved(true);
-                    setFilters({ ...filters, pagesMin: min, pagesMax: max });
+                    updateFilters({ pagesMin: min, pagesMax: max });
                   }}
                 />
                 <span className="text-xs font-medium text-muted-foreground w-6">500</span>
@@ -585,15 +682,12 @@ export function SearchForm({
         </div>
       </ScrollArea>
 
+      {/* ── Action buttons ─────────────────────────────────────────────────── */}
       <div className="p-4 lg:p-8 border-t border-border-subtle bg-surface flex flex-col sm:flex-row gap-4 shrink-0">
         <Button
           variant="outline"
           className="flex-1 h-12 border-border-subtle text-text-secondary font-medium text-sm bg-surface hover:bg-surface-2 hover:text-foreground transition-all rounded-2xl"
-          onClick={() => {
-            handleClearFilters();
-            setResults([]);
-            setTotalCount(0);
-          }}
+          onClick={handleReset}
         >
           {t("search.reset")}
         </Button>

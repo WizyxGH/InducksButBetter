@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, User, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { getIssueDetail } from "@/lib/turso"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,7 +36,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   }, [issuecode])
 
   // Build high-res cover image URL
-  const coverUrl = React.useMemo(() => {
+  const coverUrl = useMemo(() => {
     if (!issue?.issue_thumb) return null
     const parts = issue.issue_thumb.split("|")
     const url = parts.length > 1 ? parts[1] : parts[0]
@@ -63,10 +63,10 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   if (!issue) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        <p>Numéro introuvable.</p>
+        <p>{t("publication.empty")}</p>
         <Button onClick={onBack} variant="outline" className="mt-4 gap-2 rounded-xl">
           <ArrowLeft className="w-4 h-4" />
-          Retour
+          {t("common.back")}
         </Button>
       </div>
     )
@@ -83,7 +83,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
     if (month === "00") return year
     try {
       const date = new Date(parseInt(year), parseInt(month) - 1, day === "00" ? 1 : parseInt(day))
-      return new Intl.DateTimeFormat(i18n.language === "en" ? "en-US" : "fr-FR", {
+      return new Intl.DateTimeFormat(i18n.language, {
         year: "numeric",
         month: "long",
         day: day !== "00" ? "numeric" : undefined,
@@ -124,14 +124,14 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
           <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
             <CardContent className="p-4 space-y-4">
               <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">
-                Caractéristiques du numéro
+                {t("publication.issue_no")}
               </h3>
               
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-xs text-text-body">
                   <Calendar className="w-4 h-4 text-primary shrink-0" />
                   <div>
-                    <p className="font-bold">Date de publication</p>
+                    <p className="font-bold">{t("publication.date")}</p>
                     <p className="text-[10px] text-muted-foreground">{formatDate(issue.oldestdate)}</p>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <Layers className="w-4 h-4 text-primary shrink-0" />
                     <div>
-                      <p className="font-bold">Nombre de pages</p>
+                      <p className="font-bold">{t("publication.pages")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.pages} pages</p>
                     </div>
                   </div>
@@ -150,7 +150,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <DollarSign className="w-4 h-4 text-primary shrink-0" />
                     <div>
-                      <p className="font-bold">Prix de vente</p>
+                      <p className="font-bold">{t("search.price") || "Prix"}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.price}</p>
                     </div>
                   </div>
@@ -160,7 +160,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <Ruler className="w-4 h-4 text-primary shrink-0" />
                     <div>
-                      <p className="font-bold">Dimensions / Format</p>
+                      <p className="font-bold">{t("search.dimensions") || "Format"}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.size}</p>
                     </div>
                   </div>
@@ -170,7 +170,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <LinkIcon className="w-4 h-4 text-primary shrink-0" />
                     <div>
-                      <p className="font-bold">Objet joint / gadget</p>
+                      <p className="font-bold">{t("search.attached") || "Objet joint"}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.attached}</p>
                     </div>
                   </div>
@@ -206,9 +206,9 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
               className="flex items-center justify-between w-full group"
             >
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                Contenu 
+                {t("publication.content") || "Contenu"} 
                 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
-                  {issue.stories?.length || 0} entrée{(issue.stories?.length || 0) > 1 ? "s" : ""}
+                  {t("publication.entry", { count: issue.stories?.length || 0 })}
                 </span>
               </h3>
               <div className="p-1 rounded-md hover:bg-surface-2 transition-colors">
@@ -225,7 +225,9 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                 {issue.stories && issue.stories.length > 0 ? (
                   issue.stories.map((story: any, idx: number) => (
                     <Card
-                      key={story.storycode || idx}
+                      // Include idx to guarantee uniqueness: the same storycode can
+                      // appear multiple times in a single issue (e.g. multi-part stories).
+                      key={`${story.storycode ?? ""}-${idx}`}
                       onClick={() => story.storycode && onSelectStory && onSelectStory(story.storycode)}
                       className="group rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs cursor-pointer border hover:border-primary/20"
                     >
@@ -255,7 +257,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                             )}
                             {story.original_title && story.original_title !== story.entry_title && (
                               <p className="text-[10px] text-muted-foreground italic truncate">
-                                Titre original : {story.original_title}
+                                {t("story.original_title") || "Titre original"} : {story.original_title}
                               </p>
                             )}
                           </div>
@@ -265,12 +267,12 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                             <div className="text-[10px] text-text-secondary space-y-0.5">
                               {story.writers && (
                                 <p className="truncate">
-                                  <span className="font-semibold">Scénario :</span> {story.writers}
+                                  <span className="font-semibold">{t("story.script") || "Scénario"} :</span> {story.writers}
                                 </p>
                               )}
                               {story.artists && (
                                 <p className="truncate">
-                                  <span className="font-semibold">Dessin :</span> {story.artists}
+                                  <span className="font-semibold">{t("story.art") || "Dessin"} :</span> {story.artists}
                                 </p>
                               )}
                             </div>
@@ -286,7 +288,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                     </Card>
                   ))
                 ) : (
-                  <p className="text-sm text-text-secondary italic">Aucun contenu référencé pour ce numéro.</p>
+                  <p className="text-sm text-text-secondary italic">{t("publication.empty")}</p>
                 )}
               </div>
             )}
@@ -294,30 +296,5 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
         </div>
       </div>
     </div>
-  )
-}
-
-function Loader2({ className }: { className?: string }) {
-  return (
-    <svg
-      className={`animate-spin ${className}`}
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
   )
 }

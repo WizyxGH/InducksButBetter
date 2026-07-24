@@ -83,7 +83,11 @@
     "rows_per_page": "Risultati per pagina",
     "title_pub_label": "Titolo della serie o uscita",
     "title_pub_placeholder": "Es: Four Color, US/FC...",
-    "publications_found": "{{count}} pubblicazioni trovate"
+    "publications_found": "{{count}} pubblicazioni trovate",
+    "display": "Visualizzazione",
+    "all_stories": "Tutte le storie",
+    "with_image_only": "Solo con immagine",
+    "without_image": "Solo senza immagine"
   },
   "roles": {
     "any": "Qualsiasi",
@@ -309,6 +313,7 @@
     "links": "Collegamenti",
     "coauthors": "Coautori frequenti",
     "frequent_characters": "Personaggi frequenti",
+    "favorite_characters": "Personaggi preferiti",
     "place_in": "a",
     "born_range": "Anno di nascita",
     "deceased_range": "Anno di decesso",
@@ -395,14 +400,16 @@
     "title": "Elenco dei paesi",
     "country_name": "Paese",
     "publications_count": "Pubblicazioni",
-    "search_placeholder": "Filtra paesi..."
+    "search_placeholder": "Filtra paesi...",
+    "desc": "Seleziona un paese per esplorare le sue pubblicazioni Disney."
   },
   "countryPubs": {
     "title": "Pubblicazioni di {{country}}",
     "pub_title": "Titolo",
     "pub_code": "Codice",
     "issues_count": "Numero di albi",
-    "search_placeholder": "Filtra pubblicazioni..."
+    "search_placeholder": "Filtra pubblicazioni...",
+    "desc": "Esplora le riviste e le serie Disney pubblicate in questo paese."
   },
   "publication": {
     "title": "Rivista: {{title}}",
@@ -414,6 +421,9 @@
     "issue_no": "Albo #",
     "date": "Data",
     "pages": "Pagine",
-    "empty": "Nessun albo trovato."
+    "empty": "Nessun albo trovato.",
+    "content": "Contenuto",
+    "entry_one": "{{count}} voce",
+    "entry_other": "{{count}} voci"
   }
 }

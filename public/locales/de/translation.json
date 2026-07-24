@@ -85,7 +85,11 @@
     "title_pub_placeholder": "Bsp: Four Color, US/FC...",
     "publications_found": "{{count}} Veröffentlichungen gefunden",
     "category": "Kategorie",
-    "category_placeholder": "Bsp: comic book, magazine..."
+    "category_placeholder": "Bsp: comic book, magazine...",
+    "display": "Anzeige",
+    "all_stories": "Alle Geschichten",
+    "with_image_only": "Nur mit Bild",
+    "without_image": "Nur ohne Bild"
   },
   "roles": {
     "any": "Beliebig",
@@ -111,7 +115,8 @@
     "loading": "Wird geladen...",
     "no_data": "Keine Daten gefunden",
     "error": "Ein Fehler ist aufgetreten",
-    "save": "Speichern"
+    "save": "Speichern",
+    "or": "oder"
   },
   "story": {
     "no_title": "Ohne Titel",
@@ -301,7 +306,8 @@
     "success": "Lokale ISV-Datenbank erfolgreich geladen!",
     "error": "Fehler beim Laden der ISV-Datenbank.",
     "already_imported": "Warnung: Du hast bereits eine lokale Datenbank importiert. Das Importieren neuer Dateien ersetzt die aktuelle.",
-    "imported_stats": "Derzeit geladene Dateien: {{count}} (Gesamtgröße: {{size}})"
+    "imported_stats": "Derzeit geladene Dateien: {{count}} (Gesamtgröße: {{size}})",
+    "btn_cloud": "Automatisch importieren (Empfohlen)"
   },
   "authors": {
     "born": "Geboren",
@@ -311,6 +317,7 @@
     "links": "Links",
     "coauthors": "Häufige Co-Autoren",
     "frequent_characters": "Häufige Figuren",
+    "favorite_characters": "Lieblingscharaktere",
     "place_in": "in",
     "born_range": "Geburtsjahr",
     "deceased_range": "Todesjahr",
@@ -397,14 +404,16 @@
     "title": "Länderliste",
     "country_name": "Land",
     "publications_count": "Veröffentlichungen",
-    "search_placeholder": "Länder filtern..."
+    "search_placeholder": "Länder filtern...",
+    "desc": "Wählen Sie ein Land aus, um seine Disney-Veröffentlichungen zu erkunden."
   },
   "countryPubs": {
     "title": "Veröffentlichungen aus {{country}}",
     "pub_title": "Titel",
     "pub_code": "Code",
     "issues_count": "Ausgabenanzahl",
-    "search_placeholder": "Veröffentlichungen filtern..."
+    "search_placeholder": "Veröffentlichungen filtern...",
+    "desc": "Entdecken Sie Disney-Magazine und -Serien, die in diesem Land veröffentlicht wurden."
   },
   "publication": {
     "title": "Magazin: {{title}}",
@@ -416,6 +425,9 @@
     "issue_no": "Ausgabe Nr.",
     "date": "Datum",
     "pages": "Seiten",
-    "empty": "Keine Ausgaben gefunden."
+    "empty": "Keine Ausgaben gefunden.",
+    "content": "Inhalt",
+    "entry_one": "{{count}} Eintrag",
+    "entry_other": "{{count}} Einträge"
   }
-}\n
+}

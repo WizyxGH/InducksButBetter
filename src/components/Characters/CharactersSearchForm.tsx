@@ -88,7 +88,7 @@ export function CharactersSearchForm({
               selected={filters.universes}
               onChange={(vals) => setFilters({ ...filters, universes: vals })}
               placeholder={t("search.all_universes") || "Tous les univers"}
-              searchPlaceholder={t("search.search_universe") || "Rechercher..."}
+              searchPlaceholder={t("search.search_universe")}
               emptyMessage={t("common.no_data") || "Aucun résultat"}
             />
           </div>

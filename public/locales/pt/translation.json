@@ -83,7 +83,11 @@
     "rows_per_page": "Resultados por página",
     "title_pub_label": "Título da série ou edição",
     "title_pub_placeholder": "Ex: Four Color, US/FC...",
-    "publications_found": "{{count}} publicações encontradas"
+    "publications_found": "{{count}} publicações encontradas",
+    "display": "Visualização",
+    "all_stories": "Todas as histórias",
+    "with_image_only": "Apenas com imagem",
+    "without_image": "Apenas sem imagem"
   },
   "roles": {
     "any": "Qualquer",
@@ -309,6 +313,7 @@
     "links": "Links",
     "coauthors": "Coautores frequentes",
     "frequent_characters": "Personagens frequentes",
+    "favorite_characters": "Personagens favoritas",
     "place_in": "em",
     "born_range": "Ano de nascimento",
     "deceased_range": "Ano de falecimento",
@@ -395,14 +400,16 @@
     "title": "Lista de países",
     "country_name": "País",
     "publications_count": "Publicações",
-    "search_placeholder": "Filtrar países..."
+    "search_placeholder": "Filtrar países...",
+    "desc": "Selecione um país para explorar suas publicações Disney."
   },
   "countryPubs": {
     "title": "Publicações de {{country}}",
     "pub_title": "Título",
     "pub_code": "Código",
     "issues_count": "Número de edições",
-    "search_placeholder": "Filtrar publicações..."
+    "search_placeholder": "Filtrar publicações...",
+    "desc": "Explore as revistas e séries da Disney publicadas neste país."
   },
   "publication": {
     "title": "Revista: {{title}}",
@@ -414,6 +421,9 @@
     "issue_no": "Edição #",
     "date": "Data",
     "pages": "Páginas",
-    "empty": "Nenhuma edição encontrada."
+    "empty": "Nenhuma edição encontrada.",
+    "content": "Conteúdo",
+    "entry_one": "{{count}} entrada",
+    "entry_other": "{{count}} entradas"
   }
 }

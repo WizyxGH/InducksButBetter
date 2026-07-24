@@ -43,8 +43,8 @@ export function OnboardingModal() {
       bg: "bg-blue-500/10",
     },
     {
-      title: t("onboarding.step2.title", "Consultation hors-ligne"),
-      desc: t("onboarding.step2.desc", "InducksButBetter utilise une base de données locale. Plus d'attente et aucune connexion requise ! Vous pouvez mettre à jour cette base à tout moment depuis les paramètres."),
+      title: t("onboarding.step2.title", "Base de données locale"),
+      desc: t("onboarding.step2.desc", "La base de données en ligne étant limitée, nous vous recommandons fortement d'utiliser la base locale. Rendez-vous dans les paramètres pour télécharger et importer les fichiers (.isv) pour un accès illimité."),
       icon: Database,
       color: "text-emerald-500",
       bg: "bg-emerald-500/10",

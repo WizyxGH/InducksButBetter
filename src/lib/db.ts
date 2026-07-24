@@ -1,5 +1,6 @@
 import { tursoClient } from "./turso"
 import { executeLocal, hasLocalDb } from "./localDb"
+export { hasLocalDb } from "./localDb"
 
 /**
  * Unifies the execution of SQL queries:

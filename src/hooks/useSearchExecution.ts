@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { executeQuery } from "@/lib/db";
+import { executeQuery, hasLocalDb } from "@/lib/db";
 import { buildAdvancedSearchQuery, SearchFilters } from "@/lib/searchService";
 import { handleDbError } from "@/lib/utils";
 
@@ -63,9 +63,13 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
       
       const countResult = await executeQuery({ sql: countQuery, args: countParams });
       
-      await executeQuery({ sql: query, args: params }, (newRow) => {
+      const mainResult = await executeQuery({ sql: query, args: params }, (newRow) => {
         setResults((prev) => [...prev, newRow]);
       });
+
+      if (!hasLocalDb() && mainResult && mainResult.rows) {
+        setResults(mainResult.rows);
+      }
 
       setTotalCount(Number(countResult.rows[0]?.total || countResult.rows[0]?.COUNT || 0));
     } catch (err) {

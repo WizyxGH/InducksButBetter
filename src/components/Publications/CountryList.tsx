@@ -72,7 +72,7 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
             {t("countries.title") || "Liste des pays"}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Sélectionnez un pays pour explorer ses publications Disney.
+            {t("countries.desc") || "Sélectionnez un pays pour explorer ses publications Disney."}
           </p>
         </div>
         <Input

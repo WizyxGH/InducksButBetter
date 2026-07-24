@@ -18,6 +18,10 @@ i18n
       loadPath: `${import.meta.env.BASE_URL}locales/{{lng}}/{{ns}}.json`,
     },
     defaultNS: 'translation',
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+    }
   });
 
 export default i18n;

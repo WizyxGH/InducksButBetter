@@ -32,6 +32,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   const [publication, setPublication] = useState<PublicationDetailData | null>(null);
   const [issues, setIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleYears, setVisibleYears] = useState(5);
 
   const groupedIssues = useMemo(() => {
     return Object.entries(
@@ -46,6 +47,14 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
       }, {})
     );
   }, [issues]);
+
+  const displayedYears = useMemo(() => {
+    return groupedIssues.slice(0, visibleYears);
+  }, [groupedIssues, visibleYears]);
+
+  useEffect(() => {
+    setVisibleYears(5);
+  }, [publicationcode]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -307,7 +316,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                 </div>
               ) : (
                 <div className="space-y-8 pb-4 pr-2">
-                  {groupedIssues.map(([year, yearIssues]) => (
+                  {displayedYears.map(([year, yearIssues]) => (
                     <div key={year} className="space-y-3">
                       <div className="flex items-center gap-3">
                         <h3 className="font-bold text-foreground text-base tracking-tight">{year}</h3>
@@ -344,6 +353,18 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                       </div>
                     </div>
                   ))}
+
+                  {groupedIssues.length > visibleYears && (
+                    <div className="flex justify-center pt-4">
+                      <Button
+                        onClick={() => setVisibleYears(prev => prev + 5)}
+                        variant="outline"
+                        className="rounded-xl border-border-subtle hover:bg-surface-2 font-medium px-6"
+                      >
+                        Afficher plus d'années
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
