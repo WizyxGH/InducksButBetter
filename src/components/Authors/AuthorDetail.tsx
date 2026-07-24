@@ -175,11 +175,13 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                 </p>
               )}
               <div className="flex items-center gap-2">
-                <img
-                  src={getFlagUrl(author.nationalitycountrycode)}
-                  className="w-5 h-3.5 rounded-sm object-cover shrink-0"
-                  alt=""
-                />
+                {author.nationalitycountrycode && (
+                  <img
+                    src={getFlagUrl(author.nationalitycountrycode as string)}
+                    className="w-5 h-3.5 rounded-sm object-cover shrink-0"
+                    alt=""
+                  />
+                )}
                 <p className="text-[10px] text-muted-foreground font-mono">{author.personcode}</p>
               </div>
             </div>
