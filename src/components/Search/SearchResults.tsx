@@ -97,14 +97,14 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
 
       <div className="flex-1 min-h-0">
         {loading ? (
-          <ScrollArea className="h-full pr-4">
-            <div className="grid grid-cols-1 gap-6 pb-12 opacity-70">
+        <ScrollArea className="h-full lg:pr-4 mobile-no-scroll">
+            <div className="grid grid-cols-1 gap-6 pb-6 lg:pb-12 opacity-70">
               {[1, 2, 3, 4].map((i) => actualRenderSkeleton(i))}
             </div>
           </ScrollArea>
         ) : results.length > 0 ? (
-          <ScrollArea className="h-full pr-4">
-            <div className="grid grid-cols-1 gap-6 pb-12">
+          <ScrollArea className="h-full lg:pr-4 mobile-no-scroll">
+            <div className="grid grid-cols-1 gap-6 pb-6 lg:pb-12">
               {results.map((row: any, i: number) => (
                 <div
                   key={row.issuecode || row.storycode || i}
@@ -141,7 +141,7 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
 
       {/* Functional Pagination Section */}
       {totalCount > rowsPerPage && (
-        <div className="px-4 py-6 flex items-center justify-between shrink-0 bg-surface border-t border-border-subtle mt-4">
+        <div className="px-4 pt-6 pb-4 lg:pb-6 flex items-center justify-between shrink-0 bg-surface border-t border-border-subtle mt-4">
           <div className="text-sm font-medium text-muted-foreground">
             Page <span className="text-foreground">{currentPage}</span>{" "}
             <span className="mx-1 text-text-secondary">/</span> {totalPages}

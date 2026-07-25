@@ -48,6 +48,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
   const [coCharacters, setCoCharacters] = useState<CoCharacter[]>([]);
   const [firstAppearance, setFirstAppearance] = useState<any | null>(null);
   const [stories, setStories] = useState<any[]>([]);
+  const [universes, setUniverses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -123,19 +124,33 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
             setFirstAppearance(firstAppResult.rows[0]);
           }
 
-          // 7. Fetch stories
           const storiesResult = await executeQuery({
-            sql: `SELECT DISTINCT s.storycode, s.title as story_title, s.firstpublicationdate,
-                         (SELECT COUNT(*) FROM inducks_appearance WHERE charactercode = ? AND storyversioncode = sv.storyversioncode) as appearances
+            sql: `SELECT DISTINCT s.storycode, 
+                         COALESCE(
+                           NULLIF(NULLIF(s.title, 'Untitled'), ''),
+                           (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
+                         ) as original_title, s.firstpublicationdate,
+                         (SELECT COUNT(*) FROM inducks_appearance WHERE charactercode = ? AND storyversioncode = sv.storyversioncode) as appearances,
+                         (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title
                   FROM inducks_appearance a
                   JOIN inducks_storyversion sv ON a.storyversioncode = sv.storyversioncode
                   JOIN inducks_story s ON sv.storycode = s.storycode
                   WHERE a.charactercode = ?
                   ORDER BY s.firstpublicationdate DESC
                   LIMIT 30`,
-            args: [charactercode, charactercode],
+            args: [charactercode, currentLang, charactercode],
           });
           setStories(storiesResult.rows as any[]);
+
+          // 8. Fetch universes
+          const univResult = await executeQuery({
+            sql: `SELECT u.universecode, u.universename 
+                  FROM inducks_ucrelation ucr
+                  JOIN inducks_universe u ON ucr.universecode = u.universecode
+                  WHERE ucr.charactercode = ?`,
+            args: [charactercode],
+          });
+          setUniverses(univResult.rows as any[]);
         }
       } catch (error) {
         console.error("Error fetching character details:", error);
@@ -191,19 +206,19 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               <h2 className="text-2xl font-bold tracking-tight text-foreground">{displayName}</h2>
               <div className="flex gap-1">
                 {character.heroonly === "Y" && (
-                  <Badge className="bg-yellow-500 hover:bg-yellow-500 text-black text-[10px] rounded-lg">Héros principal</Badge>
+                  <Badge className="bg-yellow-500 hover:bg-yellow-500 text-black text-[10px] rounded-lg">{t("characters.hero_only") || "Héros principal"}</Badge>
                 )}
                 {character.official === "Y" && (
-                  <Badge variant="secondary" className="text-[10px] rounded-lg">Officiel</Badge>
+                  <Badge variant="secondary" className="text-[10px] rounded-lg">{t("characters.official") || "Officiel"}</Badge>
                 )}
                 {character.onetime === "Y" && (
-                  <Badge variant="outline" className="text-[10px] rounded-lg">Unique</Badge>
+                  <Badge variant="outline" className="text-[10px] rounded-lg">{t("characters.onetime") || "Unique"}</Badge>
                 )}
               </div>
             </div>
             {character.charactername && character.charactername !== displayName && (
               <p className="text-xs text-muted-foreground">
-                <span className="font-semibold">Original:</span> {character.charactername}
+                <span className="font-semibold">{t("characters.original_name", { defaultValue: "Original" })}:</span> {character.charactername}
               </p>
             )}
             <p className="text-[10px] text-muted-foreground font-mono">{character.charactercode}</p>
@@ -213,6 +228,19 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
             <p className="text-xs text-text-secondary italic max-w-2xl leading-relaxed">
               "{character.charactercomment}"
             </p>
+          )}
+
+          {universes.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <span className="text-xs font-semibold text-muted-foreground mr-1">
+                {t("characters.universe") || "Univers"}:
+              </span>
+              {universes.map((univ, idx) => (
+                <Badge key={idx} variant="outline" className="text-[10px] rounded-lg">
+                  {univ.universename}
+                </Badge>
+              ))}
+            </div>
           )}
 
           {firstAppearance && (
@@ -230,7 +258,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                   }}
                   className="text-primary hover:underline font-semibold cursor-pointer"
                 >
-                  {firstAppearance.title || "Sans titre"} ({firstAppearance.firstpublicationdate})
+                  {firstAppearance.title || t("story.no_title", { defaultValue: "Sans titre" })} ({firstAppearance.firstpublicationdate})
                 </span>
               </span>
             </div>
@@ -248,7 +276,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Star className="w-4 h-4 text-primary" />
-                  Noms internationaux
+                  {t("characters.international_names", { defaultValue: "Noms internationaux" })}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-1.5 max-h-[300px] overflow-y-auto text-xs">
@@ -394,9 +422,34 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                     className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
                   >
                     <div className="space-y-0.5 min-w-0">
-                      <p className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
-                        {story.story_title || "Sans titre"}
-                      </p>
+                      <div className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
+                        {(() => {
+                          const translated = story.translated_title;
+                          const original = story.original_title || story.story_title;
+                          let mainTitle = original;
+                          let subTitle = null;
+
+                          if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
+                            mainTitle = translated;
+                            if (original && original !== 'Untitled' && original !== translated) {
+                              subTitle = original;
+                            }
+                          } else if (!original || original === 'Untitled') {
+                            mainTitle = t("story.no_title") || "Sans titre";
+                          }
+
+                          return (
+                            <div className="truncate flex flex-col min-w-0">
+                              <span className="truncate" title={mainTitle}>{mainTitle}</span>
+                              {subTitle && (
+                                <span className="text-[10px] text-muted-foreground font-medium truncate font-normal" title={subTitle}>
+                                  {subTitle}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                       <p className="text-[10px] text-muted-foreground font-mono">{story.storycode}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

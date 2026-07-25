@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
   TooltipArrow,
 } from "@/components/ui/tooltip"
-import { CreatorBadge } from "@/components/CreatorBadge"
+import { EntityBadge } from "@/components/EntityBadge"
 import { FlagBadge } from "@/components/FlagBadge"
 
 interface StoryResultCardProps {
@@ -185,10 +185,10 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
       tabIndex={0}
       className="group overflow-hidden border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 hover:bg-zinc-50/10 dark:hover:bg-zinc-800/10 transition-all duration-300 rounded-lg bg-white dark:bg-zinc-900 cursor-pointer active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      <CardContent className="p-0 flex flex-row">
+      <CardContent className="p-0 flex flex-col sm:flex-row">
         {/* Left: Thumbnail */}
         <div
-          className="w-[200px] shrink-0 border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
+          className="w-full h-48 sm:w-[200px] sm:h-auto shrink-0 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
         >
           {/* Shimmer skeleton while image loads */}
           {thumbData && !imageError && !imageLoaded && (
@@ -239,9 +239,35 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                     {cleanText(row.hero_name)}
                   </span>
                 )}
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1 truncate group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
-                  {cleanText(row.story_title) || t('story.no_title')}
-                </h3>
+                {(() => {
+                  const translated = cleanText(row.translated_title);
+                  const original = cleanText(row.original_title) || cleanText(row.story_title);
+                  
+                  let mainTitle = original;
+                  let subTitle = null;
+
+                  if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
+                    mainTitle = translated;
+                    if (original && original !== 'Untitled' && original !== translated) {
+                      subTitle = original;
+                    }
+                  } else if (!original || original === 'Untitled') {
+                    mainTitle = t('story.no_title');
+                  }
+
+                  return (
+                    <>
+                      <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1 truncate group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" title={mainTitle}>
+                        {mainTitle}
+                      </h3>
+                      {subTitle && (
+                        <p className="text-xs text-muted-foreground font-medium mb-1.5 truncate" title={subTitle}>
+                          {subTitle}
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
                 <div className="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 font-semibold tracking-wider">
                   {row.storycode}
                 </div>
@@ -308,13 +334,13 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
               <div className="text-[11px] flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-zinc-500 dark:text-zinc-400 tracking-tighter mr-0.5">{t('story.script')} :</span>
                 {writers.length > 0 ? writers.map((w: any, i: number) => (
-                  <CreatorBadge key={i} code={w.code} name={w.name} />
+                  <EntityBadge key={i} type="creator" code={w.code} name={w.name} onSelect={onSelectCharacter} />
                 )) : <span className="text-zinc-400">?</span>}
               </div>
               <div className="text-[11px] flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-zinc-500 dark:text-zinc-400 tracking-tighter mr-0.5">{t('story.art')} :</span>
                 {artists.length > 0 ? artists.map((a: any, i: number) => (
-                  <CreatorBadge key={i} code={a.code} name={a.name} size="sm" />
+                  <EntityBadge key={i} type="creator" code={a.code} name={a.name} size="sm" onSelect={onSelectCharacter} />
                 )) : <span className="text-zinc-400">?</span>}
               </div>
             </div>
@@ -327,58 +353,16 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                   : `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${c.code}`)}`;
 
                 return (
-                  <div key={i} className="flex items-center gap-1.5 w-fit group/char">
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 cursor-pointer">
-                          <div 
-                            className="w-4 h-4 rounded-full overflow-hidden border-zinc-200 dark:border-zinc-700 border bg-zinc-100 dark:bg-zinc-800 shrink-0 shadow-sm relative flex items-center justify-center"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onSelectCharacter) onSelectCharacter(c.code, c.name);
-                              else window.open(`https://inducks.org/character.php?c=${c.code}`, "_blank");
-                            }}
-                          >
-                            <span className="text-[6px] font-bold text-zinc-400 dark:text-zinc-500 absolute inset-0 flex items-center justify-center uppercase leading-none tracking-tighter">
-                              {c.code}
-                            </span>
-                            <img 
-                              src={charImageUrl}
-                              alt={c.name}
-                              className="w-full h-full object-cover z-10 relative"
-                              onError={(e) => (e.currentTarget.style.display = 'none')}
-                            />
-                          </div>
-                          <span 
-                            className="text-[10px] text-blue-600 hover:text-blue-700 hover:underline font-medium whitespace-nowrap"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onSelectCharacter) onSelectCharacter(c.code, c.name);
-                              else window.open(`https://inducks.org/character.php?c=${c.code}`, "_blank");
-                            }}
-                          >
-                            {c.name}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
-                        <div className="flex flex-col gap-0.5">
-                          <p className="font-bold">
-                            {c.name}
-                            <span className="ml-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({c.code})</span>
-                          </p>
-                          {c.charComment && <p className="text-zinc-600 dark:text-zinc-400 italic leading-snug">{c.charComment}</p>}
-                        </div>
-                        <TooltipArrow className="fill-popover" />
-                      </TooltipContent>
-                    </Tooltip>
-
-                    {c.appComment && (
-                      <span className="text-[9px] text-zinc-400 italic whitespace-nowrap">
-                        ({c.appComment})
-                      </span>
-                    )}
-                  </div>
+                  <EntityBadge
+                    key={i}
+                    type="character"
+                    code={c.code}
+                    name={c.name}
+                    url={c.url}
+                    appComment={c.appComment}
+                    charComment={c.charComment}
+                    onSelect={onSelectCharacter}
+                  />
                 );
               })}
               {characters.length > 15 && (

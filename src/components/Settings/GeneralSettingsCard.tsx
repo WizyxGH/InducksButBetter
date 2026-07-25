@@ -26,7 +26,8 @@ export function GeneralSettingsCard() {
   const { t, i18n } = useTranslation()
   const { theme, setTheme } = useTheme()
 
-  const currentLang = languagesList.find(l => l.code === i18n.language) || languagesList[1];
+  const langCode = (i18n.resolvedLanguage || i18n.language || "en").split('-')[0];
+  const currentLang = languagesList.find(l => l.code === langCode) || languagesList[1];
 
   return (
     <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm flex flex-col h-full">
@@ -42,7 +43,7 @@ export function GeneralSettingsCard() {
       <CardContent className="space-y-4 flex-1 flex flex-col">
         <div className="space-y-2">
           <Label className="text-xs font-semibold">{t("settings.language") || "Langue"}</Label>
-          <Select value={i18n.language} onValueChange={(lang) => i18n.changeLanguage(lang)}>
+          <Select value={currentLang.code} onValueChange={(lang) => i18n.changeLanguage(lang)}>
             <SelectTrigger className="w-full h-10 border-border-subtle bg-surface/50 rounded-xl hover:bg-surface-2">
               <div className="flex items-center gap-2">
                 <img 

@@ -57,7 +57,7 @@ export function LocalDbUploader() {
       await loadFromIsvFiles(Array.from(files), (progress) => {
         const msg = t('localDb.progress_importing', { table: progress.table, current: progress.current, total: progress.total })
         setProgressMsg(msg)
-        const percent = Math.round((progress.current / progress.total) * 100)
+        const percent = Math.round(progress.percent || 0)
         
         toast.loading(
           <div className="flex flex-col gap-2 w-[280px] mt-1">

@@ -22,6 +22,8 @@ self.onmessage = async (e: MessageEvent) => {
         db.run("PRAGMA synchronous = OFF;");
         db.run("PRAGMA temp_store = MEMORY;");
         let processed = 0;
+        let totalGlobalBytes = files.reduce((acc: number, f: any) => acc + (f.size || 0), 0);
+        let globalBytesRead = 0;
         
         for (const file of files as any[]) {
           const fileName = file.name || file.name;
@@ -90,13 +92,21 @@ self.onmessage = async (e: MessageEvent) => {
 
             // Report progress within the current file every 5% to keep UI responsive
             if (fileSize > 0) {
-              const percent = Math.min(99, Math.round((bytesRead / fileSize) * 100));
-              if (percent >= lastReportedPercent + 5) {
-                lastReportedPercent = percent;
+              const filePercent = Math.min(99, Math.round((bytesRead / fileSize) * 100));
+              if (filePercent >= lastReportedPercent + 5) {
+                lastReportedPercent = filePercent;
+                
+                let globalPercent = 0;
+                if (totalGlobalBytes > 0) {
+                  globalPercent = Math.min(99, Math.round(((globalBytesRead + bytesRead) / totalGlobalBytes) * 100));
+                } else {
+                  globalPercent = Math.round(((processed + (bytesRead / fileSize)) / files.length) * 100);
+                }
+
                 self.postMessage({
                   type: 'progress',
                   table: tableName,
-                  percent: percent,
+                  percent: globalPercent,
                   current: processed + 1,
                   total: files.length
                 });
@@ -120,10 +130,11 @@ self.onmessage = async (e: MessageEvent) => {
           
           stmt.free();
           db.run("COMMIT;");
+          globalBytesRead += fileSize;
           processed++;
         }
         
-        self.postMessage({ type: 'progress', table: "Creating indexes...", current: files.length, total: files.length });
+        self.postMessage({ type: 'progress', table: "Creating indexes...", percent: 100, current: files.length, total: files.length });
         
         const INDEXES_TO_CREATE: Record<string, string[]> = {
           inducks_story: ["storycode", "storyheadercode", "firstpublicationdate"],
@@ -147,7 +158,8 @@ self.onmessage = async (e: MessageEvent) => {
           inducks_characterurl: ["charactercode"],
           inducks_publishingjob: ["issuecode", "publisherid"],
           inducks_storycodes: ["storycode", "alternativecode"],
-          inducks_issueurl: ["issuecode"]
+          inducks_issueurl: ["issuecode"],
+          inducks_indexer: ["indexer"]
         };
 
         db.run("BEGIN TRANSACTION;");
@@ -158,6 +170,9 @@ self.onmessage = async (e: MessageEvent) => {
             } catch (err) {}
           }
         }
+        try {
+          db.run(`CREATE INDEX IF NOT EXISTS idx_inducks_person_numissues ON inducks_person(CAST(numberofindexedissues AS INTEGER));`);
+        } catch (err) {}
         db.run("COMMIT;");
         
         if (processed < files.length) {

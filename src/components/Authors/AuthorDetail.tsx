@@ -110,7 +110,12 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
 
           // 6. Fetch stories
           const storiesResult = await executeQuery({
-            sql: `SELECT DISTINCT s.storycode, s.title as story_title, COUNT(*) as appearances
+            sql: `SELECT DISTINCT s.storycode, 
+                         COALESCE(
+                           NULLIF(NULLIF(s.title, 'Untitled'), ''),
+                           (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
+                         ) as original_title, COUNT(*) as appearances,
+                         (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title
                   FROM inducks_storyjob sj
                   JOIN inducks_storyversion sv ON sj.storyversioncode = sv.storyversioncode
                   JOIN inducks_story s ON sv.storycode = s.storycode
@@ -118,7 +123,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                   GROUP BY s.storycode
                   ORDER BY appearances DESC
                   LIMIT 20`,
-            args: [personcode],
+            args: [currentLang, personcode],
           });
           setStories(storiesResult.rows as any[]);
         }
@@ -248,19 +253,19 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               <CardContent className="space-y-4 text-xs leading-relaxed text-text-secondary">
                 {author.education && (
                   <div>
-                    <span className="font-bold text-foreground block mb-0.5">Éducation:</span>
+                    <span className="font-bold text-foreground block mb-0.5">{t("authors.education", { defaultValue: "Éducation" })}:</span>
                     <p>{author.education}</p>
                   </div>
                 )}
                 {author.comicstext && (
                   <div>
-                    <span className="font-bold text-foreground block mb-0.5">Comics:</span>
+                    <span className="font-bold text-foreground block mb-0.5">{t("authors.comics", { defaultValue: "Comics" })}:</span>
                     <p>{author.comicstext}</p>
                   </div>
                 )}
                 {author.othertext && (
                   <div>
-                    <span className="font-bold text-foreground block mb-0.5">Autre:</span>
+                    <span className="font-bold text-foreground block mb-0.5">{t("authors.other", { defaultValue: "Autre" })}:</span>
                     <p>{author.othertext}</p>
                   </div>
                 )}
@@ -400,9 +405,34 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                     className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
                   >
                     <div className="space-y-0.5 min-w-0">
-                      <p className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
-                        {story.story_title || "Sans titre"}
-                      </p>
+                      <div className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
+                        {(() => {
+                          const translated = story.translated_title;
+                          const original = story.original_title || story.story_title;
+                          let mainTitle = original;
+                          let subTitle = null;
+
+                          if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
+                            mainTitle = translated;
+                            if (original && original !== 'Untitled' && original !== translated) {
+                              subTitle = original;
+                            }
+                          } else if (!original || original === 'Untitled') {
+                            mainTitle = t("story.no_title") || "Sans titre";
+                          }
+
+                          return (
+                            <div className="truncate flex flex-col min-w-0">
+                              <span className="truncate" title={mainTitle}>{mainTitle}</span>
+                              {subTitle && (
+                                <span className="text-[10px] text-muted-foreground font-medium truncate font-normal" title={subTitle}>
+                                  {subTitle}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                       <p className="text-[10px] text-muted-foreground font-mono">{story.storycode}</p>
                     </div>
                     <Badge variant="outline" className="text-[10px] shrink-0">

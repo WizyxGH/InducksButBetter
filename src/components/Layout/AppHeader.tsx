@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next"
 import { LibraryBig, Settings as SettingsIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { LanguageToggle } from "@/components/LanguageToggle"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface AppHeaderProps {
   activeTab: string
@@ -50,6 +52,7 @@ export function AppHeader({ activeTab, setActiveTab, prevTab, setPrevTab }: AppH
             <LibraryBig className="w-5 h-5" />
             <span className="hidden sm:inline">{t('tabs.publications') || "Publications"}</span>
           </Button>
+          
           <Button
             variant="ghost"
             onClick={() => {
@@ -69,6 +72,11 @@ export function AppHeader({ activeTab, setActiveTab, prevTab, setPrevTab }: AppH
             <SettingsIcon className="w-5 h-5" />
             <span className="hidden sm:inline">{t('settings.title') || "Paramètres"}</span>
           </Button>
+
+          <div className="flex items-center gap-1 sm:gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </header>

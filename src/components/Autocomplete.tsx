@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Check, ChevronDown, LibraryBig, Loader2, User, X, BookOpen } from "lucide-react"
+import { Check, ChevronDown, LibraryBig, Loader2, User, X, BookOpen, Search } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { AvatarWithFallback } from "./AvatarWithFallback"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
   const [items, setItems] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(false)
   const [selectedLabel, setSelectedLabel] = React.useState<string | null>(null)
+  const { t } = useTranslation()
 
   React.useEffect(() => {
     if (value !== undefined) {
@@ -63,7 +65,7 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
         if (isActive) setItems(data)
       } catch (err) {
         console.error(err)
-        handleDbError(err, "Erreur lors de l'autocomplétion.")
+        handleDbError(err, t("common.autocomplete_error") || "Erreur lors de l'autocomplétion.")
       } finally {
         if (isActive) setLoading(false)
       }
@@ -145,6 +147,27 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
           <Command shouldFilter={false}>
             <CommandList>
               <CommandGroup>
+                {query && query.length >= 2 && items.length > 0 && (
+                  <CommandItem
+                    value={`raw-${query}`}
+                    onSelect={() => handleSelect(query, query)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelect(query, query);
+                    }}
+                    className="cursor-pointer rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 aria-selected:bg-surface-2 hover:bg-surface-2"
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                        <Search className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="truncate text-sm font-medium text-text-body">
+                        "{query}"
+                      </span>
+                    </div>
+                  </CommandItem>
+                )}
                 {items.map((item) => {
                   const id = item.charactercode || item.personcode || item.storycode || item.publisherid || item.publicationcode;
                   let name = item.charactername || item.fullname || item.storyname || item.publishername || item.storycode || item.publicationname;

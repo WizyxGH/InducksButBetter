@@ -14,6 +14,7 @@ import { Autocomplete } from "@/components/Autocomplete";
 import { MultiAutocomplete } from "@/components/MultiAutocomplete";
 import { SearchableMultiSelect } from "@/components/SearchableMultiSelect";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import { AvatarWithFallback } from "@/components/AvatarWithFallback";
 import { SearchFilters } from "@/lib/searchService";
 import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
 import { AUTHOR_NATIONALITIES, KIND_LABELS } from "@/lib/constants";
@@ -100,8 +101,9 @@ export function SearchForm({
 
   /** Options for the content-type (kind) multi-select. */
   const kindOptions = useMemo(
-    () => Object.entries(KIND_LABELS).map(([code, label]) => ({ value: code, label })),
-    [] // KIND_LABELS is a static constant — never changes
+    () => Object.entries(KIND_LABELS).map(([code, fallbackLabel]) => ({ value: code, label: t(`kinds.${code}`, { defaultValue: fallbackLabel as string }) as string })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [i18n.language]
   );
 
   /** Options for the publication country multi-select, grouped by continent. */
@@ -236,15 +238,15 @@ export function SearchForm({
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex-1 flex flex-col border-border-subtle/60 dark:border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl overflow-hidden bg-surface min-h-[600px] lg:min-h-0">
+    <div className="flex-none lg:flex-1 flex flex-col border-border-subtle/60 dark:border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl lg:overflow-hidden overflow-visible bg-surface">
       <div className="px-8 py-5 border-b border-border-subtle bg-surface flex items-center justify-between shrink-0">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-3">
           {t("search.title")}
         </h2>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-8">
+      <ScrollArea className="flex-1 mobile-no-scroll">
+        <div className="p-4 sm:p-8">
           <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-8 gap-y-4 md:gap-y-7">
 
             {/* ── Inducks code & Keywords ───────────────────────────────────── */}
@@ -403,12 +405,19 @@ export function SearchForm({
                   <div key={pr.id} className="flex flex-col sm:flex-row items-center gap-2">
                     <div className="flex-1 w-full relative">
                       {pr.code ? (
-                        <div className="h-10 border border-border-subtle rounded-xl bg-surface-2 flex items-center justify-between px-3">
-                          <span className="text-sm font-medium">{selectedLabels[pr.code] || pr.code}</span>
+                        <div className="h-10 border border-border-subtle rounded-xl bg-surface-2 flex items-center justify-between pl-2 pr-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <AvatarWithFallback
+                              src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${pr.code.replace(/ /g, "_")}.jpg`)}`}
+                              name={selectedLabels[pr.code] || pr.code}
+                              sizeClasses="w-6 h-6"
+                            />
+                            <span className="text-sm font-medium truncate">{selectedLabels[pr.code] || pr.code}</span>
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 rounded-full"
+                            className="h-6 w-6 rounded-full shrink-0"
                             onClick={() => handleRoleClear(idx)}
                           >
                             <X className="w-3 h-3" />
@@ -659,15 +668,33 @@ export function SearchForm({
                     </span>
                   </div>
                 </div>
-                <span className="text-xs text-muted-foreground font-mono font-medium bg-surface-2 px-2 py-0.5 rounded border border-border-subtle mb-1">
-                  {filters.pagesMin} — {filters.pagesMax}
-                </span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={filters.pagesMin ?? 0}
+                    onChange={(e) => {
+                      setPagesSliderMoved(true);
+                      updateFilters({ pagesMin: parseInt(e.target.value) || 0 });
+                    }}
+                    className="w-16 h-7 text-xs text-center bg-surface-2 border-border-subtle font-mono px-1"
+                  />
+                  <span className="text-xs text-muted-foreground font-mono font-medium">—</span>
+                  <Input
+                    type="number"
+                    value={filters.pagesMax ?? 100}
+                    onChange={(e) => {
+                      setPagesSliderMoved(true);
+                      updateFilters({ pagesMax: parseInt(e.target.value) || 0 });
+                    }}
+                    className="w-16 h-7 text-xs text-center bg-surface-2 border-border-subtle font-mono px-1 mb-1"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-4 py-3 pb-8">
                 <span className="text-xs font-medium text-muted-foreground w-4">0</span>
                 <Slider
-                  value={[filters.pagesMin ?? 0, filters.pagesMax ?? 500]}
-                  max={500}
+                  value={[filters.pagesMin ?? 0, filters.pagesMax ?? 100]}
+                  max={Math.max(500, filters.pagesMax ?? 100)}
                   step={1}
                   className="flex-1"
                   onValueChange={([min, max]) => {
@@ -675,7 +702,9 @@ export function SearchForm({
                     updateFilters({ pagesMin: min, pagesMax: max });
                   }}
                 />
-                <span className="text-xs font-medium text-muted-foreground w-6">500</span>
+                <span className="text-xs font-medium text-muted-foreground w-6">
+                  {Math.max(500, filters.pagesMax ?? 100)}
+                </span>
               </div>
             </div>
           </form>
@@ -683,27 +712,21 @@ export function SearchForm({
       </ScrollArea>
 
       {/* ── Action buttons ─────────────────────────────────────────────────── */}
-      <div className="p-4 lg:p-8 border-t border-border-subtle bg-surface flex flex-col sm:flex-row gap-4 shrink-0">
+      <div className="p-6 border-t border-border-subtle bg-surface-2/30 flex flex-col-reverse sm:flex-row gap-3 shrink-0">
         <Button
           variant="outline"
-          className="flex-1 h-12 border-border-subtle text-text-secondary font-medium text-sm bg-surface hover:bg-surface-2 hover:text-foreground transition-all rounded-2xl"
+          className="flex-1 rounded-xl h-11"
           onClick={handleReset}
         >
           {t("search.reset")}
         </Button>
         <Button
-          className="flex-[1.5] h-12 bg-primary text-primary-foreground font-medium text-sm shadow-xl hover:bg-primary/90 transition-all rounded-2xl active:scale-[0.98]"
+          className="flex-[1.5] rounded-xl h-11"
           onClick={() => handleSearch()}
           disabled={loading}
         >
-          {loading ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              <span>{t("search.searching")}</span>
-            </div>
-          ) : (
-            <>{t("search.submit")}</>
-          )}
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+          {t("search.submit")}
         </Button>
       </div>
     </div>

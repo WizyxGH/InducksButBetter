@@ -60,7 +60,7 @@ export async function autocompletePerson(q: string) {
       SELECT personcode, fullname, nationalitycountrycode, fullname as displayname 
       FROM inducks_person 
       WHERE fullname LIKE ? OR personcode LIKE ? 
-      GROUP BY personcode
+      ORDER BY fullname ASC
       LIMIT 10
     `,
     args: [`%${q}%`, `%${q}%`]
@@ -164,7 +164,12 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
   // 1. Core story info
   const coreResult = await executeQuery({
     sql: `
-      SELECT s.storycode, s.firstpublicationdate, s.storyheadercode, s.storycomment, s.title,
+      SELECT s.storycode, s.firstpublicationdate, s.storyheadercode, s.storycomment,
+        COALESCE(
+          NULLIF(NULLIF(s.title, 'Untitled'), ''),
+          (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
+        ) as original_title,
+        (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title,
         COALESCE(
           (SELECT sn.subseriesname FROM inducks_storysubseries ss JOIN inducks_subseriesname sn ON ss.subseriescode = sn.subseriescode WHERE ss.storycode = s.storycode ORDER BY CASE WHEN sn.languagecode = ? THEN 0 ELSE 1 END, sn.preferred DESC LIMIT 1),
           (SELECT sh.title FROM inducks_storyheader sh WHERE sh.storyheadercode = s.storyheadercode LIMIT 1)
@@ -172,7 +177,7 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
       FROM inducks_story s
       WHERE s.storycode = ?
     `,
-    args: [lang, storycode]
+    args: [lang, lang, storycode]
   });
 
   if (coreResult.rows.length === 0) return null;
@@ -247,7 +252,8 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
         p.countrycode, 
         c.countryname,
         e.position,
-        e.title as entry_title
+        e.title as entry_title,
+        i.oldestdate
       FROM inducks_entry e
       JOIN inducks_issue i ON e.issuecode = i.issuecode
       JOIN inducks_publication p ON i.publicationcode = p.publicationcode

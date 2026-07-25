@@ -26,22 +26,22 @@ export function CharacterResultCard({ char, onSelect }: CharacterResultCardProps
 
   return (
     <Card
-      className="p-4 cursor-pointer hover:bg-surface-2 hover:border-primary/25 hover:shadow-md transition-all duration-300 group flex items-start gap-4 border border-border-subtle bg-surface-2/20 rounded-2xl h-[120px] overflow-hidden"
+      className="p-0 cursor-pointer hover:bg-surface-2 hover:border-primary/25 hover:shadow-md transition-all duration-300 group flex flex-col sm:flex-row items-start border border-border-subtle bg-surface-2/20 rounded-2xl h-auto sm:h-[120px] overflow-hidden"
       onClick={() => onSelect(char.charactercode)}
     >
       {thumbUrl ? (
         <img
           src={thumbUrl}
           alt={char.charactername}
-          className="w-16 h-16 rounded-xl object-cover border border-border-subtle shrink-0 shadow-sm"
+          className="w-full h-32 sm:w-[100px] sm:h-full object-cover border-b sm:border-b-0 sm:border-r border-border-subtle shrink-0 shadow-sm"
         />
       ) : (
-        <div className="w-16 h-16 rounded-xl bg-surface-3 flex items-center justify-center border border-border-subtle shrink-0">
+        <div className="w-full h-32 sm:w-[100px] sm:h-full bg-surface-3 flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border-subtle shrink-0">
           <Cat className="w-6 h-6 text-muted-foreground/40" />
         </div>
       )}
 
-      <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+      <div className="flex-1 min-w-0 flex flex-col justify-between h-full p-4 w-full">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <h3 className="font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">

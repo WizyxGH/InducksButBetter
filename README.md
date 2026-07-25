@@ -7,6 +7,7 @@
   [![TypeScript](https://img.shields.io/badge/TypeScript_5.2-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
   [![Turso](https://img.shields.io/badge/Turso_0.14-4FF8D2?style=for-the-badge&logo=sqlite&logoColor=black)](https://turso.tech/)
+  [![Crowdin](https://badges.crowdin.net/inducksbutbetter/localized.svg)](https://crowdin.com/project/inducksbutbetter)
 </div>
 
 <br />
@@ -79,6 +80,10 @@ This project is fully automated for deployment on GitHub Pages using GitHub Acti
 ## Credits
 
 - **Luis Bärenfaller**: German, Italian, Portuguese and Spanish translation contributions.
+
+## Localization (Crowdin)
+
+Help us translate InducksButBetter into your language! You can easily contribute to the translations via our [Crowdin project](https://crowdin.com/project/inducksbutbetter).
 
 ---
 

@@ -36,14 +36,14 @@ export function PublicationsSearchForm({
   const { t } = useTranslation();
 
   return (
-    <div className="flex-1 flex flex-col border-border-subtle/60 dark:border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl overflow-hidden bg-surface min-h-[600px] lg:min-h-0">
+    <div className="flex-none lg:flex-1 flex flex-col border-border-subtle/60 dark:border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl overflow-visible lg:overflow-hidden bg-surface">
       <div className="px-8 py-5 border-b border-border-subtle bg-surface flex items-center justify-between shrink-0">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-3">
           {t("search.publications_title") || "Recherche de Publications"}
         </h2>
       </div>
 
-      <ScrollArea className="flex-1 w-full bg-surface">
+      <ScrollArea className="flex-1 w-full bg-surface mobile-no-scroll">
         <div className="p-4 lg:p-8 pt-0">
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6" onSubmit={(e) => handleSearch(e)}>
             
@@ -243,27 +243,21 @@ export function PublicationsSearchForm({
         </div>
       </ScrollArea>
 
-      <div className="p-4 lg:p-8 border-t border-border-subtle bg-surface flex flex-col sm:flex-row gap-4 shrink-0">
+      <div className="p-6 border-t border-border-subtle bg-surface-2/30 flex flex-col-reverse sm:flex-row gap-3 shrink-0">
         <Button
           variant="outline"
-          className="flex-1 h-12 border-border-subtle text-text-secondary font-medium text-sm bg-surface hover:bg-surface-2 hover:text-foreground transition-all rounded-2xl"
+          className="flex-1 rounded-xl h-11"
           onClick={handleClearFilters}
         >
           {t("search.reset")}
         </Button>
         <Button
-          className="flex-[1.5] h-12 bg-primary text-primary-foreground font-medium text-sm shadow-xl hover:bg-primary/90 transition-all rounded-2xl active:scale-[0.98]"
+          className="flex-[1.5] rounded-xl h-11"
           onClick={() => handleSearch()}
           disabled={loading}
         >
-          {loading ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              <span>{t("search.searching")}</span>
-            </div>
-          ) : (
-            <>{t("search.submit")}</>
-          )}
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+          {t("search.submit")}
         </Button>
       </div>
     </div>

@@ -51,7 +51,7 @@
     "pages_exact": "Nombre exact",
     "results_per_page": "Résultats par page",
     "reset": "Réinitialiser",
-    "submit": "Lancer la recherche",
+    "submit": "Rechercher",
     "searching": "Recherche en cours...",
     "results": "Résultats",
     "sort_by": "Trier par",
@@ -103,6 +103,10 @@
     "pubdate_asc": "Plus anciennes",
     "title_az": "Titre A-Z",
     "title_za": "Titre Z-A",
+    "issues_desc": "Plus de numéros",
+    "issues_asc": "Moins de numéros",
+    "oldest_first": "Plus anciennes d'abord",
+    "newest_first": "Plus récentes d'abord",
     "pages_desc": "Plus de pages",
     "pages_asc": "Moins de pages",
     "published_most": "Le plus publié",
@@ -126,7 +130,8 @@
     "go_to_settings": "Aller aux paramètres",
     "back": "Retour",
     "save": "Sauvegarder",
-    "or": "ou"
+    "or": "ou",
+    "all_countries": "Tous les pays"
   },
   "story": {
     "no_title": "Sans titre",
@@ -141,7 +146,13 @@
     "read_more": "Lire plus",
     "read_less": "Moins",
     "none": "Aucune",
-    "other_publications": "Autres publications"
+    "description": "Descriptif",
+    "other_publications": "Autres publications",
+    "story_code": "Code de l'histoire",
+    "creators": "Auteurs / Créateurs",
+    "characters": "Personnages",
+    "uncredited": "Non crédité.",
+    "original_title": "Titre original"
   },
   "kinds": {
     "s": "Histoire",
@@ -153,7 +164,11 @@
     "f": "Filler",
     "q": "Quiz",
     "w": "Inconnu",
-    "n": "Histoire"
+    "n": "Histoire",
+    "k": "Bande quotidienne, hebdomadaire",
+    "t": "Texte",
+    "P": "Peinture (portrait)",
+    "L": "Peinture (paysage)"
   },
   "tabs": {
     "stories": "Histoires",
@@ -293,14 +308,17 @@
     "general": "Général",
     "general_desc": "Langue de l'interface et thème d'affichage.",
     "language": "Langue",
+    "links": "Liens utiles & Communauté",
+    "links_desc": "Rejoignez la communauté Inducks ou contribuez au projet.",
+    "discord": "Serveur Discord de Inducks",
+    "contribute": "Contribuer au projet",
+    "translate": "Traduire le projet",
     "theme": "Thème d'affichage",
     "inducks_cookie": "Cookie Inducks",
     "cookie_desc": "Ce cookie permet d'accéder aux images haute résolution d'Inducks.",
     "cookie_saved": "Cookie sauvegardé !",
     "cookie_help": "Ce cookie permet d'accéder aux images haute résolution. Récupérez-le dans l'inspecteur du navigateur sur inducks.org.",
-    "download_isv": "Télécharger les fichiers ISV",
-    "links": "Liens utiles & communauté",
-    "links_desc": "Rejoignez la communauté Inducks ou contribuez au projet."
+    "download_isv": "Télécharger les fichiers ISV"
   },
   "localDb": {
     "title": "Base de données Inducks locale",
@@ -322,11 +340,15 @@
     "btn_cloud": "Importer automatiquement (Recommandé)"
   },
   "authors": {
+    "biography": "Biographie",
     "born": "Né(e) le",
     "deceased": "Décédé(e) le",
     "birth_name": "Nom de naissance",
     "aliases": "Alias",
     "links": "Liens",
+    "education": "Éducation",
+    "comics": "Comics",
+    "other": "Autre",
     "coauthors": "Co-auteurs fréquents",
     "frequent_characters": "Personnages fréquents",
     "favorite_characters": "Personnages favoris",
@@ -406,6 +428,8 @@
     "category": "Catégorie",
     "official": "Personnage officiel",
     "onetime": "Personnage unique",
+    "original_name": "Original",
+    "international_names": "Noms internationaux",
     "no_description": "Aucune description disponible pour ce personnage."
   },
   "legal": {
@@ -415,6 +439,8 @@
   },
   "countries": {
     "title": "Liste des pays",
+    "publications_title": "Publications",
+    "publication_title": "Titre de publication",
     "country_name": "Pays",
     "publications_count": "Publications",
     "search_placeholder": "Filtrer les pays...",
@@ -459,6 +485,10 @@
     "step3": {
       "title": "Votre collection",
       "desc": "Ajoutez les bandes dessinées que vous possédez à votre collection personnelle pour pouvoir filtrer vos recherches par la suite."
+    },
+    "step4": {
+      "title": "Participer au projet",
+      "desc": "Vous pouvez contribuer au projet sur GitHub ou rejoindre notre serveur Discord !"
     }
   }
 }

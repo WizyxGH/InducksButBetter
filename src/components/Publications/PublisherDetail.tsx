@@ -15,6 +15,8 @@ interface PublicationInfo {
   countrycode: string;
   publicationcomment?: string;
   issueCount: number;
+  minYear?: string;
+  maxYear?: string;
 }
 
 interface PublisherDetailProps {
@@ -53,7 +55,9 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
             SELECT p.publicationcode, 
                    COALESCE((SELECT pn.publicationname FROM inducks_publicationname pn WHERE pn.publicationcode = p.publicationcode LIMIT 1), p.title) as title, 
                    p.languagecode, p.countrycode, p.publicationcomment,
-                   COUNT(DISTINCT i.issuecode) as issueCount
+                   COUNT(DISTINCT i.issuecode) as issueCount,
+                   SUBSTR(MIN(i.oldestdate), 1, 4) as minYear,
+                   SUBSTR(MAX(i.oldestdate), 1, 4) as maxYear
             FROM inducks_publishingjob pj
             JOIN inducks_issue i ON pj.issuecode = i.issuecode
             JOIN inducks_publication p ON i.publicationcode = p.publicationcode
@@ -165,9 +169,14 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
                 </h3>
                 <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1.5">
                   {getFlagUrl(p.countrycode) && (
-                    <img src={getFlagUrl(p.countrycode)} alt={p.countrycode} className="w-3.5 h-2.5 rounded object-cover shadow-xs opacity-80" />
+                    <img src={getFlagUrl(p.countrycode)} alt={p.countrycode} className="w-3.5 h-2.5 rounded object-cover shadow-xs opacity-80" title={p.countrycode} />
                   )}
                   {p.publicationcode}
+                  {p.minYear && p.minYear !== '0000' && (
+                    <span className="ml-1 opacity-70">
+                      • {p.minYear}{p.maxYear && p.maxYear !== p.minYear && p.maxYear !== '9999' ? ` - ${p.maxYear}` : ''}
+                    </span>
+                  )}
                 </p>
                 {p.publicationcomment && (
                   <p className="text-[10.5px] text-text-secondary italic line-clamp-2 mt-1.5 pt-0.5">

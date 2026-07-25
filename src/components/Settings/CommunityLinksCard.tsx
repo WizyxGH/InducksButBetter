@@ -1,6 +1,6 @@
 import React from "react"
 import { useTranslation } from "react-i18next"
-import { HelpCircle, ExternalLink, Scale } from "lucide-react"
+import { HelpCircle, ExternalLink, Scale, Languages } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DiscordIcon } from "@/components/icons/DiscordIcon"
 import { Github } from "lucide-react"
@@ -20,7 +20,7 @@ export function CommunityLinksCard() {
           {t("settings.links_desc") || "Rejoignez la communauté Inducks ou contribuez au projet."}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <a
           href="https://discord.gg/trPVaPwDJz"
           target="_blank"
@@ -31,7 +31,7 @@ export function CommunityLinksCard() {
             <DiscordIcon className="w-5 h-5 text-[#5865F2] shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5">
               <p className="text-xs font-bold text-foreground">Discord</p>
-              <p className="text-[10px] text-muted-foreground">Discord de Inducks</p>
+              <p className="text-[10px] text-muted-foreground">{t("settings.discord") || "Discord de Inducks"}</p>
             </div>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-text-secondary group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
@@ -47,7 +47,23 @@ export function CommunityLinksCard() {
             <Github className="w-5 h-5 text-foreground shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5">
               <p className="text-xs font-bold text-foreground">GitHub</p>
-              <p className="text-[10px] text-muted-foreground">Contribuer au projet</p>
+              <p className="text-[10px] text-muted-foreground">{t("settings.contribute") || "Contribuer au projet"}</p>
+            </div>
+          </div>
+          <ExternalLink className="w-3.5 h-3.5 text-text-secondary group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
+        </a>
+
+        <a
+          href="https://crowdin.com/project/inducksbutbetter"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-between p-4 rounded-xl border border-border-subtle bg-surface/50 hover:bg-surface-2 hover:-translate-y-0.5 active:scale-98 hover:shadow-xs transition-all duration-300 group"
+        >
+          <div className="flex items-center gap-3">
+            <Languages className="w-5 h-5 text-green-500 shrink-0 group-hover:scale-105 transition-transform" />
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-foreground">Translations</p>
+              <p className="text-[10px] text-muted-foreground">{t("settings.translate") || "Traduire le projet"}</p>
             </div>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-text-secondary group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />

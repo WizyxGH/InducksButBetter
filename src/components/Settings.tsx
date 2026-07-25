@@ -1,6 +1,5 @@
 import React from "react"
 import { useTranslation } from "react-i18next"
-import { GeneralSettingsCard } from "./Settings/GeneralSettingsCard"
 import { LocalDatabaseCard } from "./Settings/LocalDatabaseCard"
 import { InducksCookieCard } from "./Settings/InducksCookieCard"
 import { PersonalCollectionCard } from "./Settings/PersonalCollectionCard"
@@ -21,7 +20,6 @@ export function Settings() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <GeneralSettingsCard />
         <LocalDatabaseCard />
         <InducksCookieCard />
         <PersonalCollectionCard />

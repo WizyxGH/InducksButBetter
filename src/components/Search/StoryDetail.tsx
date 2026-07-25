@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, Copy, Check, Calendar, BookOpen, User, Users, FileText, ChevronDown, ChevronUp, Link } from "lucide-react"
+import { ArrowLeft, Copy, Check, Calendar, BookOpen, User, Users, FileText, ChevronDown, ChevronUp } from "lucide-react"
 import { getStoryDetail } from "@/lib/turso"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { getFlagUrl } from "@/lib/utils"
 import { toast } from "sonner"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { EntityBadge } from "@/components/EntityBadge"
 
 interface StoryDetailProps {
   storycode: string
@@ -26,6 +26,9 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({})
   const [showAllDescriptions, setShowAllDescriptions] = useState(false)
 
+  // Filters for publications
+  const [pubSortOrder, setPubSortOrder] = useState<"asc" | "desc">("asc")
+
   useEffect(() => {
     async function fetchDetails() {
       setLoading(true)
@@ -34,7 +37,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
         setStory(details)
       } catch (e) {
         console.error(e)
-        toast.error("Impossible de charger les détails de l'histoire.")
+        toast.error(t("common.error", { defaultValue: "Une erreur est survenue" }))
       } finally {
         setLoading(false)
       }
@@ -45,7 +48,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   const copyToClipboard = () => {
     navigator.clipboard.writeText(storycode)
     setCopied(true)
-    toast.success("Code copié dans le presse-papiers !")
+    toast.success(t("story.code_copied", { defaultValue: "Code copié !" }))
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -61,10 +64,10 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   if (!story) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        <p>Histoire introuvable.</p>
+        <p>{t("story.not_found", { defaultValue: "Histoire introuvable." })}</p>
         <Button onClick={onBack} variant="outline" className="mt-4 gap-2 rounded-xl">
           <ArrowLeft className="w-4 h-4" />
-          Retour
+          {t("common.back")}
         </Button>
       </div>
     )
@@ -138,7 +141,32 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
         <div className="md:col-span-2 space-y-6">
           <div className="space-y-3">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {story.story_title || "Sans titre"}
+              {(() => {
+                const translated = story.translated_title;
+                const original = story.original_title;
+                let mainTitle = original;
+                let subTitle = null;
+
+                if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
+                  mainTitle = translated;
+                  if (original && original !== 'Untitled' && original !== translated) {
+                    subTitle = original;
+                  }
+                } else if (!original || original === 'Untitled') {
+                  mainTitle = t("story.no_title") || "Sans titre";
+                }
+
+                return (
+                  <div>
+                    <div title={mainTitle}>{mainTitle}</div>
+                    {subTitle && (
+                      <div className="text-sm text-muted-foreground font-medium mt-1 font-normal" title={subTitle}>
+                        {subTitle}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
               <span className="font-semibold">{story.series_title}</span>
@@ -158,7 +186,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 {(story.entirepages || story.brokenpagenumerator) && (
                   <Badge variant="outline" className="font-medium text-[10px] gap-1 bg-surface">
                     <FileText className="w-3 h-3" />
-                    {story.entirepages ? `${story.entirepages} pages` : `${story.brokenpagenumerator}/${story.brokenpagedenominator} page`}
+                    {story.entirepages ? `${story.entirepages} ${t("story.pages")}` : `${story.brokenpagenumerator}/${story.brokenpagedenominator} ${t("story.page")}`}
                   </Badge>
                 )}
               </div>
@@ -166,12 +194,16 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
           </div>
 
           {/* Copyable Story Code */}
-          <div className="flex items-center gap-3 p-3 bg-surface-2 border border-border-subtle rounded-2xl">
+          <div 
+            className="flex items-center gap-3 p-3 bg-surface-2 border border-border-subtle rounded-2xl cursor-pointer hover:bg-surface-3 transition-all active:scale-[0.99] group/copy"
+            onClick={copyToClipboard}
+            title={t("common.copy_to_clipboard") || "Copier dans le presse-papier"}
+          >
             <div className="space-y-0.5 flex-1">
-              <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">Code de l'histoire</p>
+              <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">{t("story.story_code", { defaultValue: "Code de l'histoire" })}</p>
               <p className="font-mono text-sm font-bold text-foreground">{storycode}</p>
             </div>
-            <Button size="icon" variant="ghost" onClick={copyToClipboard} className="h-9 w-9 hover:bg-surface rounded-xl">
+            <Button size="icon" variant="ghost" className="h-9 w-9 group-hover/copy:bg-surface rounded-xl pointer-events-none">
               {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-text-secondary" />}
             </Button>
           </div>
@@ -180,7 +212,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <FileText className="w-4 h-4 text-primary" />
-              Synopsis & Description
+              {t('story.description') || "Descriptif"}
             </h3>
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden">
               <CardContent className="p-4 space-y-4">
@@ -194,7 +226,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                     <p className="text-sm text-text-body leading-relaxed whitespace-pre-wrap">{defaultDesc.desctext}</p>
                   </div>
                 ) : (
-                  <p className="text-sm text-text-secondary italic">Aucune description disponible.</p>
+                  <p className="text-sm text-text-secondary italic">{t("story.no_description_full", { defaultValue: "Aucune description disponible." })}</p>
                 )}
 
                 {/* Accordion for descriptions in other languages */}
@@ -206,8 +238,8 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                     >
                       <span>
                         {showAllDescriptions
-                          ? "Masquer les autres langues"
-                          : `Afficher les descriptions dans d'autres langues (${otherDescriptions.length})`}
+                          ? t("story.hide_languages", { defaultValue: "Masquer les autres langues" })
+                          : `${t("story.show_languages", { defaultValue: "Afficher les descriptions dans d'autres langues" })} (${otherDescriptions.length})`}
                       </span>
                       {showAllDescriptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
@@ -236,7 +268,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
-              Auteurs / Créateurs
+              {t("story.creators", { defaultValue: "Auteurs / Créateurs" })}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Writers */}
@@ -244,20 +276,20 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 <CardContent className="p-4 space-y-3">
                   <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-blue-500" />
-                    Scénaristes
+                    {t("story.script", { defaultValue: "Scénario" })}
                   </h4>
                   {writers.length > 0 ? (
-                    <ul className="space-y-1">
+                    <div className="flex flex-wrap gap-2 pt-1">
                       {writers.map((c: any) => (
-                        <li 
-                          key={`${c.personcode}-${c.role}`} 
-                          className="text-sm font-semibold text-foreground cursor-pointer hover:text-primary transition-colors hover:underline"
-                          onClick={() => window.location.hash = `#/authors/${c.personcode}`}
-                        >
-                          {c.fullname}
-                        </li>
+                        <EntityBadge
+                          key={`${c.personcode}-${c.role}`}
+                          type="creator"
+                          code={c.personcode}
+                          name={c.fullname || c.personcode}
+                          onSelect={(code, name) => window.location.hash = `#/authors/${code}`}
+                        />
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="text-xs text-text-secondary italic">Non crédité.</p>
                   )}
@@ -269,20 +301,20 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 <CardContent className="p-4 space-y-3">
                   <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-emerald-500" />
-                    Dessinateurs
+                    {t("story.art", { defaultValue: "Dessin" })}
                   </h4>
                   {artists.length > 0 ? (
-                    <ul className="space-y-1">
+                    <div className="flex flex-wrap gap-2 pt-1">
                       {artists.map((c: any) => (
-                        <li 
-                          key={`${c.personcode}-${c.role}`} 
-                          className="text-sm font-semibold text-foreground cursor-pointer hover:text-primary transition-colors hover:underline"
-                          onClick={() => window.location.hash = `#/authors/${c.personcode}`}
-                        >
-                          {c.fullname}
-                        </li>
+                        <EntityBadge
+                          key={`${c.personcode}-${c.role}`}
+                          type="creator"
+                          code={c.personcode}
+                          name={c.fullname || c.personcode}
+                          onSelect={(code, name) => window.location.hash = `#/authors/${code}`}
+                        />
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="text-xs text-text-secondary italic">Non crédité.</p>
                   )}
@@ -311,50 +343,25 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
           {/* Characters Panel */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-foreground">Personnages</h3>
+            <h3 className="text-sm font-bold text-foreground">{t("story.characters", { defaultValue: "Personnages" })}</h3>
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
               <CardContent className="p-4">
                 {story.characters && story.characters.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {story.characters.map((c: any) => {
-                      const avatarUrl = `/api/proxy-image?url=${encodeURIComponent(
-                        `https://inducks.org/characterthumb.php?c=${c.charactercode}`
-                      )}`
-                      return (
-                        <Tooltip key={c.charactercode} delayDuration={300}>
-                          <TooltipTrigger asChild>
-                            <div
-                              className="flex items-center gap-2 bg-surface-2 border border-border-subtle px-2.5 py-1 rounded-xl text-xs font-semibold text-text-body cursor-pointer hover:bg-surface-3 active:scale-98 transition-all"
-                              onClick={() => onSelectCharacter && onSelectCharacter(c.charactercode, c.charactername || c.charactercode)}
-                            >
-                              <img
-                                src={avatarUrl}
-                                alt=""
-                                className="w-5 h-5 rounded-full object-cover bg-zinc-200 dark:bg-zinc-800 shrink-0"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none"
-                                }}
-                              />
-                              <span>{c.charactername || c.charactercode}</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
-                            <div className="flex flex-col gap-0.5">
-                              <p className="font-bold text-foreground">{c.charactername || c.charactercode}</p>
-                              <p className="text-[10px] text-muted-foreground font-mono">{c.charactercode}</p>
-                              {c.charactercomment && (
-                                <p className="text-[10px] text-text-secondary mt-1 border-t border-border-subtle pt-1 italic">
-                                  {c.charactercomment}
-                                </p>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      )
-                    })}
+                  <div className="flex flex-wrap gap-3 p-1">
+                    {story.characters.map((c: any) => (
+                      <EntityBadge
+                        key={c.charactercode}
+                        type="character"
+                        code={c.charactercode}
+                        name={c.charactername || c.charactercode}
+                        charComment={c.charactercomment}
+                        appComment={c.appearancecomment}
+                        onSelect={onSelectCharacter}
+                      />
+                    ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-text-secondary italic">Aucun personnage répertorié.</p>
+                  <p className="text-xs text-text-secondary italic">{t("story.no_characters", { defaultValue: "Aucun personnage répertorié." })}</p>
                 )}
               </CardContent>
             </Card>
@@ -365,15 +372,30 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
       {/* Publications by Country (Full Width) */}
       <div className="space-y-3 pt-6 border-t border-border-subtle mt-8">
-        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-          Publications par pays
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
-            {Object.values(publicationsByCountry).flat().length}
-          </span>
-        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+            {t("tabs.publications") || "Publications"}
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
+              {story.publications?.length || 0}
+            </span>
+          </h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPubSortOrder(pubSortOrder === "asc" ? "desc" : "asc")}
+            className="h-8 rounded-xl text-xs font-medium bg-surface hover:bg-surface-2 gap-1.5"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            {pubSortOrder === "asc" ? t("sort.oldest_first") || "Plus anciennes d'abord" : t("sort.newest_first") || "Plus récentes d'abord"}
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.keys(publicationsByCountry).map((country) => {
-            const pubs = publicationsByCountry[country]
+            let pubs = [...publicationsByCountry[country]]
+            if (pubSortOrder === "desc") {
+              pubs.reverse()
+            }
             const flagCode = pubs[0]?.countrycode || "un"
             const isExpanded = !!expandedCountries[country]
             return (
@@ -401,22 +423,22 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
                 {isExpanded && (
                   <div className="border-t border-border-subtle bg-surface-2/30 p-2 space-y-1.5 animate-fadeIn">
-                    {pubs.map((pub: any) => (
+                    {pubs.map((pub: any, i: number) => (
                       <div
-                        key={pub.entrycode}
+                        key={pub.entrycode + i}
                         onClick={() => onSelectIssue && onSelectIssue(pub.issuecode)}
                         className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-2 transition-colors cursor-pointer border border-transparent hover:border-border-subtle"
                       >
                         <div className="space-y-0.5 min-w-0 flex-1">
                           <p className="text-xs font-bold text-foreground truncate">{pub.publication_title}</p>
                           <p className="text-[10px] text-muted-foreground font-medium">
-                            Numéro : {pub.issuenumber} {pub.position && `• Pos. ${pub.position}`}
+                            {t("story.issue_number", { defaultValue: "Numéro :" })} {pub.issuenumber} {pub.position && `• Pos. ${pub.position}`}
                           </p>
                         </div>
                         <div className="text-right shrink-0 ml-2">
                           {pub.entirepages && (
                             <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">
-                              {pub.entirepages} p.
+                              {pub.entirepages} {t("story.pages_short", { defaultValue: "p." })}
                             </span>
                           )}
                         </div>

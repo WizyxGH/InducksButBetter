@@ -20,12 +20,12 @@ export function ThemeToggle() {
   return (
     <Select value={theme} onValueChange={(value) => setTheme(value as "light" | "dark" | "system") }>
       <SelectTrigger
-        className="w-full sm:w-[140px] h-10 border-border-subtle bg-surface/80 rounded-xl hover:bg-surface-2 transition-all font-medium text-sm"
+        className="w-[auto] sm:w-[140px] px-2.5 sm:px-3 h-10 border-border-subtle bg-surface/80 rounded-xl hover:bg-surface-2 transition-all font-medium text-sm"
         aria-label={t("theme.label")}
       >
         <div className="flex items-center gap-2">
           <CurrentIcon className="w-4 h-4" />
-          <span>{currentOption.label}</span>
+          <span className="hidden sm:inline">{currentOption.label}</span>
         </div>
       </SelectTrigger>
       <SelectContent className="rounded-xl border-border-subtle bg-surface">

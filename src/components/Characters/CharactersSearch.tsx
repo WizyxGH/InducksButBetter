@@ -106,7 +106,7 @@ export function CharactersSearch({ selectedCharactercode, setSelectedCharacterco
 
   return (
     <div className="h-full flex flex-col overflow-auto lg:overflow-hidden bg-background">
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 p-4 lg:p-8 gap-8 px-4 lg:px-12">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 p-4 lg:p-8 gap-8 px-4 lg:px-12 pb-12 lg:pb-8">
         {/* Left Side: Filters form */}
         <CharactersSearchForm
           filters={filters}

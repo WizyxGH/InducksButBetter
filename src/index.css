@@ -185,3 +185,12 @@
   animation: ripple 1.2s infinite ease-out;
 }
 
+@media (max-width: 1023px) {
+  .mobile-no-scroll {
+    overflow: visible !important;
+  }
+  .mobile-no-scroll > [data-radix-scroll-area-viewport] {
+    overflow: visible !important;
+  }
+}
+

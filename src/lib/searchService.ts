@@ -301,7 +301,7 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
         if (pr.role && pr.role !== 'any') {
           roleCondition = `AND sj.plotwritartink LIKE '%${pr.role}%'`;
         }
-        svWhere.push(`EXISTS (SELECT 1 FROM inducks_storyjob sj WHERE sj.storyversioncode = sv.storyversioncode AND sj.personcode = ? ${roleCondition})`);
+        svWhere.push(`sv.storyversioncode IN (SELECT sj.storyversioncode FROM inducks_storyjob sj WHERE sj.personcode = ? ${roleCondition})`);
         p.push(pr.code.trim());
       });
     }
@@ -310,7 +310,7 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   if (filters.excludePersoncode) {
     const codes = (Array.isArray(filters.excludePersoncode) ? filters.excludePersoncode : String(filters.excludePersoncode).split(",")).map(c => c.trim()).filter(Boolean);
     if (codes.length > 0) {
-      svWhere.push(`NOT EXISTS (SELECT 1 FROM inducks_storyjob sj_ex WHERE sj_ex.storyversioncode = sv.storyversioncode AND sj_ex.personcode IN (${codes.map(() => "?").join(",")}))`);
+      svWhere.push(`sv.storyversioncode NOT IN (SELECT sj_ex.storyversioncode FROM inducks_storyjob sj_ex WHERE sj_ex.personcode IN (${codes.map(() => "?").join(",")}))`);
       p.push(...codes);
     }
   }
@@ -474,6 +474,11 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
       ) as series_title,
       s.firstpublicationdate, sv.kind, sv.entirepages, sv.brokenpagenumerator, sv.brokenpagedenominator, sv.plotsummary, s.storycomment,
       COALESCE(
+        NULLIF(NULLIF(s.title, 'Untitled'), ''),
+        (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
+      ) as original_title,
+      (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title,
+      COALESCE(
         (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' ORDER BY CASE WHEN pub.languagecode = ? THEN 0 ELSE 1 END, e.entrycode ASC LIMIT 1),
         s.title,
         NULL
@@ -563,7 +568,7 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     ORDER BY ${orderBy}
   `;
 
-  return { query: mainQuery, countQuery, params: [...p, pageSize, offset, lang, lang, lang, lang, lang, lang], countParams: p, pageSize, page };
+  return { query: mainQuery, countQuery, params: [...p, pageSize, offset, lang, lang, lang, lang, lang, lang, lang], countParams: p, pageSize, page };
 }
 
 export interface PublicationsSearchFilters {

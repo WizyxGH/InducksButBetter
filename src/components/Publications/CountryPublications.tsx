@@ -151,13 +151,13 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
           />
           <Select value={sortOrder} onValueChange={setSortOrder}>
             <SelectTrigger className="w-full sm:w-48 h-10 border-border-subtle bg-surface rounded-xl text-sm">
-              <SelectValue placeholder="Trier par..." />
+              <SelectValue placeholder={t("sort.title_az") || "Trier par..."} />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-border-subtle bg-surface">
-              <SelectItem value="title_asc" className="rounded-lg">Titre A-Z</SelectItem>
-              <SelectItem value="title_desc" className="rounded-lg">Titre Z-A</SelectItem>
-              <SelectItem value="issues_desc" className="rounded-lg">Plus de numéros</SelectItem>
-              <SelectItem value="issues_asc" className="rounded-lg">Moins de numéros</SelectItem>
+              <SelectItem value="title_asc" className="rounded-lg">{t("sort.title_az") || "Titre A-Z"}</SelectItem>
+              <SelectItem value="title_desc" className="rounded-lg">{t("sort.title_za") || "Titre Z-A"}</SelectItem>
+              <SelectItem value="issues_desc" className="rounded-lg">{t("sort.issues_desc") || "Plus de numéros"}</SelectItem>
+              <SelectItem value="issues_asc" className="rounded-lg">{t("sort.issues_asc") || "Moins de numéros"}</SelectItem>
             </SelectContent>
           </Select>
         </div>

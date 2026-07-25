@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ChevronDown, LibraryBig, Loader2, User, X } from "lucide-react"
+import { Check, ChevronDown, LibraryBig, Loader2, User, X, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -176,6 +176,22 @@ export function MultiAutocomplete({
           <CommandList className="max-h-[300px] overflow-y-auto">
             <CommandEmpty>{loading ? t?.('common.loading') || "Chargement..." : emptyMessage}</CommandEmpty>
             <CommandGroup>
+              {query && query.length >= 2 && items.length > 0 && !selected.includes(`raw-${query}`) && (
+                <CommandItem
+                  value={`raw-${query}`}
+                  onSelect={() => handleSelect(query, query)}
+                  className="cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                      <Search className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="truncate text-sm font-medium text-text-body">
+                      "{query}"
+                    </span>
+                  </div>
+                </CommandItem>
+              )}
               {items.map((item) => {
                 const id = item.charactercode || item.personcode || item.storycode || item.publisherid;
                 const name = item.charactername || item.fullname || item.storyname || item.publishername || item.storycode;
