@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { getFlagUrl } from "@/lib/utils"
 import { toast } from "sonner"
+import { KindBadge } from "@/components/KindBadge"
 
 interface IssueDetailProps {
   issuecode: string
@@ -18,6 +19,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   const [loading, setLoading] = useState(true)
   const [issue, setIssue] = useState<any>(null)
   const [isContentExpanded, setIsContentExpanded] = useState(true)
+  const hasCookie = useMemo(() => !!localStorage.getItem("inducks_cookie"), [])
 
   useEffect(() => {
     async function fetchDetails() {
@@ -27,13 +29,33 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
         setIssue(details)
       } catch (e) {
         console.error(e)
-        toast.error("Impossible de charger les détails du numéro.")
+        toast.error(t("publication.error_load") || "Impossible de charger les détails du numéro.")
       } finally {
         setLoading(false)
       }
     }
     fetchDetails()
   }, [issuecode])
+
+  useEffect(() => {
+    if (!loading && issue) {
+      const hash = window.location.hash;
+      const match = hash.match(/[?&]pos=([^&]+)/i);
+      if (match) {
+        const pos = decodeURIComponent(match[1]).trim().toLowerCase();
+        setTimeout(() => {
+          const element = document.getElementById(`pos-${pos}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            element.classList.add("highlight-pulse");
+            setTimeout(() => {
+              element.classList.remove("highlight-pulse");
+            }, 2000);
+          }
+        }, 500);
+      }
+    }
+  }, [loading, issue, window.location.hash]);
 
   // Build high-res cover image URL
   const coverUrl = useMemo(() => {
@@ -106,19 +128,21 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Column: Cover & Core Specs */}
         <div className="space-y-6">
-          <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden p-2">
-            <div className="aspect-[3/4] w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-800 rounded-lg overflow-hidden">
-              {coverUrl ? (
-                <img
-                  src={coverUrl}
-                  alt=""
-                  className="max-h-full max-w-full object-contain hover:scale-102 transition-transform duration-500"
-                />
-              ) : (
-                <BookOpen className="w-12 h-12 text-muted-foreground opacity-20" />
-              )}
-            </div>
-          </Card>
+          {hasCookie && (
+            <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden p-2">
+              <div className="aspect-[3/4] w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-800 rounded-lg overflow-hidden">
+                {coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt=""
+                    className="max-h-full max-w-full object-contain hover:scale-102 transition-transform duration-500"
+                  />
+                ) : (
+                  <BookOpen className="w-12 h-12 text-muted-foreground opacity-20" />
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* Issue Specs */}
           <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
@@ -141,7 +165,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                     <Layers className="w-4 h-4 text-primary shrink-0" />
                     <div>
                       <p className="font-bold">{t("publication.pages")}</p>
-                      <p className="text-[10px] text-muted-foreground">{issue.pages} pages</p>
+                      <p className="text-[10px] text-muted-foreground">{issue.pages} {t("search.pages").toLowerCase()}</p>
                     </div>
                   </div>
                 )}
@@ -196,7 +220,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {issue.publication_title} #{issue.issuenumber}
             </h1>
-            <p className="text-xs font-semibold text-text-secondary">Code : {issuecode}</p>
+            <p className="text-xs font-semibold text-text-secondary">{t("common.code") || "Code"} : {issuecode}</p>
           </div>
 
           {/* Index of Stories */}
@@ -228,6 +252,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                       // Include idx to guarantee uniqueness: the same storycode can
                       // appear multiple times in a single issue (e.g. multi-part stories).
                       key={`${story.storycode ?? ""}-${idx}`}
+                      id={story.position ? `pos-${story.position.trim().toLowerCase()}` : undefined}
                       onClick={() => story.storycode && onSelectStory && onSelectStory(story.storycode)}
                       className="group rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs cursor-pointer border hover:border-primary/20"
                     >
@@ -244,16 +269,14 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                             </p>
                             {story.entirepages && (
                               <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono shrink-0">
-                                {story.entirepages} p.
+                                {story.entirepages} {t("story.pages_short", "p.")}
                               </span>
                             )}
                           </div>
 
                           <div className="flex items-center gap-2 overflow-hidden">
                             {story.kind && (
-                              <span className="text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-1.5 py-0.5 rounded shrink-0">
-                                {t(`kinds.${story.kind}`, { defaultValue: story.kind })}
-                              </span>
+                              <KindBadge kind={story.kind} />
                             )}
                             {story.original_title && story.original_title !== story.entry_title && (
                               <p className="text-[10px] text-muted-foreground italic truncate">

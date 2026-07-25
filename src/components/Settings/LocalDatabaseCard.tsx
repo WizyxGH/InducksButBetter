@@ -14,9 +14,9 @@ import { loadFromIsvFiles, loadFromCloud, hasLocalDb, getLocalDbStats } from "@/
  */
 function ToastProgress({ msg, percent }: { msg: string; percent: number }) {
   return (
-    <div className="flex flex-col gap-2 mt-1">
-      <div className="flex items-start gap-2">
-        <span className="text-sm font-medium leading-tight flex-1 min-w-0">{msg}</span>
+    <div className="flex flex-col gap-2 w-full mt-1">
+      <div className="flex items-start justify-between gap-4">
+        <span className="text-sm font-medium leading-tight flex-1 break-words">{msg}</span>
         <span className="text-xs font-mono font-bold text-primary shrink-0 mt-0.5">{percent}%</span>
       </div>
       <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">

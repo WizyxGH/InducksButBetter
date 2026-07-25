@@ -13,6 +13,23 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
+function ToastProgress({ msg, percent }: { msg: string; percent: number }) {
+  return (
+    <div className="flex flex-col gap-2 w-full mt-1">
+      <div className="flex items-start justify-between gap-4">
+        <span className="text-sm font-medium leading-tight flex-1 break-words">{msg}</span>
+        <span className="text-xs font-mono font-bold text-primary shrink-0 mt-0.5">{percent}%</span>
+      </div>
+      <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+        <div
+          className="h-full bg-primary transition-all duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export function LocalDbUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -40,18 +57,7 @@ export function LocalDbUploader() {
     setProgressMsg(t('localDb.progress_start'))
     
     const toastId = "db-upload-toast"
-    toast.loading(
-      <div className="flex flex-col gap-2 w-[280px] mt-1">
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-sm font-medium truncate">{t('localDb.progress_start')}</span>
-          <span className="text-xs font-mono font-bold text-primary shrink-0">0%</span>
-        </div>
-        <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden shrink-0">
-          <div className="h-full bg-primary transition-all duration-300" style={{ width: '0%' }}></div>
-        </div>
-      </div>, 
-      { id: toastId }
-    )
+    toast.loading(<ToastProgress msg={t('localDb.progress_start')} percent={0} />, { id: toastId })
 
     try {
       await loadFromIsvFiles(Array.from(files), (progress) => {
@@ -59,18 +65,7 @@ export function LocalDbUploader() {
         setProgressMsg(msg)
         const percent = Math.round(progress.percent || 0)
         
-        toast.loading(
-          <div className="flex flex-col gap-2 w-[280px] mt-1">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-medium truncate" title={msg}>{msg}</span>
-              <span className="text-xs font-mono font-bold text-primary shrink-0">{percent}%</span>
-            </div>
-            <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden shrink-0">
-              <div className="h-full bg-primary transition-all duration-300" style={{ width: `${percent}%` }}></div>
-            </div>
-          </div>,
-          { id: toastId }
-        )
+        toast.loading(<ToastProgress msg={msg} percent={percent} />, { id: toastId })
       })
       setIsActive(true)
       setIsOpen(false)

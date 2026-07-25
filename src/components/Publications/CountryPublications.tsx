@@ -128,6 +128,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
           </Button>
           <div className="min-w-0">
             <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 truncate">
+              <span>{t("countryPubs.title_prefix") || "Publications de"}</span>
               {flagUrl && (
                 <img
                   src={flagUrl}
@@ -135,7 +136,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
                   className="w-6 h-4.5 rounded object-cover shadow-xs border border-border-subtle/10 shrink-0"
                 />
               )}
-              {t("countries.publications_title", { country: countryName }) || `Publications de : ${countryName}`}
+              <span>{countryName}</span>
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               {t("countryPubs.desc") || "Explorez les magazines et séries Disney publiés dans ce pays."}
@@ -191,7 +192,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
               <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-surface-2 px-3 py-1 rounded-xl border border-border-subtle shrink-0">
                 <FileText className="w-3.5 h-3.5 text-primary" />
                 <span>
-                  {p.issueCount} {p.issueCount > 1 ? "numéros" : "numéro"}
+                  {p.issueCount} {p.issueCount > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
                 </span>
               </div>
             </Card>

@@ -323,7 +323,7 @@
   "localDb": {
     "title": "Import Inducks database",
     "desc_1": "By default, InducksButBetter uses a remote hosting service which has usage limits. You can bypass these limits by loading your own local database!",
-    "desc_2": "Step 1: Download all the ISV files from the link below to your computer or phone.\nStep 2: Click the import area below and select all those files (ending in .isv).",
+    "desc_2": "Step 1: Download all the ISV files from the link below to your device.\nStep 2: Click the import area below and select all those files (ending in .isv).",
     "instructions_title": "How to install the local database?",
     "btn_import": "Import",
     "btn_local": "Local DB",

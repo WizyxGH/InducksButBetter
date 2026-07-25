@@ -44,6 +44,9 @@ export function handleDbError(err: any, customMessage?: string) {
 export function getFlagUrl(countryCode: string): string {
   if (!countryCode) return "";
   let code = countryCode.toLowerCase().trim();
+  if (code === "yu") {
+    return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Flag_of_Yugoslavia_%281946-1992%29.svg/20px-Flag_of_Yugoslavia_%281946-1992%29.svg.png";
+  }
   const map: Record<string, string> = {
     uk: "gb",
     en: "gb",

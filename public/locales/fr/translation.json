@@ -94,7 +94,7 @@
   "roles": {
     "any": "N'importe",
     "p": "Synopsis",
-    "w": "Script",
+    "w": "Scénario",
     "a": "Crayonné",
     "i": "Encrage"
   },
@@ -131,7 +131,8 @@
     "back": "Retour",
     "save": "Sauvegarder",
     "or": "ou",
-    "all_countries": "Tous les pays"
+    "all_countries": "Tous les pays",
+    "code": "Code"
   },
   "story": {
     "no_title": "Sans titre",
@@ -159,7 +160,7 @@
     "c": "Couverture",
     "i": "Illustration",
     "a": "Article",
-    "p": "Poster",
+    "p": "Affiche",
     "g": "Jeu",
     "f": "Double page centrale",
     "q": "Quiz",
@@ -323,7 +324,7 @@
   "localDb": {
     "title": "Base de données Inducks locale",
     "desc_1": "Par défaut, InducksButBetter utilise un service d'hébergement distant soumis à des quotas. Vous pouvez contourner cette limite en chargeant votre propre base de données !",
-    "desc_2": "Étape 1 : Téléchargez tous les fichiers ISV via le lien ci-dessous sur votre ordinateur ou téléphone.\nÉtape 2 : Cliquez sur la zone d'importation ci-dessous et sélectionnez la totalité de ces fichiers (se terminant par .isv).",
+    "desc_2": "Étape 1 : Téléchargez tous les fichiers ISV via le lien ci-dessous sur votre appareil.\nÉtape 2 : Cliquez sur la zone d'importation ci-dessous et sélectionnez la totalité de ces fichiers (se terminant par .isv).",
     "instructions_title": "Comment installer la base locale ?",
     "btn_import": "Importer",
     "btn_local": "DB locale",
@@ -430,7 +431,8 @@
     "onetime": "Personnage unique",
     "original_name": "Original",
     "international_names": "Noms internationaux",
-    "no_description": "Aucune description disponible pour ce personnage."
+    "no_description": "Aucune description disponible pour ce personnage.",
+    "character_code": "Code du personnage"
   },
   "legal": {
     "link": "Mentions légales",
@@ -444,7 +446,9 @@
     "country_name": "Pays",
     "publications_count": "Publications",
     "search_placeholder": "Filtrer les pays...",
-    "desc": "Sélectionnez un pays pour explorer ses publications Disney."
+    "desc": "Sélectionnez un pays pour explorer ses publications Disney.",
+    "publications_singular": "publication",
+    "publications_plural": "publications"
   },
   "countryPubs": {
     "title": "Publications de : {{country}}",
@@ -452,7 +456,8 @@
     "pub_code": "Code",
     "issues_count": "Nombre de numéros",
     "search_placeholder": "Filtrer les publications...",
-    "desc": "Explorez les magazines et séries Disney publiés dans ce pays."
+    "desc": "Explorez les magazines et séries Disney publiés dans ce pays.",
+    "title_prefix": "Publications de"
   },
   "publication": {
     "title": "Magazine : {{title}}",
@@ -468,10 +473,14 @@
     "empty": "Aucun numéro trouvé.",
     "content": "Contenu",
     "entry_one": "{{count}} entrée",
-    "entry_other": "{{count}} entrées"
+    "entry_other": "{{count}} entrées",
+    "issue_singular": "numéro",
+    "issues_plural": "numéros",
+    "error_load": "Impossible de charger les détails du numéro."
   },
   "publisher": {
-    "title": "Éditeur : {{publisher}}"
+    "title": "Éditeur : {{publisher}}",
+    "desc": "Explorez les magazines et séries édités par cette maison d'édition."
   },
   "onboarding": {
     "step1": {

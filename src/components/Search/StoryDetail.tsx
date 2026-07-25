@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { getFlagUrl } from "@/lib/utils"
 import { toast } from "sonner"
 import { EntityBadge } from "@/components/EntityBadge"
+import { KindBadge } from "@/components/KindBadge"
 
 interface StoryDetailProps {
   storycode: string
@@ -21,6 +22,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   const [loading, setLoading] = useState(true)
   const [story, setStory] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), [])
 
   // Accordion states
   const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({})
@@ -180,9 +182,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 </>
               )}
               <div className="flex items-center gap-1.5 ml-2">
-                <Badge variant="secondary" className="font-medium text-[10px]">
-                  {story.kind ? (t(`kinds.${story.kind}`, story.kind) as string) : (t("kinds.s") as string)}
-                </Badge>
+                <KindBadge kind={story.kind || "s"} />
                 {(story.entirepages || story.brokenpagenumerator) && (
                   <Badge variant="outline" className="font-medium text-[10px] gap-1 bg-surface">
                     <FileText className="w-3 h-3" />
@@ -327,7 +327,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
         {/* Right Content: Cover / Characters / Publications */}
         <div className="space-y-6">
           {/* Story Thumbnail (if available) */}
-          {story.story_thumb && (
+          {hasCookie && story.story_thumb && (
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden">
               <div className="aspect-[4/3] w-full flex items-center justify-center p-2 bg-zinc-50 dark:bg-zinc-800">
                 <img
@@ -426,7 +426,15 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                     {pubs.map((pub: any, i: number) => (
                       <div
                         key={pub.entrycode + i}
-                        onClick={() => onSelectIssue && onSelectIssue(pub.issuecode)}
+                        onClick={() => {
+                          if (pub.position) {
+                            const rootPrefix = window.location.hash.startsWith("#/publications") ? "publications" : "entries";
+                            const displayCode = pub.issuecode.replace(" ", "/");
+                            window.location.hash = `#/${rootPrefix}/issue/${encodeURIComponent(displayCode)}?pos=${encodeURIComponent(pub.position.trim().toLowerCase())}`;
+                          } else if (onSelectIssue) {
+                            onSelectIssue(pub.issuecode);
+                          }
+                        }}
                         className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-2 transition-colors cursor-pointer border border-transparent hover:border-border-subtle"
                       >
                         <div className="space-y-0.5 min-w-0 flex-1">

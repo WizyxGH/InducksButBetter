@@ -84,12 +84,12 @@
     "title_pub_label": "Serien- oder Ausgabentitel",
     "title_pub_placeholder": "Bsp: Four Color, US/FC...",
     "publications_found": "{{count}} Veröffentlichungen gefunden",
-    "category": "Category",
-    "category_placeholder": "Ex: comic book, magazine...",
-    "display": "Display",
-    "all_stories": "All stories",
-    "with_image_only": "With image only",
-    "without_image": "Without image only"
+    "category": "Kategorie",
+    "category_placeholder": "Z.B. Comic-Heft, Magazin...",
+    "display": "Anzeige",
+    "all_stories": "Alle Geschichten",
+    "with_image_only": "Nur mit Bild",
+    "without_image": "Nur ohne Bild"
   },
   "roles": {
     "any": "Beliebig",
@@ -103,10 +103,10 @@
     "pubdate_asc": "Älteste zuerst",
     "title_az": "Titel A-Z",
     "title_za": "Titel Z-A",
-    "issues_desc": "Most issues",
-    "issues_asc": "Fewest issues",
-    "oldest_first": "Oldest first",
-    "newest_first": "Newest first",
+    "issues_desc": "Die meisten Ausgaben",
+    "issues_asc": "Die wenigsten Ausgaben",
+    "oldest_first": "Älteste zuerst",
+    "newest_first": "Neueste zuerst",
     "pages_desc": "Mehr Seiten",
     "pages_asc": "Weniger Seiten",
     "published_most": "Am meisten veröffentlicht",
@@ -114,24 +114,25 @@
     "country_code": "Land & Code",
     "date_asc": "Datum (älteste)",
     "date_desc": "Datum (neuste)",
-    "stories_desc": "More stories",
-    "stories_asc": "Fewer stories",
+    "stories_desc": "Mehr Geschichten",
+    "stories_asc": "Weniger Geschichten",
     "name_asc": "Name A-Z",
     "name_desc": "Name Z-A",
-    "appearances_desc": "More appearances",
-    "appearances_asc": "Fewer appearances"
+    "appearances_desc": "Mehr Auftritte",
+    "appearances_asc": "Weniger Auftritte"
   },
   "common": {
     "loading": "Wird geladen...",
     "no_data": "Keine Daten gefunden",
     "error": "Ein Fehler ist aufgetreten",
-    "error_quota": "The online database is currently overloaded. To continue searching, please import the local database (.isv files) in the settings.",
-    "quota_banner": "The online database is overloaded. Please import the local database in the settings to continue your searches without any limits.",
-    "go_to_settings": "Go to settings",
+    "error_quota": "Die Online-Datenbank ist derzeit überlastet. Bitte importiere die lokale Datenbank (.isv-Dateien) in den Einstellungen, um weitersuchen zu können.",
+    "quota_banner": "Die Online-Datenbank ist überlastet. Bitte importiere die lokale Datenbank in den Einstellungen, um unbegrenzt suchen zu können.",
+    "go_to_settings": "Gehe zu den Einstellungen",
     "back": "Back",
     "save": "Speichern",
     "or": "or",
-    "all_countries": "All countries"
+    "all_countries": "Alle Länder",
+    "code": "Code"
   },
   "story": {
     "no_title": "Ohne Titel",
@@ -146,13 +147,13 @@
     "read_more": "Mehr lesen",
     "read_less": "Weniger",
     "none": "Keine",
-    "description": "Description",
+    "description": "Beschreibung",
     "other_publications": "Andere Veröffentlichungen",
-    "story_code": "Story code",
-    "creators": "Creators / Authors",
-    "characters": "Characters",
-    "uncredited": "Uncredited.",
-    "original_title": "Original title"
+    "story_code": "Geschichten-Code",
+    "creators": "Autoren & Zeichner",
+    "characters": "Figuren",
+    "uncredited": "Nicht namentlich genannt.",
+    "original_title": "Originaltitel"
   },
   "kinds": {
     "s": "Geschichte",
@@ -165,10 +166,10 @@
     "q": "Quiz",
     "w": "Unbekannt",
     "n": "Geschichte",
-    "k": "Daily/Weekly strip",
+    "k": "Täglicher/Wöchentlicher Strip",
     "t": "Text",
-    "P": "Painting (portrait)",
-    "L": "Painting (landscape)"
+    "P": "Gemälde (Porträt)",
+    "L": "Gemälde (Landschaft)"
   },
   "tabs": {
     "stories": "Geschichten",
@@ -310,9 +311,9 @@
     "language": "Sprache",
     "links": "Nützliche Links & Community",
     "links_desc": "Trete der Inducks-Community bei oder hilf mit, beim Projekt.",
-    "discord": "Inducks Discord server",
-    "contribute": "Contribute to the project",
-    "translate": "Translate the project",
+    "discord": "Inducks-Discord-Server",
+    "contribute": "Am Projekt mitwirken",
+    "translate": "Das Projekt übersetzen",
     "theme": "Anzeige",
     "inducks_cookie": "Inducks-Cookie",
     "cookie_desc": "Dieses Cookie ermöglicht das Laden hochauflösender Bilder von Inducks.",
@@ -324,11 +325,11 @@
     "title": "Inducks-Datenbank importieren",
     "desc_1": "Standardmäßig verwendet InducksButBetter eine Remote-Datenbank mit Nutzungsbeschränkungen. Du kannst diese Beschränkungen umgehen, indem Du die rohen Inducks ISV-Dateien lokal verwendest!",
     "desc_2": "Bitte lade das offizielle Inducks-Dump herunter, extrahiere die ZIP-Datei und wähle hier alle <1>.isv</1>-Dateien aus. Wir generieren die Datenbank im Speicher Deines Browsers.",
-    "instructions_title": "How to install the local database?",
+    "instructions_title": "Wie installiere ich die lokale Datenbank?",
     "btn_import": "DB importieren",
     "btn_local": "Lokale DB",
     "btn_select": ".isv-Dateien auswählen",
-    "btn_select_sub": "Select all the extracted .isv files",
+    "btn_select_sub": "Wähle alle extrahierten .isv-Dateien aus",
     "tooltip_active": "Lokale Datenbank wird verwendet",
     "tooltip_upload": "Lokale Datenbank hochladen",
     "progress_start": "Import wird gestartet...",
@@ -337,21 +338,21 @@
     "error": "Fehler beim Laden der ISV-Datenbank.",
     "already_imported": "Warnung: Du hast bereits eine lokale Datenbank importiert. Das Importieren neuer Dateien ersetzt die aktuelle.",
     "imported_stats": "Derzeit geladene Dateien: {{count}} (Gesamtgröße: {{size}})",
-    "btn_cloud": "Import automatically (Recommended)"
+    "btn_cloud": "Automatisch importieren (Empfohlen)"
   },
   "authors": {
-    "biography": "Biography",
+    "biography": "Biografie",
     "born": "Geboren",
     "deceased": "Gestorben",
     "birth_name": "Geburtsname",
     "aliases": "Pseudonyme",
     "links": "Links",
-    "education": "Education",
+    "education": "Ausbildung",
     "comics": "Comics",
-    "other": "Other",
+    "other": "Sonstiges",
     "coauthors": "Häufige Co-Autoren",
     "frequent_characters": "Häufige Figuren",
-    "favorite_characters": "Favorite characters",
+    "favorite_characters": "Lieblingsfiguren",
     "place_in": "in",
     "born_range": "Geburtsjahr",
     "deceased_range": "Todesjahr",
@@ -401,8 +402,8 @@
     "co_characters": "Häufige Begleiter",
     "stories_featuring": "Geschichten mit {{name}}",
     "title": "Figurensuche",
-    "code": "Character code",
-    "code_placeholder": "Ex: DD, MM...",
+    "code": "Figurencode",
+    "code_placeholder": "Z.B. DD, MM...",
     "name": "Figurenname",
     "name_placeholder": "Eine Figur suchen...",
     "universe": "Universum",
@@ -429,8 +430,8 @@
     "category": "Kategorie",
     "official": "Offizielle Figuren",
     "onetime": "Figur mit einem Auftritt",
-    "original_name": "Original name",
-    "international_names": "International names",
+    "original_name": "Originalname",
+    "international_names": "Internationale Namen",
     "no_description": "Keine Beschreibung für diese Figur verfügbar."
   },
   "legal": {
@@ -440,12 +441,14 @@
   },
   "countries": {
     "title": "Länderliste",
-    "publications_title": "Publications",
+    "publications_title": "Publikationen",
     "publication_title": "Publication Title",
     "country_name": "Land",
     "publications_count": "Veröffentlichungen",
     "search_placeholder": "Länder filtern...",
-    "desc": "Select a country to explore its Disney publications."
+    "desc": "Wähle ein Land aus, um dessen Disney-Publikationen zu erkunden.",
+    "publications_singular": "Publikation",
+    "publications_plural": "Publikationen"
   },
   "countryPubs": {
     "title": "Veröffentlichungen aus {{country}}",
@@ -453,7 +456,8 @@
     "pub_code": "Code",
     "issues_count": "Ausgabenanzahl",
     "search_placeholder": "Veröffentlichungen filtern...",
-    "desc": "Explore Disney magazines and series published in this country."
+    "desc": "Entdecke Disney-Magazine und -Serien, die in diesem Land veröffentlicht wurden.",
+    "title_prefix": "Publikationen aus"
   },
   "publication": {
     "title": "Magazin: {{title}}",
@@ -461,35 +465,39 @@
     "country": "Land",
     "language": "Sprache",
     "publisher": "Verlag",
-    "category": "Category",
+    "category": "Kategorie",
     "issues": "Ausgabenliste",
     "issue_no": "Ausgabe Nr.",
     "date": "Datum",
     "pages": "Seiten",
     "empty": "Keine Ausgaben gefunden.",
-    "content": "Content",
+    "content": "Inhalt",
     "entry_one": "{{count}} entry",
-    "entry_other": "{{count}} entries"
+    "entry_other": "{{count}} entries",
+    "issue_singular": "Ausgabe",
+    "issues_plural": "Ausgaben",
+    "error_load": "Details der Ausgabe konnten nicht geladen werden."
   },
   "publisher": {
-    "title": "Publisher: {{publisher}}"
+    "title": "Publisher: {{publisher}}",
+    "desc": "Entdecke die von diesem Verlag herausgegebenen Magazine und Serien."
   },
   "onboarding": {
     "step1": {
-      "title": "Explore the Inducks database",
-      "desc": "Search through thousands of stories, explore publications by country, and discover your favorite Disney authors and characters."
+      "title": "Erkunde die Inducks-Datenbank",
+      "desc": "Suche in Tausenden von Geschichten, erkunde Publikationen nach Ländern und entdecke deine Lieblings-Autoren, Zeichner und -Figuren."
     },
     "step2": {
-      "title": "Local database",
-      "desc": "Since the online database is limited, we highly recommend using the local database. Go to the settings to download and import the (.isv) files for unlimited access."
+      "title": "Lokale Datenbank",
+      "desc": "Da die Online-Datenbank limitiert ist, empfehlen wir dringend die Nutzung der lokalen Datenbank. Gehe zu den Einstellungen, um die (.isv)-Dateien für unbegrenzten Zugriff herunterzuladen und zu importieren."
     },
     "step3": {
-      "title": "Your collection",
-      "desc": "Add the comics you own to your personal collection to be able to filter your searches later."
+      "title": "Deine Sammlung",
+      "desc": "Füge die Comics, die du besitzt, zu deiner persönlichen Sammlung hinzu, um deine Suchen später filtern zu können."
     },
     "step4": {
-      "title": "Join the project",
-      "desc": "You can contribute to the project on GitHub or join our Discord server!"
+      "title": "Tritt dem Projekt bei",
+      "desc": "Du kannst auf GitHub am Projekt mitwirken oder unserem Discord-Server beitreten!"
     }
   }
 }

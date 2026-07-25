@@ -250,19 +250,21 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
               {publication.publishers && publication.publishers.length > 0 ? (
                 <div className="flex justify-between py-1 border-b border-border-subtle/30">
                   <span className="font-bold text-muted-foreground">{t("publication.publisher") || "Éditeur(s)"}</span>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-wrap justify-end gap-x-1 font-semibold text-foreground text-right max-w-[70%]">
                     {publication.publishers.map((pub, idx) => (
-                      <span 
-                        key={pub.id || idx}
-                        className="font-semibold text-foreground text-right cursor-pointer hover:text-primary transition-colors hover:underline"
-                        onClick={() => {
-                          if (pub.id) {
-                            window.location.hash = `#/publishers/${encodeURIComponent(pub.id)}`;
-                          }
-                        }}
-                      >
-                        {pub.name}
-                      </span>
+                      <React.Fragment key={pub.id || idx}>
+                        <span 
+                          className="cursor-pointer hover:text-primary transition-colors hover:underline"
+                          onClick={() => {
+                            if (pub.id) {
+                              window.location.hash = `#/publishers/${encodeURIComponent(pub.id)}`;
+                            }
+                          }}
+                        >
+                          {pub.name}
+                        </span>
+                        {idx < publication.publishers!.length - 1 && <span className="text-muted-foreground mr-0.5">,</span>}
+                      </React.Fragment>
                     ))}
                   </div>
                 </div>
@@ -305,7 +307,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                   {t("publication.issues") || "Liste des numéros"}
                 </span>
                 <Badge variant="secondary" className="font-bold text-xs">
-                  {issues.length} {issues.length > 1 ? "numéros" : "numéro"}
+                  {issues.length} {issues.length > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -322,7 +324,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                         <h3 className="font-bold text-foreground text-base tracking-tight">{year}</h3>
                         <div className="h-px bg-border-subtle flex-1" />
                         <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                          {(yearIssues as any[]).length} {(yearIssues as any[]).length > 1 ? "numéros" : "numéro"}
+                          {(yearIssues as any[]).length} {(yearIssues as any[]).length > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
                         </span>
                       </div>
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">

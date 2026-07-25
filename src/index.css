@@ -194,3 +194,37 @@
   }
 }
 
+@keyframes highlight-pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 hsla(var(--primary), 0.4);
+    transform: scale(1);
+    border-color: hsl(var(--primary));
+  }
+  15% {
+    transform: scale(1.015);
+    box-shadow: 0 0 0 10px hsla(var(--primary), 0.2), 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: hsl(var(--primary));
+    background-color: hsla(var(--primary), 0.05);
+  }
+  30% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px hsla(var(--primary), 0.1), 0 2px 6px rgba(0, 0, 0, 0.02);
+    border-color: hsl(var(--primary));
+  }
+  60% {
+    box-shadow: 0 0 0 2px hsla(var(--primary), 0.05);
+    border-color: hsla(var(--primary), 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    transform: scale(1);
+  }
+}
+
+.highlight-pulse {
+  animation: highlight-pulse-glow 2s cubic-bezier(0.25, 1, 0.5, 1) both;
+  z-index: 10;
+  position: relative;
+}
+
+

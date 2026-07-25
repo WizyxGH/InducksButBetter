@@ -34,7 +34,7 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
             FROM inducks_country c
             ORDER BY countryname ASC
           `,
-          args: [i18n.language]
+          args: [i18n.language?.split("-")[0] || "en"]
         });
         // Filter out countries that have 0 publications to avoid clutter
         const filtered = (result.rows as CountryInfo[]).filter(c => c.pubCount > 0);
@@ -106,10 +106,9 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
                   <h3 className="font-semibold text-foreground truncate">
                     {c.countryname}
                   </h3>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <LibraryBig className="w-3 h-3 text-primary shrink-0" />
+                  <div className="text-[10px] text-muted-foreground">
                     <span>
-                      {c.pubCount} {c.pubCount > 1 ? "séries" : "série"}
+                      {c.pubCount} {c.pubCount > 1 ? t("countries.publications_plural", "publications") : t("countries.publications_singular", "publication")}
                     </span>
                   </div>
                 </div>

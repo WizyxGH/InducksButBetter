@@ -94,6 +94,8 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
     }
   };
 
+  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), []);
+
   return (
     <Card
       onClick={handleClick}
@@ -103,9 +105,10 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
     >
       <CardContent className="p-0 flex flex-row">
         {/* Left: Cover Thumbnail */}
-        <div
-          className="w-[140px] sm:w-[180px] shrink-0 border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
-        >
+        {hasCookie && (
+          <div
+            className="w-[140px] sm:w-[180px] shrink-0 border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
+          >
           {thumbData && !imageError && !imageLoaded && (
             <div className="absolute inset-1 rounded animate-shimmer" />
           )}
@@ -143,6 +146,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
             </Button>
           )}
         </div>
+        )}
 
         {/* Right: Content */}
         <div className="flex-1 flex flex-col min-w-0 p-5 gap-3">

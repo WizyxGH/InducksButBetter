@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip"
 import { EntityBadge } from "@/components/EntityBadge"
 import { FlagBadge } from "@/components/FlagBadge"
+import { KindBadge } from "@/components/KindBadge"
 
 interface StoryResultCardProps {
   row: any
@@ -178,6 +179,8 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
     }
   };
 
+  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), []);
+
   return (
     <Card
       onClick={handleClick}
@@ -187,9 +190,10 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
     >
       <CardContent className="p-0 flex flex-col sm:flex-row">
         {/* Left: Thumbnail */}
-        <div
-          className="w-full h-48 sm:w-[200px] sm:h-auto shrink-0 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
-        >
+        {hasCookie && (
+          <div
+            className="w-full h-48 sm:w-[200px] sm:h-auto shrink-0 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
+          >
           {/* Shimmer skeleton while image loads */}
           {thumbData && !imageError && !imageLoaded && (
             <div className="absolute inset-1 rounded animate-shimmer" />
@@ -228,6 +232,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
             </Button>
           )}
         </div>
+        )}
 
         {/* Right: Content */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -282,7 +287,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                     : (row.brokenpagenumerator && row.brokenpagedenominator)
                       ? `${row.brokenpagenumerator}/${row.brokenpagedenominator}`
                       : "?"
-                } {t('story.pages')} · <span className="text-blue-600/80 font-medium">{t(`kinds.${row.kind}`) || row.kind}</span>
+                } {t('story.pages')} · <KindBadge kind={row.kind} />
               </div>
               <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
                 <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('story.release_date')} :</span> {formatDate(row.firstpublicationdate)}

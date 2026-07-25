@@ -23,6 +23,7 @@ export function EntityBadge({
   onSelect,
 }: EntityBadgeProps) {
   const isCharacter = type === "character"
+  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), [])
 
   const avatarSize = size === "sm" ? "w-4 h-4" : "w-5 h-5"
   const tooltipAvatarSize = "w-12 h-12"
@@ -73,7 +74,7 @@ export function EntityBadge({
             onClick={handleClick}
             className="flex items-center gap-1.5 hover:bg-surface-2 p-1 -m-1 rounded-md transition-colors cursor-pointer"
           >
-            {renderAvatar(avatarSize, size === "sm" ? "text-[6px]" : "text-[8px]")}
+            {hasCookie && renderAvatar(avatarSize, size === "sm" ? "text-[6px]" : "text-[8px]")}
             <span className={`${size === "sm" ? "text-[10px]" : "text-xs"} text-primary hover:underline font-medium whitespace-nowrap`}>
               {name}
             </span>
@@ -81,7 +82,7 @@ export function EntityBadge({
         </TooltipTrigger>
         <TooltipContent className="max-w-[300px] text-xs leading-relaxed p-3">
           <div className="flex gap-3 items-start">
-            {renderAvatar(tooltipAvatarSize, "text-[16px]")}
+            {hasCookie && renderAvatar(tooltipAvatarSize, "text-[16px]")}
             <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
               <p className="font-bold text-foreground">
                 {name}

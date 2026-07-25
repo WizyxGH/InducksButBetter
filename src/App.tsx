@@ -82,7 +82,8 @@ function App() {
       }
 
       const decodedHash = decodeURIComponent(hash);
-      const parts = decodedHash.replace("#/", "").split("/");
+      const [pathPart, queryPart] = decodedHash.split("?");
+      const parts = pathPart.replace("#/", "").split("/");
       const rootPart = parts[0];
 
       if (rootPart === "settings") {
@@ -158,13 +159,17 @@ function App() {
     // Force the path to be the absolute base path to avoid nested relative paths
     const baseUrl = import.meta.env.BASE_URL || "/";
     const cleanBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-    const expectedUrl = `${cleanBase}${expectedHash}`;
     
-    // Compare actual URL (path + hash) to avoid duplicate pushState calls
-    const currentUrl = window.location.pathname + window.location.hash;
-    if (currentUrl !== expectedUrl) {
-      window.history.pushState(null, "", expectedUrl);
+    // Compare actual URL (path + hash without query) to avoid duplicate pushState calls
+    const currentCleanHash = window.location.hash.split("?")[0];
+    const expectedCleanHash = expectedHash.split("?")[0];
+    
+    if (currentCleanHash === expectedCleanHash) {
+      return;
     }
+    
+    const expectedUrl = `${cleanBase}${expectedHash}`;
+    window.history.pushState(null, "", expectedUrl);
   };
 
   useEffect(() => {
@@ -237,107 +242,121 @@ function App() {
           {/* Content Viewport */}
           <div className="flex-1 min-h-0 overflow-hidden relative">
             <TabsContent value="stories" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
-              <Suspense fallback={<TabFallback />}>
-                <AdvancedSearch
-                  selectedStorycode={selectedStorycode}
-                  setSelectedStorycode={setSelectedStorycode}
-                  selectedIssuecode={selectedIssuecode}
-                  setSelectedIssuecode={setSelectedIssuecode}
-                />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="sql" className="h-full m-0 p-0 border-none outline-none bg-surface overflow-auto">
-              <div className="p-4 lg:px-12">
+              {activeTab === "stories" && (
                 <Suspense fallback={<TabFallback />}>
-                  <SqlEditor query={sqlQuery} setQuery={setSqlQuery} />
-                </Suspense>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="publications" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
-              <Suspense fallback={<TabFallback />}>
-                {selectedIssuecode ? (
-                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
-                    <IssueDetail
-                      issuecode={selectedIssuecode}
-                      onBack={() => navigateBack(() => setSelectedIssuecode(null))}
-                      onSelectStory={(code) => {
-                        setSelectedStorycode(code)
-                        setActiveTab("stories")
-                      }}
-                    />
-                  </div>
-                ) : selectedPublicationcode ? (
-                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
-                    <PublicationDetail
-                      publicationcode={selectedPublicationcode}
-                      onBack={() => navigateBack(() => setSelectedPublicationcode(null))}
-                      onSelectIssue={(code) => setSelectedIssuecode(code)}
-                    />
-                  </div>
-                ) : selectedPublisherid ? (
-                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
-                    <PublisherDetail
-                      publisherid={selectedPublisherid}
-                      onBack={() => navigateBack(() => setSelectedPublisherid(null))}
-                      onSelectPublication={(code) => setSelectedPublicationcode(code)}
-                    />
-                  </div>
-                ) : (
-                  <PublicationsSearch
+                  <AdvancedSearch
                     selectedStorycode={selectedStorycode}
                     setSelectedStorycode={setSelectedStorycode}
                     selectedIssuecode={selectedIssuecode}
                     setSelectedIssuecode={setSelectedIssuecode}
                   />
-                )}
-              </Suspense>
+                </Suspense>
+              )}
+            </TabsContent>
+
+            <TabsContent value="sql" className="h-full m-0 p-0 border-none outline-none bg-surface overflow-auto">
+              {activeTab === "sql" && (
+                <div className="p-4 lg:px-12">
+                  <Suspense fallback={<TabFallback />}>
+                    <SqlEditor query={sqlQuery} setQuery={setSqlQuery} />
+                  </Suspense>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="publications" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
+              {activeTab === "publications" && (
+                <Suspense fallback={<TabFallback />}>
+                  {selectedIssuecode ? (
+                    <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                      <IssueDetail
+                        issuecode={selectedIssuecode}
+                        onBack={() => navigateBack(() => setSelectedIssuecode(null))}
+                        onSelectStory={(code) => {
+                          setSelectedStorycode(code)
+                          setActiveTab("stories")
+                        }}
+                      />
+                    </div>
+                  ) : selectedPublicationcode ? (
+                    <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                      <PublicationDetail
+                        publicationcode={selectedPublicationcode}
+                        onBack={() => navigateBack(() => setSelectedPublicationcode(null))}
+                        onSelectIssue={(code) => setSelectedIssuecode(code)}
+                      />
+                    </div>
+                  ) : selectedPublisherid ? (
+                    <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                      <PublisherDetail
+                        publisherid={selectedPublisherid}
+                        onBack={() => navigateBack(() => setSelectedPublisherid(null))}
+                        onSelectPublication={(code) => setSelectedPublicationcode(code)}
+                      />
+                    </div>
+                  ) : (
+                    <PublicationsSearch
+                      selectedStorycode={selectedStorycode}
+                      setSelectedStorycode={setSelectedStorycode}
+                      selectedIssuecode={selectedIssuecode}
+                      setSelectedIssuecode={setSelectedIssuecode}
+                    />
+                  )}
+                </Suspense>
+              )}
             </TabsContent>
 
             <TabsContent value="countries" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
-              <Suspense fallback={<TabFallback />}>
-                {selectedCountrycode ? (
-                  <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
-                    <CountryPublications
-                      countrycode={selectedCountrycode}
-                      onBack={() => navigateBack(() => setSelectedCountrycode(null))}
-                      onSelectPublication={(code) => {
-                        setSelectedPublicationcode(code);
-                        setActiveTab("publications"); // go back to publications to show details
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="h-full overflow-y-auto w-full">
-                    <CountryList onSelectCountry={setSelectedCountrycode} />
-                  </div>
-                )}
-              </Suspense>
+              {activeTab === "countries" && (
+                <Suspense fallback={<TabFallback />}>
+                  {selectedCountrycode ? (
+                    <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                      <CountryPublications
+                        countrycode={selectedCountrycode}
+                        onBack={() => navigateBack(() => setSelectedCountrycode(null))}
+                        onSelectPublication={(code) => {
+                          setSelectedPublicationcode(code);
+                          setActiveTab("publications"); // go back to publications to show details
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full overflow-y-auto w-full">
+                      <CountryList onSelectCountry={setSelectedCountrycode} />
+                    </div>
+                  )}
+                </Suspense>
+              )}
             </TabsContent>
 
             <TabsContent value="authors" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
-              <Suspense fallback={<TabFallback />}>
-                <AuthorsSearch
-                  selectedAuthorcode={selectedPersoncode}
-                  setSelectedAuthorcode={setSelectedPersoncode}
-                />
-              </Suspense>
+              {activeTab === "authors" && (
+                <Suspense fallback={<TabFallback />}>
+                  <AuthorsSearch
+                    selectedAuthorcode={selectedPersoncode}
+                    setSelectedAuthorcode={setSelectedPersoncode}
+                  />
+                </Suspense>
+              )}
             </TabsContent>
 
             <TabsContent value="characters" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
-              <Suspense fallback={<TabFallback />}>
-                <CharactersSearch
-                  selectedCharactercode={selectedCharactercode}
-                  setSelectedCharactercode={setSelectedCharactercode}
-                />
-              </Suspense>
+              {activeTab === "characters" && (
+                <Suspense fallback={<TabFallback />}>
+                  <CharactersSearch
+                    selectedCharactercode={selectedCharactercode}
+                    setSelectedCharactercode={setSelectedCharactercode}
+                  />
+                </Suspense>
+              )}
             </TabsContent>
 
             <TabsContent value="settings" className="h-full m-0 p-0 border-none outline-none overflow-auto bg-surface-2/40">
-              <Suspense fallback={<TabFallback />}>
-                <Settings />
-              </Suspense>
+              {activeTab === "settings" && (
+                <Suspense fallback={<TabFallback />}>
+                  <Settings />
+                </Suspense>
+              )}
             </TabsContent>
           </div>
         </Tabs>

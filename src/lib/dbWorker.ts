@@ -24,6 +24,7 @@ self.onmessage = async (e: MessageEvent) => {
         let processed = 0;
         let totalGlobalBytes = files.reduce((acc: number, f: any) => acc + (f.size || 0), 0);
         let globalBytesRead = 0;
+        let lastReportedGlobalPercent = -1;
         
         for (const file of files as any[]) {
           const fileName = file.name || file.name;
@@ -36,7 +37,17 @@ self.onmessage = async (e: MessageEvent) => {
             continue;
           }
           
-          self.postMessage({ type: 'progress', table: tableName, current: processed + 1, total: files.length });
+          const startPercent = totalGlobalBytes > 0 
+            ? Math.min(99, Math.round((globalBytesRead / totalGlobalBytes) * 100)) 
+            : Math.round((processed / files.length) * 100);
+          
+          self.postMessage({ 
+            type: 'progress', 
+            table: tableName, 
+            percent: startPercent,
+            current: processed + 1, 
+            total: files.length 
+          });
           
           let stream;
           if (isUrl) {
@@ -90,19 +101,17 @@ self.onmessage = async (e: MessageEvent) => {
               stmt.run(boundValues);
             }
 
-            // Report progress within the current file every 5% to keep UI responsive
+            // Report progress within the current file every 1% of global progress
             if (fileSize > 0) {
-              const filePercent = Math.min(99, Math.round((bytesRead / fileSize) * 100));
-              if (filePercent >= lastReportedPercent + 5) {
-                lastReportedPercent = filePercent;
-                
-                let globalPercent = 0;
-                if (totalGlobalBytes > 0) {
-                  globalPercent = Math.min(99, Math.round(((globalBytesRead + bytesRead) / totalGlobalBytes) * 100));
-                } else {
-                  globalPercent = Math.round(((processed + (bytesRead / fileSize)) / files.length) * 100);
-                }
+              let globalPercent = 0;
+              if (totalGlobalBytes > 0) {
+                globalPercent = Math.min(99, Math.round(((globalBytesRead + bytesRead) / totalGlobalBytes) * 100));
+              } else {
+                globalPercent = Math.round(((processed + (bytesRead / fileSize)) / files.length) * 100);
+              }
 
+              if (globalPercent > lastReportedGlobalPercent) {
+                lastReportedGlobalPercent = globalPercent;
                 self.postMessage({
                   type: 'progress',
                   table: tableName,

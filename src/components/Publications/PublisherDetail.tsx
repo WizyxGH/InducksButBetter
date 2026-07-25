@@ -33,6 +33,15 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
   const [sortOrder, setSortOrder] = useState("title_asc");
+  const [selectedCountry, setSelectedCountry] = useState("all");
+
+  const availableCountries = React.useMemo(() => {
+    const countriesSet = new Set<string>();
+    publications.forEach(p => {
+      if (p.countrycode) countriesSet.add(p.countrycode);
+    });
+    return Array.from(countriesSet).sort();
+  }, [publications]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,7 +71,7 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
             JOIN inducks_issue i ON pj.issuecode = i.issuecode
             JOIN inducks_publication p ON i.publicationcode = p.publicationcode
             WHERE pj.publisherid = ?
-            GROUP BY p.publicationcode, title, p.languagecode, p.countrycode, p.publicationcomment
+            GROUP BY p.publicationcode, p.title, p.languagecode, p.countrycode, p.publicationcomment
           `,
           args: [publisherid]
         });
@@ -84,6 +93,9 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
       p.title.toLowerCase().includes(filterText.toLowerCase()) ||
       p.publicationcode.toLowerCase().includes(filterText.toLowerCase())
     );
+    if (selectedCountry !== "all") {
+      filtered = filtered.filter(p => p.countrycode === selectedCountry);
+    }
     if (sortOrder === "title_asc") {
       filtered.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortOrder === "title_desc") {
@@ -92,9 +104,27 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
       filtered.sort((a, b) => b.issueCount - a.issueCount);
     } else if (sortOrder === "issues_asc") {
       filtered.sort((a, b) => a.issueCount - b.issueCount);
+    } else if (sortOrder === "date_asc") {
+      filtered.sort((a, b) => {
+        const yearA = a.minYear && a.minYear !== "0000" ? parseInt(a.minYear) : 9999;
+        const yearB = b.minYear && b.minYear !== "0000" ? parseInt(b.minYear) : 9999;
+        return yearA - yearB;
+      });
+    } else if (sortOrder === "date_desc") {
+      filtered.sort((a, b) => {
+        const yearA = a.maxYear && a.maxYear !== "9999" ? parseInt(a.maxYear) : 0;
+        const yearB = b.maxYear && b.maxYear !== "9999" ? parseInt(b.maxYear) : 0;
+        return yearB - yearA;
+      });
+    } else if (sortOrder === "country_asc") {
+      filtered.sort((a, b) => {
+        const cCompare = a.countrycode.localeCompare(b.countrycode);
+        if (cCompare !== 0) return cCompare;
+        return a.title.localeCompare(b.title);
+      });
     }
     return filtered;
-  }, [publications, filterText, sortOrder]);
+  }, [publications, filterText, selectedCountry, sortOrder]);
 
   const flagUrl = getFlagUrl(publisherCountry);
 
@@ -130,7 +160,7 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
               {t("publisher.title", { publisher: publisherName }) || `Éditeur : ${publisherName}`}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Explorez les magazines et séries édités par cette maison d'édition.
+              {t("publisher.desc") || "Explorez les magazines et séries édités par cette maison d'édition."}
             </p>
           </div>
         </div>
@@ -139,17 +169,40 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
             placeholder={t("countryPubs.search_placeholder") || "Filtrer les publications..."}
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
-            className="w-full sm:w-64 rounded-xl h-10 border-border-subtle bg-surface"
+            className="w-full sm:w-60 rounded-xl h-10 border-border-subtle bg-surface"
           />
+          {availableCountries.length > 1 && (
+            <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+              <SelectTrigger className="w-full sm:w-40 h-10 border-border-subtle bg-surface rounded-xl text-sm">
+                <SelectValue placeholder={t("common.all_countries") || "Tous les pays"} />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border-subtle bg-surface">
+                <SelectItem value="all" className="rounded-lg">{t("common.all_countries") || "Tous les pays"}</SelectItem>
+                {availableCountries.map(code => (
+                  <SelectItem key={code} value={code} className="rounded-lg">
+                    <span className="flex items-center gap-2">
+                      {getFlagUrl(code) && (
+                        <img src={getFlagUrl(code)} alt={code} className="w-4 h-3 rounded-xs object-cover shrink-0" />
+                      )}
+                      <span className="uppercase font-bold text-xs">{code}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={sortOrder} onValueChange={setSortOrder}>
             <SelectTrigger className="w-full sm:w-48 h-10 border-border-subtle bg-surface rounded-xl text-sm">
-              <SelectValue placeholder="Trier par..." />
+              <SelectValue placeholder={t("search.sort_by") || "Trier par..."} />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-border-subtle bg-surface">
-              <SelectItem value="title_asc" className="rounded-lg">Titre A-Z</SelectItem>
-              <SelectItem value="title_desc" className="rounded-lg">Titre Z-A</SelectItem>
-              <SelectItem value="issues_desc" className="rounded-lg">Plus de numéros</SelectItem>
-              <SelectItem value="issues_asc" className="rounded-lg">Moins de numéros</SelectItem>
+              <SelectItem value="title_asc" className="rounded-lg">{t("sort.title_az") || "Titre A-Z"}</SelectItem>
+              <SelectItem value="title_desc" className="rounded-lg">{t("sort.title_za") || "Titre Z-A"}</SelectItem>
+              <SelectItem value="issues_desc" className="rounded-lg">{t("sort.issues_desc") || "Plus de numéros"}</SelectItem>
+              <SelectItem value="issues_asc" className="rounded-lg">{t("sort.issues_asc") || "Moins de numéros"}</SelectItem>
+              <SelectItem value="date_asc" className="rounded-lg">{t("sort.oldest_first") || "Plus anciennes d'abord"}</SelectItem>
+              <SelectItem value="date_desc" className="rounded-lg">{t("sort.newest_first") || "Plus récentes d'abord"}</SelectItem>
+              <SelectItem value="country_asc" className="rounded-lg">{t("sort.country_code") || "Pays & Code"}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -188,7 +241,7 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
               <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-surface-2 px-3 py-1 rounded-xl border border-border-subtle shrink-0">
                 <FileText className="w-3.5 h-3.5 text-primary" />
                 <span>
-                  {p.issueCount} {p.issueCount > 1 ? "numéros" : "numéro"}
+                  {p.issueCount} {p.issueCount > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
                 </span>
               </div>
             </Card>
