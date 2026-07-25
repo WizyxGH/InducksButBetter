@@ -15,6 +15,7 @@ import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
 import { autocompletePublisher, autocompletePerson, autocompletePublicationTitle, autocompleteIndexer } from "@/lib/turso";
 
 import { getFlagUrl } from "@/lib/utils";
+import { useSearchDisabled } from "@/hooks/useSearchDisabled";
 
 interface PublicationsSearchFormProps {
   filters: PublicationsSearchFilters;
@@ -34,6 +35,7 @@ export function PublicationsSearchForm({
   meta,
 }: PublicationsSearchFormProps) {
   const { t } = useTranslation();
+  const isSearchDisabled = useSearchDisabled();
 
   return (
     <div className="flex-none lg:flex-1 flex flex-col border-border-subtle/60 dark:border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl overflow-visible lg:overflow-hidden bg-surface">
@@ -46,7 +48,7 @@ export function PublicationsSearchForm({
       <ScrollArea className="flex-1 w-full bg-surface mobile-no-scroll">
         <div className="p-4 lg:p-8 pt-0">
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6" onSubmit={(e) => handleSearch(e)}>
-            
+
             {/* Country */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.publication_country")}</Label>
@@ -254,7 +256,7 @@ export function PublicationsSearchForm({
         <Button
           className="flex-[1.5] rounded-xl h-11"
           onClick={() => handleSearch()}
-          disabled={loading}
+          disabled={loading || isSearchDisabled}
         >
           {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           {t("search.submit")}

@@ -20,6 +20,7 @@ import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
 import { AUTHOR_NATIONALITIES, KIND_LABELS } from "@/lib/constants";
 import { autocompleteStorycode, autocompletePublisher, autocompletePerson, autocompleteCharacter } from "@/lib/turso";
 import { getFlagUrl } from "@/lib/utils";
+import { useSearchDisabled } from "@/hooks/useSearchDisabled";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -28,9 +29,9 @@ const LAYOUT_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
 /** Display filter options for the "Affichage" (image presence) select. */
 const IMAGE_OPTIONS = [
-  { value: "all",  labelKey: "search.all_stories"    },
-  { value: "yes",  labelKey: "search.with_image_only" },
-  { value: "no",   labelKey: "search.without_image"   },
+  { value: "all", labelKey: "search.all_stories" },
+  { value: "yes", labelKey: "search.with_image_only" },
+  { value: "no", labelKey: "search.without_image" },
 ] as const;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -85,6 +86,7 @@ export function SearchForm({
   setTotalCount,
 }: SearchFormProps) {
   const { t, i18n } = useTranslation();
+  const isSearchDisabled = useSearchDisabled();
 
   // ── Stable filter updater (functional form avoids stale closure issues) ────
 
@@ -113,7 +115,7 @@ export function SearchForm({
         value: c.countrycode,
         label:
           t(`nationalities.${c.countrycode.toLowerCase()}`) !==
-          `nationalities.${c.countrycode.toLowerCase()}`
+            `nationalities.${c.countrycode.toLowerCase()}`
             ? t(`nationalities.${c.countrycode.toLowerCase()}`)
             : c.countryname,
         group: t(`continents.${COUNTRY_CONTINENTS[c.countrycode.toLowerCase()] || "other"}`),
@@ -723,7 +725,7 @@ export function SearchForm({
         <Button
           className="flex-[1.5] rounded-xl h-11"
           onClick={() => handleSearch()}
-          disabled={loading}
+          disabled={loading || isSearchDisabled}
         >
           {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           {t("search.submit")}
