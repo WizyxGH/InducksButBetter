@@ -22,10 +22,10 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   { code: "fr", name: "Français (FR)",   flag: "https://flagcdn.com/w20/fr.png" },
   { code: "en", name: "English (US)",    flag: "https://flagcdn.com/w20/us.png" },
   { code: "de", name: "Deutsch (DE)",    flag: "https://flagcdn.com/w20/de.png" },
+  { code: "es", name: "Español (ES)",    flag: "https://flagcdn.com/w20/es.png" },
+  { code: "it", name: "Italiano (IT)",   flag: "https://flagcdn.com/w20/it.png" },
+  { code: "pt", name: "Português (PT)",  flag: "https://flagcdn.com/w20/pt.png" },
   // Uncomment each entry once its Crowdin coverage is sufficient:
-  // { code: "es", name: "Español (ES)",    flag: "https://flagcdn.com/w20/es.png" },
-  // { code: "it", name: "Italiano (IT)",   flag: "https://flagcdn.com/w20/it.png" },
-  // { code: "pt", name: "Português (PT)",  flag: "https://flagcdn.com/w20/pt.png" },
   // { code: "nl", name: "Nederlands (NL)", flag: "https://flagcdn.com/w20/nl.png" },
   // { code: "da", name: "Dansk (DA)",      flag: "https://flagcdn.com/w20/dk.png" },
   // { code: "sv", name: "Svenska (SV)",    flag: "https://flagcdn.com/w20/se.png" },
