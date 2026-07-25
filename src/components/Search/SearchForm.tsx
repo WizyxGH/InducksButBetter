@@ -20,6 +20,7 @@ import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
 import { AUTHOR_NATIONALITIES, KIND_LABELS } from "@/lib/constants";
 import { autocompleteStorycode, autocompletePublisher, autocompletePerson, autocompleteCharacter } from "@/lib/turso";
 import { getFlagUrl } from "@/lib/utils";
+import { useSearchDisabled } from "@/hooks/useSearchDisabled";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -85,6 +86,7 @@ export function SearchForm({
   setTotalCount,
 }: SearchFormProps) {
   const { t, i18n } = useTranslation();
+  const isSearchDisabled = useSearchDisabled();
 
   // ── Stable filter updater (functional form avoids stale closure issues) ────
 
@@ -723,7 +725,7 @@ export function SearchForm({
         <Button
           className="flex-[1.5] rounded-xl h-11"
           onClick={() => handleSearch()}
-          disabled={loading}
+          disabled={loading || isSearchDisabled}
         >
           {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           {t("search.submit")}
