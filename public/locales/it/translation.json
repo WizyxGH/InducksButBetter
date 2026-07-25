@@ -29,7 +29,7 @@
     "exclude_author_placeholder": "Ex: Carl Barks, Don Rosa...",
     "author_nationality": "Author nationality",
     "heroes": "Heroes",
-    "heroes_placeholder": "Paperino, Topolino...",
+    "heroes_placeholder": "Donald, Mickey...",
     "universe": "Universe",
     "all_universes": "All universes",
     "search_universe": "Ex: Donald Duck, Mickey Mouse...",
@@ -136,7 +136,7 @@
   "story": {
     "no_title": "Untitled",
     "pagination": "Pagination",
-    "release_date": "Data di pubblicazione",
+    "release_date": "Release date",
     "unknown_date": "Unknown",
     "publications": "Publications",
     "script": "Script",
@@ -161,7 +161,7 @@
     "a": "Article",
     "p": "Poster",
     "g": "Game",
-    "f": "Doppia pagina centrale",
+    "f": "Centerfold",
     "q": "Quiz",
     "w": "Unknown",
     "n": "Story",
@@ -177,9 +177,9 @@
     "characters": "Characters",
     "sql": "SQL",
     "coming_soon": {
-      "publications": "Esplorare pubblicazioni disponibile a breve...",
-      "authors": "Esplorare autori disponibile a breve...",
-      "characters": "Esplorare personaggi disponibile a breve..."
+      "publications": "Publication explorer coming soon...",
+      "authors": "Authors explorer coming soon...",
+      "characters": "Characters explorer coming soon..."
     },
     "countries": "Countries"
   },
@@ -188,7 +188,7 @@
     "subtitle": "Find exactly what you are looking for in the Inducks database"
   },
   "ai": {
-    "welcome": "Ciao! Sono il tuo esperto di Inducks. Posso aiutarti a scrivere domande SQL complesse. Cosa stai cercando?",
+    "welcome": "Hello! I am your Inducks expert. I can help you write complex SQL queries. What are you looking for?",
     "error": "Sorry, an error occurred while connecting to the assistant.",
     "thinking": "The assistant is thinking...",
     "placeholder": "Ex: Scrooge stories by Barks...",
@@ -197,8 +197,8 @@
     "voice_disable": "Disable voice reading",
     "voice_enable": "Enable voice reading",
     "use": "Use",
-    "listening": "Ascoltando...",
-    "dictate": "Dettare la domanda",
+    "listening": "Listening...",
+    "dictate": "Dictate your query",
     "listening_placeholder": "I'm listening...",
     "activate_title": "Activate Local AI",
     "activate_desc": "To work offline and for free, the AI {{size}}must be downloaded once. It will use your browser's power.",
@@ -207,15 +207,15 @@
   },
   "sql": {
     "title": "SQL Editor",
-    "placeholder": "Inserisci la tua domanda SQLite qui (es: SELECT * FROM inducks_character LIMIT 10)",
-    "run_query": "Esegui domanda",
-    "previous_query": "domanda precedente",
+    "placeholder": "Enter your SQLite query here (e.g., SELECT * FROM inducks_character LIMIT 10)",
+    "run_query": "Execute Query",
+    "previous_query": "Previous query",
     "no_results": "No results",
-    "no_results_desc": "Esegui una domanda per visualizzare i dati.",
+    "no_results_desc": "Execute a query to see the data.",
     "tables": "Tables:",
     "results_count_one": "1 result found",
     "results_count_other": "{{count}} results found",
-    "query_success": "domanda eseguita con successo."
+    "query_success": "Query executed successfully."
   },
   "continents": {
     "europe": "Europe",
@@ -385,9 +385,9 @@
     "next": "Next",
     "error_fetch": "Error: Failed to fetch data.",
     "detail_title": "Author details",
-    "real_name": "Nome reale",
+    "real_name": "Real name",
     "country": "Country",
-    "web_link": "link web",
+    "web_link": "Web link",
     "stories": "Stories",
     "no_description": "No description available for this author."
   },
@@ -462,11 +462,11 @@
     "language": "Language",
     "publisher": "Publisher",
     "category": "Category",
-    "issues": "Elenco degli edizioni",
-    "issue_no": "Edizione #",
+    "issues": "Issues list",
+    "issue_no": "Issue #",
     "date": "Date",
     "pages": "Pages",
-    "empty": "Nessuna edizione trovata.",
+    "empty": "No issues found.",
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries"
