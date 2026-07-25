@@ -131,7 +131,8 @@
     "back": "Back",
     "save": "Save",
     "or": "or",
-    "all_countries": "All countries"
+    "all_countries": "All countries",
+    "code": "Code"
   },
   "story": {
     "no_title": "Untitled",
@@ -323,7 +324,7 @@
   "localDb": {
     "title": "Import Inducks database",
     "desc_1": "By default, InducksButBetter uses a remote hosting service which has usage limits. You can bypass these limits by loading your own local database!",
-    "desc_2": "Step 1: Download all the ISV files from the link below to your computer or phone.\nStep 2: Click the import area below and select all those files (ending in .isv).",
+    "desc_2": "Step 1: Download all the ISV files from the link below to your device.\nStep 2: Click the import area below and select all those files (ending in .isv).",
     "instructions_title": "How to install the local database?",
     "btn_import": "Import",
     "btn_local": "Local DB",
@@ -439,13 +440,15 @@
     "content": "This site uses data from the INDUCKS database (exact mentions will be completed later when the database is active again)."
   },
   "countries": {
-    "title": "Country List",
+    "title": "Country list",
     "publications_title": "Publications",
-    "publication_title": "Publication Title",
+    "publication_title": "Publication title",
     "country_name": "Country",
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
-    "desc": "Select a country to explore its Disney publications."
+    "desc": "Select a country to explore its Disney publications.",
+    "publications_singular": "publication",
+    "publications_plural": "publications"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -453,7 +456,8 @@
     "pub_code": "Code",
     "issues_count": "Issues count",
     "search_placeholder": "Filter publications...",
-    "desc": "Explore Disney magazines and series published in this country."
+    "desc": "Explore Disney magazines and series published in this country.",
+    "title_prefix": "Publications from"
   },
   "publication": {
     "title": "Magazine: {{title}}",
@@ -469,10 +473,14 @@
     "empty": "No issues found.",
     "content": "Content",
     "entry_one": "{{count}} entry",
-    "entry_other": "{{count}} entries"
+    "entry_other": "{{count}} entries",
+    "issue_singular": "issue",
+    "issues_plural": "issues",
+    "error_load": "Failed to load issue details."
   },
   "publisher": {
-    "title": "Publisher: {{publisher}}"
+    "title": "Publisher: {{publisher}}",
+    "desc": "Explore the magazines and series published by this publishing house."
   },
   "onboarding": {
     "step1": {
