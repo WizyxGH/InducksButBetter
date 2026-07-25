@@ -29,7 +29,7 @@
     "exclude_author_placeholder": "Ex: Carl Barks, Don Rosa...",
     "author_nationality": "Author nationality",
     "heroes": "Heroes",
-    "heroes_placeholder": "Donald, Mickey...",
+    "heroes_placeholder": "Donald, Miki...",
     "universe": "Universe",
     "all_universes": "All universes",
     "search_universe": "Ex: Donald Duck, Mickey Mouse...",
@@ -70,7 +70,7 @@
     "issue_collects": "This issue collects one or several other issue(s)",
     "specific_title": "Specific issue title",
     "specific_title_placeholder": "Ex: Walt Disney's Comics and Stories...",
-    "seldom_fields": "Not often or seldom used fields",
+    "seldom_fields": "Campos poco usados o raramente usados",
     "pages_min": "Pages min",
     "pages_max": "Pages max",
     "price": "Price",
@@ -161,7 +161,7 @@
     "a": "Article",
     "p": "Poster",
     "g": "Game",
-    "f": "Filler",
+    "f": "Doble página central",
     "q": "Quiz",
     "w": "Unknown",
     "n": "Story",
@@ -177,9 +177,9 @@
     "characters": "Characters",
     "sql": "SQL",
     "coming_soon": {
-      "publications": "Publication explorer coming soon...",
-      "authors": "Authors explorer coming soon...",
-      "characters": "Characters explorer coming soon..."
+      "publications": "Explorador de publicaciones próximamente...",
+      "authors": "Explorador de autores próximamente...",
+      "characters": "Explorador de personajes próximamente..."
     },
     "countries": "Countries"
   },
@@ -295,7 +295,7 @@
   "collection": {
     "title": "My Inducks collection",
     "description": "Paste exclusively the content of your raw Inducks export file (format with '^').",
-    "alert_unavailable": "Export your collection from the Inducks website ('Download my collection' option) and paste the text file content below.",
+    "alert_unavailable": "Exporta tu colección desde la página web de Inducks (opción 'Descargar mi colección') y pega el contenido del archivo de texto a continuación.",
     "cancel": "Cancel",
     "save": "Save",
     "saved_count": "You currently have {{count}} issues saved in your browser.",
