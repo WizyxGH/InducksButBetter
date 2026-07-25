@@ -29,7 +29,7 @@
     "exclude_author_placeholder": "Ex: Carl Barks, Don Rosa...",
     "author_nationality": "Author nationality",
     "heroes": "Heroes",
-    "heroes_placeholder": "Donald, Mickey...",
+    "heroes_placeholder": "Paperino, Topolino...",
     "universe": "Universe",
     "all_universes": "All universes",
     "search_universe": "Ex: Donald Duck, Mickey Mouse...",
@@ -136,7 +136,7 @@
   "story": {
     "no_title": "Untitled",
     "pagination": "Pagination",
-    "release_date": "Release date",
+    "release_date": "Data di pubblicazione",
     "unknown_date": "Unknown",
     "publications": "Publications",
     "script": "Script",
@@ -177,9 +177,9 @@
     "characters": "Characters",
     "sql": "SQL",
     "coming_soon": {
-      "publications": "Publication explorer coming soon...",
-      "authors": "Authors explorer coming soon...",
-      "characters": "Characters explorer coming soon..."
+      "publications": "Esplorare pubblicazioni disponibile a breve...",
+      "authors": "Esplorare autori disponibile a breve...",
+      "characters": "Esplorare personaggi disponibile a breve..."
     },
     "countries": "Countries"
   },
@@ -188,7 +188,7 @@
     "subtitle": "Find exactly what you are looking for in the Inducks database"
   },
   "ai": {
-    "welcome": "Hello! I am your Inducks expert. I can help you write complex SQL queries. What are you looking for?",
+    "welcome": "Ciao! Sono il tuo esperto di Inducks. Posso aiutarti a scrivere domande SQL complesse. Cosa stai cercando?",
     "error": "Sorry, an error occurred while connecting to the assistant.",
     "thinking": "The assistant is thinking...",
     "placeholder": "Ex: Scrooge stories by Barks...",
@@ -197,8 +197,8 @@
     "voice_disable": "Disable voice reading",
     "voice_enable": "Enable voice reading",
     "use": "Use",
-    "listening": "Listening...",
-    "dictate": "Dictate your query",
+    "listening": "Ascoltando...",
+    "dictate": "Dettare la domanda",
     "listening_placeholder": "I'm listening...",
     "activate_title": "Activate Local AI",
     "activate_desc": "To work offline and for free, the AI {{size}}must be downloaded once. It will use your browser's power.",
@@ -207,15 +207,15 @@
   },
   "sql": {
     "title": "SQL Editor",
-    "placeholder": "Enter your SQLite query here (e.g., SELECT * FROM inducks_character LIMIT 10)",
-    "run_query": "Execute Query",
-    "previous_query": "Previous query",
+    "placeholder": "Inserisci la tua domanda SQLite qui (es: SELECT * FROM inducks_character LIMIT 10)",
+    "run_query": "Esegui domanda",
+    "previous_query": "domanda precedente",
     "no_results": "No results",
-    "no_results_desc": "Execute a query to see the data.",
+    "no_results_desc": "Esegui una domanda per visualizzare i dati.",
     "tables": "Tables:",
     "results_count_one": "1 result found",
     "results_count_other": "{{count}} results found",
-    "query_success": "Query executed successfully."
+    "query_success": "domanda eseguita con successo."
   },
   "continents": {
     "europe": "Europe",
@@ -385,9 +385,9 @@
     "next": "Next",
     "error_fetch": "Error: Failed to fetch data.",
     "detail_title": "Author details",
-    "real_name": "Real name",
+    "real_name": "Nome reale",
     "country": "Country",
-    "web_link": "Web link",
+    "web_link": "link web",
     "stories": "Stories",
     "no_description": "No description available for this author."
   },
@@ -462,11 +462,11 @@
     "language": "Language",
     "publisher": "Publisher",
     "category": "Category",
-    "issues": "Issues list",
-    "issue_no": "Issue #",
+    "issues": "Elenco degli edizioni",
+    "issue_no": "Edizione #",
     "date": "Date",
     "pages": "Pages",
-    "empty": "No issues found.",
+    "empty": "Nessuna edizione trovata.",
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries"
