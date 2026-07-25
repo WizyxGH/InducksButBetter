@@ -16,6 +16,7 @@ import { getFlagUrl, handleDbError } from "@/lib/utils";
 import { Autocomplete } from "@/components/Autocomplete";
 import { autocompletePerson } from "@/lib/turso";
 import { SearchResults } from "@/components/Search/SearchResults";
+import { useSearchDisabled } from "@/hooks/useSearchDisabled";
 
 interface Author {
   personcode: string;
@@ -65,6 +66,7 @@ interface AuthorsSearchProps {
 
 export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: AuthorsSearchProps) {
   const { t } = useTranslation();
+  const isSearchDisabled = useSearchDisabled();
   const { meta } = useMetadata();
   const [filters, setFilters] = useState<AuthorsSearchFilters>(initialFilters);
 
@@ -384,7 +386,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
             </Button>
             <Button
               onClick={() => handleSearch()}
-              disabled={loading}
+              disabled={loading || isSearchDisabled}
               className="flex-[1.5] rounded-xl h-11"
             >
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}

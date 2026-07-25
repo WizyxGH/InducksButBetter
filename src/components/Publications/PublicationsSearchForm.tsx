@@ -46,7 +46,7 @@ export function PublicationsSearchForm({
       <ScrollArea className="flex-1 w-full bg-surface mobile-no-scroll">
         <div className="p-4 lg:p-8 pt-0">
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6" onSubmit={(e) => handleSearch(e)}>
-            
+
             {/* Country */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.publication_country")}</Label>
