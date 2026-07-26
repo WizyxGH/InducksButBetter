@@ -132,7 +132,8 @@
     "save": "Save",
     "or": "or",
     "all_countries": "All countries",
-    "code": "Code"
+    "code": "Code",
+    "present": "Present"
   },
   "story": {
     "no_title": "Untitled",
@@ -148,6 +149,8 @@
     "read_less": "Less",
     "none": "None",
     "description": "Description",
+    "issue_label": "Issue",
+    "issue_symbol": "#",
     "other_publications": "Other publications",
     "story_code": "Story code",
     "creators": "Creators / Authors",
