@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getFlagUrl } from "@/lib/utils";
+import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
 
 interface PublicationInfo {
   publicationcode: string;
@@ -157,7 +157,7 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
                   className="w-6 h-4.5 rounded object-cover shadow-xs border border-border-subtle/10 shrink-0"
                 />
               )}
-              {t("publisher.title", { publisher: publisherName }) || `Éditeur : ${publisherName}`}
+              {t("publisher.title", { publisher: cleanPublisherName(publisherName) }) || `Éditeur : ${cleanPublisherName(publisherName)}`}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               {t("publisher.desc") || "Explorez les magazines et séries édités par cette maison d'édition."}
@@ -233,7 +233,7 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
                 </p>
                 {p.publicationcomment && (
                   <p className="text-[10.5px] text-text-secondary italic line-clamp-2 mt-1.5 pt-0.5">
-                    "{p.publicationcomment}"
+                    {cleanComment(p.publicationcomment)}
                   </p>
                 )}
               </div>

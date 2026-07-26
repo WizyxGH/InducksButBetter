@@ -56,7 +56,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
       setLoading(true);
       const currentLang = i18n.language || "fr";
       try {
-        // 1. Fetch character general info
+        // 1. Fetch character general info first
         const charResult = await executeQuery({
           sql: `SELECT charactercode, charactername, official, onetime, heroonly, charactercomment 
                 FROM inducks_character WHERE charactercode = ?`,
@@ -66,90 +66,99 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
         if (charResult.rows.length > 0) {
           setCharacter(charResult.rows[0] as CharacterDetailData);
 
-          // 2. Fetch all translated names
-          const namesResult = await executeQuery({
-            sql: `SELECT languagecode, charactername, preferred 
-                  FROM inducks_charactername 
-                  WHERE charactercode = ? AND charactername != ''
-                  ORDER BY preferred DESC, languagecode ASC`,
-            args: [charactercode],
-          });
+          // Execute remaining queries in parallel to speed up load time significantly
+          const [
+            namesResult,
+            urlsResult,
+            creatorsResult,
+            coCharResult,
+            firstAppResult,
+            storiesResult,
+            univResult
+          ] = await Promise.all([
+            // 2. Fetch all translated names
+            executeQuery({
+              sql: `SELECT languagecode, charactername, preferred 
+                    FROM inducks_charactername 
+                    WHERE charactercode = ? AND charactername != ''
+                    ORDER BY preferred DESC, languagecode ASC`,
+              args: [charactercode],
+            }),
+            // 3. Fetch links
+            executeQuery({
+              sql: `SELECT sitecode, url FROM inducks_characterurl WHERE charactercode = ?`,
+              args: [charactercode],
+            }),
+            // 4. Fetch main creators
+            executeQuery({
+              sql: `SELECT sc.personcode, sc.total, sc.yearrange, p.fullname
+                    FROM inducks_statpersoncharacter sc
+                    JOIN inducks_person p ON sc.personcode = p.personcode
+                    WHERE sc.charactercode = ?
+                    ORDER BY CAST(sc.total AS INTEGER) DESC
+                    LIMIT 5`,
+              args: [charactercode],
+            }),
+            // 5. Fetch co-appearing characters
+            executeQuery({
+              sql: `SELECT scc.cocharactercode, scc.total, scc.yearrange, COALESCE(cn.charactername, c.charactername) as cocharactername
+                    FROM inducks_statcharactercharacter scc
+                    JOIN inducks_character c ON scc.cocharactercode = c.charactercode
+                    LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
+                    WHERE scc.charactercode = ?
+                    GROUP BY scc.cocharactercode
+                    ORDER BY CAST(scc.total AS INTEGER) DESC
+                    LIMIT 5`,
+              args: [currentLang, charactercode],
+            }),
+            // 6. Fetch first appearance story
+            executeQuery({
+              sql: `SELECT s.storycode, s.title, s.firstpublicationdate
+                    FROM inducks_appearance a
+                    JOIN inducks_storyversion sv ON a.storyversioncode = sv.storyversioncode
+                    JOIN inducks_story s ON sv.storycode = s.storycode
+                    WHERE a.charactercode = ? AND s.firstpublicationdate != ''
+                    ORDER BY s.firstpublicationdate ASC
+                    LIMIT 1`,
+              args: [charactercode],
+            }),
+            // 7. Fetch recent stories
+            executeQuery({
+              sql: `SELECT DISTINCT s.storycode, 
+                            COALESCE(
+                              NULLIF(NULLIF(s.title, 'Untitled'), ''),
+                              (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
+                            ) as original_title, s.firstpublicationdate,
+                            (SELECT COUNT(*) FROM inducks_appearance WHERE charactercode = ? AND storyversioncode = sv.storyversioncode) as appearances,
+                            (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title
+                    FROM inducks_appearance a
+                    JOIN inducks_storyversion sv ON a.storyversioncode = sv.storyversioncode
+                    JOIN inducks_story s ON sv.storycode = s.storycode
+                    WHERE a.charactercode = ?
+                    ORDER BY s.firstpublicationdate DESC
+                    LIMIT 30`,
+              args: [charactercode, currentLang, charactercode],
+            }),
+            // 8. Fetch universes
+            executeQuery({
+              sql: `SELECT u.universecode, u.universename 
+                    FROM inducks_ucrelation ucr
+                    JOIN inducks_universe u ON ucr.universecode = u.universecode
+                    WHERE ucr.charactercode = ?`,
+              args: [charactercode],
+            })
+          ]);
+
           setNames(namesResult.rows as CharName[]);
-
-          // 3. Fetch links
-          const urlsResult = await executeQuery({
-            sql: `SELECT sitecode, url FROM inducks_characterurl WHERE charactercode = ?`,
-            args: [charactercode],
-          });
           setUrls(urlsResult.rows);
-
-          // 4. Fetch main creators
-          const creatorsResult = await executeQuery({
-            sql: `SELECT sc.personcode, sc.total, sc.yearrange, p.fullname
-                  FROM inducks_statpersoncharacter sc
-                  JOIN inducks_person p ON sc.personcode = p.personcode
-                  WHERE sc.charactercode = ?
-                  ORDER BY CAST(sc.total AS INTEGER) DESC
-                  LIMIT 5`,
-            args: [charactercode],
-          });
           setCreators(creatorsResult.rows as CreatorStat[]);
-
-          // 5. Fetch co-appearing characters
-          const coCharResult = await executeQuery({
-            sql: `SELECT scc.cocharactercode, scc.total, scc.yearrange, COALESCE(cn.charactername, c.charactername) as cocharactername
-                  FROM inducks_statcharactercharacter scc
-                  JOIN inducks_character c ON scc.cocharactercode = c.charactercode
-                  LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
-                  WHERE scc.charactercode = ?
-                  GROUP BY scc.cocharactercode
-                  ORDER BY CAST(scc.total AS INTEGER) DESC
-                  LIMIT 5`,
-            args: [currentLang, charactercode],
-          });
           setCoCharacters(coCharResult.rows as CoCharacter[]);
-
-          // 6. Fetch first appearance story
-          const firstAppResult = await executeQuery({
-            sql: `SELECT s.storycode, s.title, s.firstpublicationdate
-                  FROM inducks_appearance a
-                  JOIN inducks_storyversion sv ON a.storyversioncode = sv.storyversioncode
-                  JOIN inducks_story s ON sv.storycode = s.storycode
-                  WHERE a.charactercode = ? AND s.firstpublicationdate != ''
-                  ORDER BY s.firstpublicationdate ASC
-                  LIMIT 1`,
-            args: [charactercode],
-          });
           if (firstAppResult.rows.length > 0) {
             setFirstAppearance(firstAppResult.rows[0]);
+          } else {
+            setFirstAppearance(null);
           }
-
-          const storiesResult = await executeQuery({
-            sql: `SELECT DISTINCT s.storycode, 
-                         COALESCE(
-                           NULLIF(NULLIF(s.title, 'Untitled'), ''),
-                           (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
-                         ) as original_title, s.firstpublicationdate,
-                         (SELECT COUNT(*) FROM inducks_appearance WHERE charactercode = ? AND storyversioncode = sv.storyversioncode) as appearances,
-                         (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title
-                  FROM inducks_appearance a
-                  JOIN inducks_storyversion sv ON a.storyversioncode = sv.storyversioncode
-                  JOIN inducks_story s ON sv.storycode = s.storycode
-                  WHERE a.charactercode = ?
-                  ORDER BY s.firstpublicationdate DESC
-                  LIMIT 30`,
-            args: [charactercode, currentLang, charactercode],
-          });
           setStories(storiesResult.rows as any[]);
-
-          // 8. Fetch universes
-          const univResult = await executeQuery({
-            sql: `SELECT u.universecode, u.universename 
-                  FROM inducks_ucrelation ucr
-                  JOIN inducks_universe u ON ucr.universecode = u.universecode
-                  WHERE ucr.charactercode = ?`,
-            args: [charactercode],
-          });
           setUniverses(univResult.rows as any[]);
         }
       } catch (error) {
@@ -164,8 +173,30 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="w-full max-w-5xl mx-auto p-4 lg:p-8 space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row gap-6 items-start">
+          <div className="w-[120px] h-[120px] rounded-2xl bg-surface-2 shrink-0" />
+          <div className="space-y-3 flex-1">
+            <div className="h-7 bg-surface-2 rounded-lg w-1/3" />
+            <div className="h-4 bg-surface-2 rounded-lg w-1/4" />
+            <div className="h-4 bg-surface-2 rounded-lg w-1/2" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="h-6 bg-surface-2 rounded-lg w-1/4" />
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-surface-2 rounded-2xl" />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-6 bg-surface-2 rounded-lg w-1/2" />
+            <div className="h-32 bg-surface-2 rounded-2xl" />
+          </div>
+        </div>
       </div>
     );
   }

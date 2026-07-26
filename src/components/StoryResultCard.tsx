@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn, hasInducksCookie } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
 import { Maximize2, BookOpen } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -87,7 +87,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   // Deduplicate by name to avoid "Picsou" appearing twice if multiple codes map to same name
   const characters = charactersRaw.filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.name === v.name) === i);
 
-  const publications = row.publication_list ? row.publication_list.split(';').map((p: string) => {
+  const publications = row.publication_list ? row.publication_list.split(',').map((p: string) => {
     const [country, name] = p.split('|');
     return { country, name: cleanText(name) };
   }) : [];
@@ -164,31 +164,42 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
     };
   }, [row.story_thumb]);
 
-  const handleClick = () => {
+  const targetHref = `#/entries/story/${encodeURIComponent(row.storycode)}`;
+
+  const handleClick = (e: React.MouseEvent) => {
+    // If user command-clicked or control-clicked, let the browser handle it (open in new tab)
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+      return;
+    }
+    
     if (onSelect) {
+      e.preventDefault();
       onSelect(row.storycode);
-    } else {
-      window.open(storyUrl, "_blank");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      handleClick();
+      if (onSelect) {
+        onSelect(row.storycode);
+      } else {
+        window.location.hash = targetHref;
+      }
     }
   };
 
-  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), []);
+  const hasCookie = React.useMemo(() => hasInducksCookie(), []);
 
   return (
-    <Card
+    <a
+      href={targetHref}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="group overflow-hidden border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 hover:bg-zinc-50/10 dark:hover:bg-zinc-800/10 transition-all duration-300 rounded-lg bg-white dark:bg-zinc-900 cursor-pointer active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className="group block overflow-hidden border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 hover:bg-zinc-50/10 dark:hover:bg-zinc-800/10 transition-all duration-300 rounded-lg bg-white dark:bg-zinc-900 cursor-pointer active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      <CardContent className="p-0 flex flex-col sm:flex-row">
+      <div className="p-0 flex flex-col sm:flex-row">
         {/* Left: Thumbnail */}
         {hasCookie && (
           <div
@@ -409,7 +420,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </a>
   )
 }

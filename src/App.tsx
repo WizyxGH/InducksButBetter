@@ -75,6 +75,7 @@ function App() {
       setSelectedCharactercode(null);
       setSelectedCountrycode(null);
       setSelectedPublicationcode(null);
+      setSelectedPublisherid(null);
 
       if (!hash) {
         setActiveTab("stories");
@@ -175,26 +176,31 @@ function App() {
   useEffect(() => {
     const rootPrefix = activeTab === "stories" ? "entries" : activeTab;
     
+    // Get existing query parameters to preserve them (like pos)
+    const currentHash = window.location.hash;
+    const queryIndex = currentHash.indexOf("?");
+    const queryStr = queryIndex !== -1 ? currentHash.substring(queryIndex) : "";
+    
     if (activeTab === "settings") {
-      pushHashState("#/settings");
+      pushHashState("#/settings" + queryStr);
     } else if (selectedStorycode) {
-      pushHashState(`#/${rootPrefix}/story/${encodeURI(selectedStorycode)}`);
+      pushHashState(`#/${rootPrefix}/story/${encodeURI(selectedStorycode)}` + queryStr);
     } else if (selectedIssuecode) {
       // Replace the space with a slash for cleaner URLs
       const displayCode = selectedIssuecode.replace(" ", "/");
-      pushHashState(`#/${rootPrefix}/issue/${encodeURI(displayCode)}`);
+      pushHashState(`#/${rootPrefix}/issue/${encodeURI(displayCode)}` + queryStr);
     } else if (selectedPersoncode) {
-      pushHashState(`#/authors/${encodeURI(selectedPersoncode)}`);
+      pushHashState(`#/authors/${encodeURI(selectedPersoncode)}` + queryStr);
     } else if (selectedCharactercode) {
-      pushHashState(`#/characters/${encodeURI(selectedCharactercode)}`);
+      pushHashState(`#/characters/${encodeURI(selectedCharactercode)}` + queryStr);
     } else if (selectedPublisherid) {
-      pushHashState(`#/publishers/${encodeURI(selectedPublisherid)}`);
+      pushHashState(`#/publishers/${encodeURI(selectedPublisherid)}` + queryStr);
     } else if (selectedCountrycode) {
-      pushHashState(`#/countries/${encodeURI(selectedCountrycode)}`);
+      pushHashState(`#/countries/${encodeURI(selectedCountrycode)}` + queryStr);
     } else if (selectedPublicationcode) {
-      pushHashState(`#/publications/publication/${encodeURI(selectedPublicationcode)}`);
+      pushHashState(`#/publications/publication/${encodeURI(selectedPublicationcode)}` + queryStr);
     } else {
-      pushHashState(`#/${rootPrefix}`);
+      pushHashState(`#/${rootPrefix}` + queryStr);
     }
   }, [
     activeTab, 

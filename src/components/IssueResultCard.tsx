@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn, hasInducksCookie } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
 import { Maximize2, BookOpen } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -79,31 +79,41 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
     };
   }, [row.issue_thumb]);
 
-  const handleClick = () => {
+  const displayCode = row.issuecode.replace(" ", "/");
+  const targetHref = `#/publications/issue/${encodeURIComponent(displayCode)}`;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+      return;
+    }
     if (onSelect) {
+      e.preventDefault();
       onSelect(row.issuecode);
-    } else {
-      window.open(issueUrl, "_blank");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      handleClick();
+      if (onSelect) {
+        onSelect(row.issuecode);
+      } else {
+        window.location.hash = targetHref;
+      }
     }
   };
 
-  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), []);
+  const hasCookie = React.useMemo(() => hasInducksCookie(), []);
 
   return (
-    <Card
+    <a
+      href={targetHref}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="group overflow-hidden border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 hover:bg-zinc-50/10 dark:hover:bg-zinc-800/10 transition-all duration-300 rounded-lg bg-white dark:bg-zinc-900 cursor-pointer active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className="group block overflow-hidden border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 hover:bg-zinc-50/10 dark:hover:bg-zinc-800/10 transition-all duration-300 rounded-lg bg-white dark:bg-zinc-900 cursor-pointer active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      <CardContent className="p-0 flex flex-row">
+      <div className="p-0 flex flex-row">
         {/* Left: Cover Thumbnail */}
         {hasCookie && (
           <div
@@ -198,7 +208,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </a>
   )
 }

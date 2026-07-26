@@ -5,10 +5,11 @@ import { getStoryDetail } from "@/lib/turso"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { getFlagUrl } from "@/lib/utils"
+import { getFlagUrl, hasInducksCookie, isInvalidPlotsummary } from "@/lib/utils"
 import { toast } from "sonner"
 import { EntityBadge } from "@/components/EntityBadge"
 import { KindBadge } from "@/components/KindBadge"
+import { useMetadata } from "@/hooks/useMetadata"
 
 interface StoryDetailProps {
   storycode: string
@@ -19,10 +20,11 @@ interface StoryDetailProps {
 
 export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacter }: StoryDetailProps) {
   const { t, i18n } = useTranslation()
+  const { meta } = useMetadata()
   const [loading, setLoading] = useState(true)
   const [story, setStory] = useState<any>(null)
   const [copied, setCopied] = useState(false)
-  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), [])
+  const hasCookie = React.useMemo(() => hasInducksCookie(), [])
 
   // Accordion states
   const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({})
@@ -117,7 +119,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
     story.descriptions?.find((d: any) => d.languagecode === i18n.language) ||
     story.descriptions?.find((d: any) => d.languagecode === "en") ||
     story.descriptions?.[0] ||
-    (story.plotsummary ? { languagecode: "original", desctext: story.plotsummary } : null)
+    (story.plotsummary && !isInvalidPlotsummary(story.plotsummary) ? { languagecode: "original", desctext: story.plotsummary } : null)
 
   const otherDescriptions = story.descriptions?.filter((d: any) => d.languagecode !== defaultDesc?.languagecode) || []
 
@@ -212,7 +214,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <FileText className="w-4 h-4 text-primary" />
-              {t('story.description') || "Descriptif"}
+              {t('story.description') || "Description"}
             </h3>
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden">
               <CardContent className="p-4 space-y-4">
@@ -220,13 +222,13 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] uppercase font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                        {defaultDesc.languagecode}
+                        {meta.languages.find((l) => l.languagecode === defaultDesc.languagecode)?.languagename || defaultDesc.languagecode.toUpperCase()}
                       </span>
                     </div>
                     <p className="text-sm text-text-body leading-relaxed whitespace-pre-wrap">{defaultDesc.desctext}</p>
                   </div>
                 ) : (
-                  <p className="text-sm text-text-secondary italic">{t("story.no_description_full", { defaultValue: "Aucune description disponible." })}</p>
+                  <p className="text-sm text-text-secondary italic">{t("story.no_description", { defaultValue: "Aucune description disponible pour cette histoire." })}</p>
                 )}
 
                 {/* Accordion for descriptions in other languages */}
@@ -246,16 +248,19 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
                     {showAllDescriptions && (
                       <div className="mt-4 space-y-4 animate-fadeIn">
-                        {otherDescriptions.map((desc: any) => (
-                          <div key={desc.languagecode} className="space-y-1 pt-3 border-t border-border-subtle/50 first:border-none first:pt-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[9px] uppercase font-bold bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded">
-                                {desc.languagecode}
-                              </span>
+                        {otherDescriptions.map((desc: any) => {
+                          const langName = meta.languages.find((l) => l.languagecode === desc.languagecode)?.languagename || desc.languagecode.toUpperCase();
+                          return (
+                            <div key={desc.languagecode} className="space-y-1 pt-3 border-t border-border-subtle/50 first:border-none first:pt-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] uppercase font-bold bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded">
+                                  {langName}
+                                </span>
+                              </div>
+                              <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap">{desc.desctext}</p>
                             </div>
-                            <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap">{desc.desctext}</p>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -438,9 +443,11 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                         className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-2 transition-colors cursor-pointer border border-transparent hover:border-border-subtle"
                       >
                         <div className="space-y-0.5 min-w-0 flex-1">
-                          <p className="text-xs font-bold text-foreground truncate">{pub.publication_title}</p>
+                          <p className="text-xs font-bold text-foreground truncate">
+                            {pub.publication_title} {t("story.issue_symbol", { defaultValue: "#" })} {pub.issuenumber}
+                          </p>
                           <p className="text-[10px] text-muted-foreground font-medium">
-                            {t("story.issue_number", { defaultValue: "Numéro :" })} {pub.issuenumber} {pub.position && `• Pos. ${pub.position}`}
+                            {pub.position ? `Pos. ${pub.position}` : ""}
                           </p>
                         </div>
                         <div className="text-right shrink-0 ml-2">

@@ -64,7 +64,7 @@ self.onmessage = async (e: MessageEvent) => {
           db.run(`CREATE TABLE ${tableName} (${columns.map(c => `"${c}" TEXT`).join(", ")});`);
           db.run("BEGIN TRANSACTION;");
           
-          const stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
+          let stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
           const colCount = columns.length;
           
           const reader = stream.getReader();
@@ -73,6 +73,7 @@ self.onmessage = async (e: MessageEvent) => {
           let bytesRead = 0;
           let lastReportedPercent = -1;
           const fileSize = file.size || 0;
+          let rowCount = 0;
           
           while (true) {
             const { value, done } = await reader.read();
@@ -99,6 +100,15 @@ self.onmessage = async (e: MessageEvent) => {
                 boundValues[i] = values[i] !== undefined ? values[i] : null;
               }
               stmt.run(boundValues);
+              rowCount++;
+              
+              // Periodically commit transaction and free statement to keep WASM memory small
+              if (rowCount % 25000 === 0) {
+                stmt.free();
+                db.run("COMMIT;");
+                db.run("BEGIN TRANSACTION;");
+                stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
+              }
             }
 
             // Report progress within the current file every 1% of global progress

@@ -3,6 +3,8 @@ import { Star, Eye, Cat } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+import { hasInducksCookie } from "@/lib/utils";
+
 export interface Character {
   charactercode: string;
   charactername: string;
@@ -19,15 +21,29 @@ interface CharacterResultCardProps {
 }
 
 export function CharacterResultCard({ char, onSelect }: CharacterResultCardProps) {
+  const hasCookie = React.useMemo(() => hasInducksCookie(), []);
   const hasThumb = char.imageUrl && char.imageUrl.includes("|");
-  const thumbUrl = hasThumb
+  const thumbUrl = (hasCookie && hasThumb)
     ? `/api/proxy-image?url=${encodeURIComponent(char.imageUrl!.split("|")[1])}`
     : null;
 
+  const targetHref = `#/characters/${encodeURIComponent(char.charactercode)}`;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+      return;
+    }
+    if (onSelect) {
+      e.preventDefault();
+      onSelect(char.charactercode);
+    }
+  };
+
   return (
-    <Card
-      className="p-0 cursor-pointer hover:bg-surface-2 hover:border-primary/25 hover:shadow-md transition-all duration-300 group flex flex-col sm:flex-row items-start border border-border-subtle bg-surface-2/20 rounded-2xl h-auto sm:h-[120px] overflow-hidden"
-      onClick={() => onSelect(char.charactercode)}
+    <a
+      href={targetHref}
+      onClick={handleClick}
+      className="group block p-0 cursor-pointer hover:bg-surface-2 hover:border-primary/25 hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row items-start border border-border-subtle bg-surface-2/20 rounded-2xl h-auto sm:h-[120px] overflow-hidden"
     >
       {thumbUrl ? (
         <img
@@ -73,6 +89,6 @@ export function CharacterResultCard({ char, onSelect }: CharacterResultCardProps
           </span>
         </div>
       </div>
-    </Card>
+    </a>
   );
 }

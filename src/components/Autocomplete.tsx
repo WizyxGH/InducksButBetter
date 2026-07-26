@@ -2,7 +2,7 @@ import * as React from "react"
 import { Check, ChevronDown, LibraryBig, Loader2, User, X, BookOpen, Search } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { AvatarWithFallback } from "./AvatarWithFallback"
-import { cn } from "@/lib/utils"
+import { cn, hasInducksCookie } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getApiUrl } from "@/lib/api"
@@ -171,42 +171,46 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
                 {items.map((item) => {
                   const id = item.charactercode || item.personcode || item.storycode || item.publisherid || item.publicationcode;
                   let name = item.charactername || item.fullname || item.storyname || item.publishername || item.storycode || item.publicationname;
+                  let imageUrl = "";
                   
                   // For stories, the ID (code) is what users usually search for
                   if (type === "stories") {
                     name = id;
                   }
                   
-                  let imageUrl = "";
-                  if (item.personcode) {
-                    const formattedCode = item.personcode.replace(/ /g, "_");
-                    imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${formattedCode}.jpg`)}`;
-                  }
-                  else if (item.charactercode) {
-                    const rawImageUrl = item.imageUrl || item.imageurl;
-                    if (rawImageUrl) {
-                      const [site, path] = rawImageUrl.split('|');
-                      if (site === 'webusers') {
-                        const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-                        const finalPath = cleanPath.startsWith('webusers/') ? cleanPath : `webusers/${cleanPath}`;
-                        imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://outducks.org/webusers/${finalPath}`)}`;
+                  const hasCookie = hasInducksCookie();
+                  
+                  if (hasCookie) {
+                    if (item.personcode) {
+                      const formattedCode = item.personcode.replace(/ /g, "_");
+                      imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${formattedCode}.jpg`)}`;
+                    }
+                    else if (item.charactercode) {
+                      const rawImageUrl = item.imageUrl || item.imageurl;
+                      if (rawImageUrl) {
+                        const [site, path] = rawImageUrl.split('|');
+                        if (site === 'webusers') {
+                          const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+                          const finalPath = cleanPath.startsWith('webusers/') ? cleanPath : `webusers/${cleanPath}`;
+                          imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://outducks.org/webusers/${finalPath}`)}`;
+                        }
                       }
-                    }
-                    if (!imageUrl) {
-                      imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${item.charactercode}`)}`;
-                    }
-                  } else if (item.storycode && item.story_thumb) {
-                    const parts = item.story_thumb.split('|');
-                    const url = parts.length > 1 ? parts[1] : parts[0];
-                    let baseUrl = url;
-                    if (!url.startsWith('http')) {
-                      if (parts[0] === 'webusers' && !url.startsWith('webusers/')) {
-                        baseUrl = `https://outducks.org/webusers/webusers/${url}`;
-                      } else {
-                        baseUrl = `https://outducks.org/${url.startsWith('/') ? url.substring(1) : url}`;
+                      if (!imageUrl) {
+                        imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${item.charactercode}`)}`;
                       }
+                    } else if (item.storycode && item.story_thumb) {
+                      const parts = item.story_thumb.split('|');
+                      const url = parts.length > 1 ? parts[1] : parts[0];
+                      let baseUrl = url;
+                      if (!url.startsWith('http')) {
+                        if (parts[0] === 'webusers' && !url.startsWith('webusers/')) {
+                          baseUrl = `https://outducks.org/webusers/webusers/${url}`;
+                        } else {
+                          baseUrl = `https://outducks.org/${url.startsWith('/') ? url.substring(1) : url}`;
+                        }
+                      }
+                      imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=${baseUrl}`)}`;
                     }
-                    imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=${baseUrl}`)}`;
                   }
 
                   return (

@@ -30,6 +30,7 @@ describe('EntityBadge Component', () => {
   })
 
   it('generates the correct proxy image URL for characters', () => {
+    localStorage.setItem("inducks_cookie", "some_cookie_val");
     renderWithProvider(
       <EntityBadge type="character" code="Donald" name="Donald Duck" />
     )
@@ -40,9 +41,11 @@ describe('EntityBadge Component', () => {
     
     const expectedUrl = `/api/proxy-image?url=${encodeURIComponent('https://inducks.org/characterthumb.php?c=Donald')}`
     expect(images[0]).toHaveAttribute('src', expectedUrl)
+    localStorage.removeItem("inducks_cookie");
   })
 
   it('generates the correct proxy image URL for creators (replacing spaces with underscores)', () => {
+    localStorage.setItem("inducks_cookie", "some_cookie_val");
     renderWithProvider(
       <EntityBadge type="creator" code="Carl Barks" name="Carl Barks" />
     )
@@ -52,6 +55,7 @@ describe('EntityBadge Component', () => {
 
     const expectedUrl = `/api/proxy-image?url=${encodeURIComponent('https://inducks.org/creators/photos/Carl_Barks.jpg')}`
     expect(images[0]).toHaveAttribute('src', expectedUrl)
+    localStorage.removeItem("inducks_cookie");
   })
 
   it('calls onSelect and prevents default navigation when clicked', () => {

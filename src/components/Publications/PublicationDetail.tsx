@@ -5,7 +5,7 @@ import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getFlagUrl } from "@/lib/utils";
+import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
 import { useMetadata } from "@/hooks/useMetadata";
 
 interface PublicationDetailData {
@@ -37,7 +37,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   const groupedIssues = useMemo(() => {
     return Object.entries(
       issues.reduce((acc: Record<string, any[]>, issue) => {
-        let year = "Inconnue";
+        let year = t("story.unknown_date", { defaultValue: "Inconnue" });
         if (issue.oldestdate && issue.oldestdate !== "0000-00-00" && issue.oldestdate !== "9999-99-99" && issue.oldestdate.length >= 4) {
           year = issue.oldestdate.substring(0, 4);
         }
@@ -279,7 +279,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                       }
                     }}
                   >
-                    {publication.publishername}
+                    {cleanPublisherName(publication.publishername)}
                   </span>
                 </div>
               ) : null}
@@ -290,7 +290,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
               )}
               {publication.publicationcomment && (
                 <div className="pt-2 leading-relaxed text-text-secondary italic">
-                  "{publication.publicationcomment}"
+                  {cleanComment(publication.publicationcomment)}
                 </div>
               )}
             </CardContent>

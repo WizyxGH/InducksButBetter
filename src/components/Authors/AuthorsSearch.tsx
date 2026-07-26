@@ -435,7 +435,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
                     <span className="truncate">
                       {author.borndate ? author.borndate.substring(0, 4) : "?"}
                       {" — "}
-                      {author.deceaseddate ? author.deceaseddate.substring(0, 4) : author.borndate ? "Présent" : "?"}
+                      {author.deceaseddate ? author.deceaseddate.substring(0, 4) : author.borndate ? t("common.present", { defaultValue: "Présent" }) : "?"}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 font-semibold text-foreground">

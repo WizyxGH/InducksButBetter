@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, ExternalLink, Calendar, MapPin, Award, BookOpen, Users, User, Cat, Globe } from "lucide-react";
+import { Loader2, ExternalLink, Calendar, MapPin, Award, BookOpen, Users, User, Cat, Globe, ChevronDown, ChevronUp } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
   const [coAuthors, setCoAuthors] = useState<CoAuthor[]>([]);
   const [favCharacters, setFavCharacters] = useState<FavCharacter[]>([]);
   const [stories, setStories] = useState<any[]>([]);
+  const [isStoriesExpanded, setIsStoriesExpanded] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -217,11 +218,17 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               <span className="text-xs font-semibold text-muted-foreground mr-1">
                 {t("authors.aliases") || "Alias"}:
               </span>
-              {aliases.map((alias, idx) => (
-                <Badge key={idx} variant={alias.official === "Y" ? "default" : "outline"} className="text-[10px] rounded-lg">
-                  {alias.givenname} {alias.surname}
-                </Badge>
-              ))}
+              {aliases
+                .map((alias) => ({
+                  ...alias,
+                  displayName: `${alias.givenname || ""} ${alias.surname || ""}`.trim()
+                }))
+                .filter((alias) => alias.displayName.length > 0)
+                .map((alias, idx) => (
+                  <Badge key={idx} variant={alias.official === "Y" ? "default" : "outline"} className="text-[10px] rounded-lg">
+                    {alias.displayName}
+                  </Badge>
+                ))}
             </div>
           )}
         </div>
@@ -385,62 +392,76 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
           {/* Stories List */}
           {stories.length > 0 && (
             <Card className="border-border-subtle rounded-2xl">
-              <CardHeader className="py-4">
-                <CardTitle className="text-sm font-bold flex items-center gap-2">
+              <button
+                onClick={() => setIsStoriesExpanded(!isStoriesExpanded)}
+                className="w-full flex items-center justify-between py-4 px-6 text-left border-none focus-visible:outline-none"
+              >
+                <div className="text-sm font-bold flex items-center gap-2 text-foreground">
                   <BookOpen className="w-4 h-4 text-primary" />
                   {t("authors.stories") || "Histoires"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2.5">
-                {stories.map((story) => (
-                  <div
-                    key={story.storycode}
-                    onClick={() => {
-                      if (onSelectStory) {
-                        onSelectStory(story.storycode);
-                      } else {
-                        window.location.hash = `#/entries/story/${encodeURIComponent(story.storycode)}`;
-                      }
-                    }}
-                    className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
-                  >
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
-                        {(() => {
-                          const translated = story.translated_title;
-                          const original = story.original_title || story.story_title;
-                          let mainTitle = original;
-                          let subTitle = null;
+                  <Badge variant="secondary" className="ml-1 text-[10px] py-0 px-1 bg-primary/10 text-primary border-none">
+                    {stories.length}
+                  </Badge>
+                </div>
+                {isStoriesExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground transition-transform" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform" />
+                )}
+              </button>
+              
+              {isStoriesExpanded && (
+                <CardContent className="space-y-2.5 px-6 pb-6 pt-0 animate-fadeIn">
+                  {stories.map((story) => (
+                    <div
+                      key={story.storycode}
+                      onClick={() => {
+                        if (onSelectStory) {
+                          onSelectStory(story.storycode);
+                        } else {
+                          window.location.hash = `#/entries/story/${encodeURIComponent(story.storycode)}`;
+                        }
+                      }}
+                      className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
+                          {(() => {
+                            const translated = story.translated_title;
+                            const original = story.original_title || story.story_title;
+                            let mainTitle = original;
+                            let subTitle = null;
 
-                          if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
-                            mainTitle = translated;
-                            if (original && original !== 'Untitled' && original !== translated) {
-                              subTitle = original;
+                            if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
+                              mainTitle = translated;
+                              if (original && original !== 'Untitled' && original !== translated) {
+                                subTitle = original;
+                              }
+                            } else if (!original || original === 'Untitled') {
+                              mainTitle = t("story.no_title") || "Sans titre";
                             }
-                          } else if (!original || original === 'Untitled') {
-                            mainTitle = t("story.no_title") || "Sans titre";
-                          }
 
-                          return (
-                            <div className="truncate flex flex-col min-w-0">
-                              <span className="truncate" title={mainTitle}>{mainTitle}</span>
-                              {subTitle && (
-                                <span className="text-[10px] text-muted-foreground font-medium truncate font-normal" title={subTitle}>
-                                  {subTitle}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })()}
+                            return (
+                              <div className="truncate flex flex-col min-w-0">
+                                <span className="truncate" title={mainTitle}>{mainTitle}</span>
+                                {subTitle && (
+                                  <span className="text-[10px] text-muted-foreground font-medium truncate font-normal" title={subTitle}>
+                                    {subTitle}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-mono">{story.storycode}</p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground font-mono">{story.storycode}</p>
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        {story.appearances} {story.appearances > 1 ? "versions" : "version"}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      {story.appearances} {story.appearances > 1 ? "versions" : "version"}
-                    </Badge>
-                  </div>
-                ))}
-              </CardContent>
+                  ))}
+                </CardContent>
+              )}
             </Card>
           )}
         </div>

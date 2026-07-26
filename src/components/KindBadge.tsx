@@ -10,7 +10,8 @@ interface KindBadgeProps {
 export function KindBadge({ kind, className }: KindBadgeProps) {
   const { t } = useTranslation();
   const kindCode = kind ? kind.trim() : "s";
-  const label = t(`kinds.${kindCode}`, { defaultValue: kindCode });
+  const rawLabel = t(`kinds.${kindCode}`, { defaultValue: kindCode });
+  const label = rawLabel ? rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase() : "";
 
   // Color mapping based on kind code
   let colorClasses = "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-500/10 dark:border-zinc-500/20";
@@ -48,7 +49,7 @@ export function KindBadge({ kind, className }: KindBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wider border shrink-0 leading-none",
+        "inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold tracking-wider border shrink-0 leading-none",
         colorClasses,
         className
       )}

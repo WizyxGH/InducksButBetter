@@ -132,7 +132,8 @@
     "save": "Sauvegarder",
     "or": "ou",
     "all_countries": "Tous les pays",
-    "code": "Code"
+    "code": "Code",
+    "present": "Présent"
   },
   "story": {
     "no_title": "Sans titre",
@@ -147,7 +148,9 @@
     "read_more": "Lire plus",
     "read_less": "Moins",
     "none": "Aucune",
-    "description": "Descriptif",
+    "description": "Description",
+    "issue_label": "N°",
+    "issue_symbol": "n°",
     "other_publications": "Autres publications",
     "story_code": "Code de l'histoire",
     "creators": "Auteurs / Créateurs",

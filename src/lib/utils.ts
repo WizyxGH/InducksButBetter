@@ -56,3 +56,32 @@ export function getFlagUrl(countryCode: string): string {
   return `https://flagcdn.com/w20/${code}.png`;
 }
 
+export function hasInducksCookie(): boolean {
+  return !!localStorage.getItem("inducks_cookie");
+}
+
+export function cleanComment(comment?: string): string {
+  if (!comment) return "";
+  // Remove brackets [ ] and leading/trailing quotes " "
+  let cleaned = comment.replace(/[\[\]]/g, "").replace(/^"|"$/g, "").trim();
+  // Remove space before commas
+  return cleaned.replace(/\s+,\s*/g, ", ");
+}
+
+export function cleanPublisherName(name?: string): string {
+  if (!name) return "";
+  // Remove space before commas, replace multiple spaces/commas neatly
+  return name.replace(/\s+,\s*/g, ", ").trim();
+}
+
+export function isInvalidPlotsummary(text?: string): boolean {
+  if (!text) return true;
+  const trimmed = text.trim();
+  
+  // Checks if the text is empty or is a typical list of credits/indexing codes (e.g. ,JGi, or Art: Barks)
+  const isCodeList = /^,\s*[a-zA-Z0-9_\s]+,\s*$/.test(trimmed) || trimmed === "," || /^,\s*[a-zA-Z0-9_\s]+$/.test(trimmed);
+  const isCreditHeader = /^(Art|Script|Plot|Des|Desenhos|Roteiro|Ink|Pencils|Pencil|Inks|Colors|Letters|Texte|Dessin|Scénario|Scenario|Translation|Aut|Dis)\s*:/i.test(trimmed);
+  
+  return isCodeList || isCreditHeader || trimmed.length <= 5;
+}
+

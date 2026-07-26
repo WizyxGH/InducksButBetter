@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getFlagUrl } from "@/lib/utils";
+import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
 
 interface PublicationInfo {
   publicationcode: string;
@@ -179,12 +179,12 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
                 <p className="text-[10px] text-muted-foreground font-mono">{p.publicationcode}</p>
                 {p.publishername && (
                   <p className="text-[10px] text-primary/80 font-medium mt-1">
-                    {p.publishername}
+                    {cleanPublisherName(p.publishername)}
                   </p>
                 )}
                 {p.publicationcomment && (
                   <p className="text-[10.5px] text-text-secondary italic line-clamp-2 mt-1.5 pt-0.5">
-                    "{p.publicationcomment}"
+                    {cleanComment(p.publicationcomment)}
                   </p>
                 )}
               </div>
