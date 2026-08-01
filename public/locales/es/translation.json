@@ -497,7 +497,7 @@
     },
     "step2": {
       "title": "Base de datos local",
-      "desc": "Como la base de datos en línea es limitada, recomendamos encarecidamente utilizar la base de datos local. Vaya a la configuración para descargar e importar los archivos (.isv) para obtener acceso ilimitado."
+      "desc": "This application runs entirely locally for blazing fast performance! Go to the settings to download and install the database for unlimited access."
     },
     "step3": {
       "title": "Su colección",

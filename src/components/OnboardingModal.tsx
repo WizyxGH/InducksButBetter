@@ -44,7 +44,7 @@ export function OnboardingModal() {
     },
     {
       title: t("onboarding.step2.title", "Base de données locale"),
-      desc: t("onboarding.step2.desc", "La base de données en ligne étant limitée, nous vous recommandons fortement d'utiliser la base locale. Rendez-vous dans les paramètres pour télécharger et importer les fichiers (.isv) pour un accès illimité."),
+      desc: t("onboarding.step2.desc", "Cette application fonctionne entièrement en local pour des performances fulgurantes ! Rendez-vous dans les paramètres pour télécharger et installer la base de données pour un accès illimité."),
       icon: Database,
       color: "text-emerald-500",
       bg: "bg-emerald-500/10",

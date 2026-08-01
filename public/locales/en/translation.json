@@ -538,7 +538,7 @@
     },
     "step2": {
       "title": "Local database",
-      "desc": "Since the online database is limited, we highly recommend using the local database. Go to the settings to download and import the (.isv) files for unlimited access."
+      "desc": "This application runs entirely locally for blazing fast performance! Go to the settings to download and install the database for unlimited access."
     },
     "step3": {
       "title": "Your collection",
