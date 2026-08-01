@@ -570,27 +570,6 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   return { query: mainQuery, countQuery, params: [...p, pageSize, offset, ...svWhereParams, lang, lang, lang, lang, lang, lang, lang], countParams: p, pageSize, page };
 }
 
-export interface PublicationsSearchFilters {
-  country?: string;
-  title?: string;
-  issuenumber?: string;
-  dateAfter?: string;
-  dateBefore?: string;
-  publisherid?: string;
-  indexer?: string;
-  collects?: boolean | string;
-  specificTitle?: string;
-  pages?: number;
-  price?: string;
-  attached?: string;
-  size?: string;
-  sort?: string;
-  page?: number | string;
-  rowsperpage?: string;
-  lang?: string;
-  category?: string;
-}
-
 export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters): SearchQueryResponse {
   const pageSize = Math.max(1, parseInt(String(filters.rowsperpage || "24"), 10) || 24);
   const page = Math.max(1, parseInt(String(filters.page || "1"), 10) || 1);
