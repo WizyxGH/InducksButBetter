@@ -5,6 +5,9 @@ import { Maximize2, BookOpen } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FlagBadge } from "@/components/FlagBadge"
+import { navigate } from "@/lib/navigation";
+import { Link } from "@/components/ui/link";
+import { routes } from "@/lib/routes";
 
 interface IssueResultCardProps {
   row: any
@@ -79,15 +82,13 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
     };
   }, [row.issue_thumb]);
 
-  const displayCode = row.issuecode.replace(" ", "/");
-  const targetHref = `#/publications/issue/${encodeURIComponent(displayCode)}`;
+  const targetHref = routes.issue(row.issuecode);
 
   const handleClick = (e: React.MouseEvent) => {
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
       return;
     }
     if (onSelect) {
-      e.preventDefault();
       onSelect(row.issuecode);
     }
   };
@@ -98,7 +99,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
       if (onSelect) {
         onSelect(row.issuecode);
       } else {
-        window.location.hash = targetHref;
+        navigate(targetHref);
       }
     }
   };
@@ -106,8 +107,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
   const hasCookie = React.useMemo(() => hasInducksCookie(), []);
 
   return (
-    <a
-      href={targetHref}
+    <Link to={targetHref}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -209,6 +209,6 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
           </div>
         </div>
       </div>
-    </a>
+    </Link>
   )
 }

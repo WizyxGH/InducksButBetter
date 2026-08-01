@@ -60,7 +60,7 @@ export async function autocompletePerson(q: string) {
       SELECT personcode, fullname, nationalitycountrycode, fullname as displayname 
       FROM inducks_person 
       WHERE fullname LIKE ? OR personcode LIKE ? 
-      ORDER BY fullname ASC
+      ORDER BY CAST(numberofindexedissues AS INTEGER) DESC, fullname ASC
       LIMIT 10
     `,
     args: [`%${q}%`, `%${q}%`]
@@ -186,7 +186,7 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
   // Get best version/thumb
   const versionResult = await executeQuery({
     sql: `
-      SELECT sv.storyversioncode, sv.kind, sv.entirepages, sv.brokenpagenumerator, sv.brokenpagedenominator, sv.plotsummary,
+      SELECT sv.storyversioncode, sv.kind, sv.entirepages, sv.brokenpagenumerator, sv.brokenpagedenominator, sv.plotsummary, sv.rowsperpage,
         COALESCE(
           (SELECT eu.sitecode || '|' || eu.url
            FROM inducks_entry e_img
@@ -220,7 +220,7 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
   // 3. Characters list
   const charactersResult = await executeQuery({
     sql: `
-      SELECT DISTINCT app_c.charactercode, COALESCE(cn.charactername, c.charactername) as charactername, app_c.appearancecomment, COALESCE(cn.characternamecomment, c.charactercomment, '') as charactercomment
+      SELECT DISTINCT app_c.charactercode, COALESCE(cn.charactername, c.charactername) as charactername, app_c.appearancecomment, COALESCE(cn.characternamecomment, c.charactercomment, '') as charactercomment, app_c.number
       FROM inducks_appearance app_c
       JOIN inducks_character c ON app_c.charactercode = c.charactercode
       LEFT JOIN inducks_charactername cn ON app_c.charactercode = cn.charactercode AND cn.languagecode = ? AND cn.preferred = 'Y'
@@ -373,3 +373,98 @@ export async function getIssueDetail(issuecode: string) {
   };
 }
 
+export interface UnifiedSearchResult {
+  id: string;
+  name: string;
+  type: "author" | "character" | "publication" | "issue" | "story";
+  subtitle?: string | null;
+}
+
+export async function unifiedAutocomplete(q: string, lang: string = 'fr'): Promise<UnifiedSearchResult[]> {
+  const queryLike = `%${q.trim()}%`;
+  const qUpper = q.trim().toUpperCase();
+  const qUpperEnd = qUpper.slice(0, -1) + String.fromCharCode(qUpper.charCodeAt(qUpper.length - 1) + 1);
+
+  const [authorsRes, charactersRes, publicationsRes, issuesRes, storiesRes] = await Promise.all([
+    // Authors
+    executeQuery({
+      sql: `
+        SELECT personcode as id, fullname as name, 'author' as type
+        FROM inducks_person 
+        WHERE fullname LIKE ? OR personcode LIKE ? 
+        ORDER BY CAST(numberofindexedissues AS INTEGER) DESC, fullname ASC
+        LIMIT 4
+      `,
+      args: [queryLike, queryLike]
+    }).catch(() => ({ rows: [] })),
+
+    // Characters
+    executeQuery({
+      sql: `
+        SELECT c.charactercode as id, COALESCE(cn.charactername, c.charactername) as name, 'character' as type
+        FROM inducks_character c
+        LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
+        WHERE c.charactercode LIKE ? OR COALESCE(cn.charactername, c.charactername) LIKE ?
+        GROUP BY c.charactercode
+        ORDER BY MAX(COALESCE(cn.preferred, 0)) DESC, charactername ASC
+        LIMIT 4
+      `,
+      args: [lang, queryLike, queryLike]
+    }).catch(() => ({ rows: [] })),
+
+    // Publications
+    executeQuery({
+      sql: `
+        SELECT p.publicationcode as id, pn.publicationname || ' (' || p.publicationcode || ')' as name, 'publication' as type
+        FROM inducks_publication p
+        JOIN inducks_publicationname pn ON p.publicationcode = pn.publicationcode
+        WHERE p.publicationcode LIKE ? OR pn.publicationname LIKE ?
+        GROUP BY p.publicationcode
+        ORDER BY MAX(CASE WHEN pn.languagecode = ? THEN 1 ELSE 0 END) DESC, pn.publicationname ASC
+        LIMIT 4
+      `,
+      args: [queryLike, queryLike, lang]
+    }).catch(() => ({ rows: [] })),
+
+    // Issues
+    executeQuery({
+      sql: `
+        SELECT i.issuecode as id, pn.publicationname || ' #' || i.issuenumber as name, 'issue' as type, i.title as subtitle
+        FROM inducks_issue i
+        JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+        LEFT JOIN inducks_publicationname pn ON p.publicationcode = pn.publicationcode
+        WHERE i.issuecode LIKE ? OR i.title LIKE ?
+        GROUP BY i.issuecode
+        ORDER BY i.oldestdate DESC
+        LIMIT 4
+      `,
+      args: [queryLike, queryLike]
+    }).catch(() => ({ rows: [] })),
+
+    // Stories
+    executeQuery({
+      sql: `
+        WITH MatchedStories AS (
+          SELECT storycode, title
+          FROM inducks_story
+          WHERE (storycode >= ? AND storycode < ?) OR title LIKE ?
+          ORDER BY storycode ASC
+          LIMIT 4
+        )
+        SELECT storycode as id, storycode as name, 'story' as type, title as subtitle
+        FROM MatchedStories
+      `,
+      args: [qUpper, qUpperEnd, queryLike]
+    }).catch(() => ({ rows: [] }))
+  ]);
+
+  const combined: UnifiedSearchResult[] = [
+    ...(authorsRes.rows || []),
+    ...(charactersRes.rows || []),
+    ...(publicationsRes.rows || []),
+    ...(issuesRes.rows || []),
+    ...(storiesRes.rows || [])
+  ] as UnifiedSearchResult[];
+
+  return combined;
+}

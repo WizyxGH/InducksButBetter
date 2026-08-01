@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Check, ChevronDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
+import { Tag } from "@/components/ui/tag"
 import {
   Command,
   CommandEmpty,
@@ -97,40 +97,40 @@ export function SearchableMultiSelect({
               <span className="text-text-secondary text-sm">{placeholder}</span>
             ) : selected.length <= maxDisplay ? (
               selectedLabels.map((label, i) => (
-                <Badge
+                <Tag
                   key={selected[i]}
-                  variant="secondary"
-                  className="bg-surface-2 text-text-body shadow-sm border border-border-subtle hover:border-border transition-all text-xs font-medium rounded-lg px-2 py-0.5 flex items-center gap-1 group"
+                  color="surface"
+                  className="pr-1 font-medium bg-surface-2 border-border-subtle text-xs"
                 >
                   <span className="leading-none">{label}</span>
                   <span
-                    className="cursor-pointer text-text-secondary hover:text-destructive transition-colors -mr-1 p-0.5"
+                    className="cursor-pointer text-text-secondary hover:text-destructive transition-colors ml-1 p-0.5"
                     onMouseDown={(e) => remove(selected[i], e)}
                   >
                     <X className="w-3 h-3" />
                   </span>
-                </Badge>
+                </Tag>
               ))
             ) : (
               <>
                 {selectedLabels.slice(0, maxDisplay).map((label, i) => (
-                  <Badge
+                  <Tag
                     key={selected[i]}
-                    variant="secondary"
-                    className="bg-surface-2 text-text-body shadow-sm border border-border-subtle hover:border-border text-xs font-medium rounded-lg px-2 py-0.5 flex items-center gap-1 group transition-all"
+                    color="surface"
+                    className="pr-1 font-medium bg-surface-2 border-border-subtle text-xs"
                   >
                     <span className="leading-none">{label}</span>
                     <span
-                      className="cursor-pointer text-text-secondary hover:text-destructive transition-colors -mr-1 p-0.5"
+                      className="cursor-pointer text-text-secondary hover:text-destructive transition-colors ml-1 p-0.5"
                       onMouseDown={(e) => remove(selected[i], e)}
                     >
                       <X className="w-3 h-3" />
                     </span>
-                  </Badge>
+                  </Tag>
                 ))}
-                <Badge variant="secondary" className="bg-surface-2 border border-dashed border-border-subtle text-text-secondary shadow-sm text-xs font-medium rounded-lg px-2 py-0.5 flex items-center h-6">
+                <Tag color="surface" className="font-medium bg-surface-2 border-dashed border-border-subtle text-text-secondary h-6 px-2 text-xs">
                   +{selected.length - maxDisplay}
-                </Badge>
+                </Tag>
               </>
             )}
           </div>

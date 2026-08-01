@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { toast } from "sonner"
 import i18n from '@/i18n'
+import { navigate } from "@/lib/navigation";
 
 let internalHistoryCount = 0;
 
@@ -32,7 +33,7 @@ export function handleDbError(err: any, customMessage?: string) {
       action: {
         label: i18n.t("common.go_to_settings", "Aller aux paramètres"),
         onClick: () => {
-          window.location.hash = '#/settings';
+          navigate('#/settings');
         }
       }
     });

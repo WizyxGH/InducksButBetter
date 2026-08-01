@@ -4,6 +4,7 @@ import { Loader2, ExternalLink, Calendar, Star, BookOpen, Users, Cat, Globe, Use
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { navigate } from "@/lib/navigation";
 
 interface CharacterDetailData {
   charactercode: string;
@@ -284,7 +285,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                     if (onSelectStory) {
                       onSelectStory(firstAppearance.storycode);
                     } else {
-                      window.location.hash = `#/entries/story/${encodeURIComponent(firstAppearance.storycode)}`;
+                      navigate(`#/entries/story/${encodeURIComponent(firstAppearance.storycode)}`);
                     }
                   }}
                   className="text-primary hover:underline font-semibold cursor-pointer"
@@ -447,7 +448,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                       if (onSelectStory) {
                         onSelectStory(story.storycode);
                       } else {
-                        window.location.hash = `#/entries/story/${encodeURIComponent(story.storycode)}`;
+                        navigate(`#/entries/story/${encodeURIComponent(story.storycode)}`);
                       }
                     }}
                     className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"

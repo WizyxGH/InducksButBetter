@@ -136,6 +136,7 @@
     "present": "Présent"
   },
   "story": {
+    "not_found": "Histoire introuvable.",
     "no_title": "Sans titre",
     "pagination": "Pagination",
     "release_date": "Date de sortie",
@@ -175,6 +176,7 @@
     "L": "Peinture (paysage)"
   },
   "tabs": {
+    "home": "Accueil",
     "stories": "Histoires",
     "publications": "Publications",
     "authors": "Auteurs",
@@ -185,11 +187,37 @@
       "authors": "Explorateur d'auteurs bientôt disponible...",
       "characters": "Explorateur de personnages bientôt disponible..."
     },
-    "countries": "Pays"
+    "countries": "Pays",
+    "settings": "Paramètres"
+  },
+  "home": {
+    "welcome_title": "InducksButBetter",
+    "welcome_subtitle": "Explorez la base de données Inducks",
+    "search_placeholder": "Rechercher un code, un auteur, un personnage, un magazine...",
+    "db_stats_title": "Statistiques de la base de données",
+    "latest_releases_title": "Dernières sorties",
+    "db_missing": "Veuillez charger une base de données locale dans les Paramètres pour afficher les statistiques et les publications.",
+    "db_statistics": "Statistiques",
+    "no_results": "Aucun résultat trouvé",
+    "type_author_one": "Auteur",
+    "type_author_other": "Auteurs",
+    "type_character_one": "Personnage",
+    "type_character_other": "Personnages",
+    "type_publication_one": "Magazine",
+    "type_publication_other": "Magazines",
+    "type_issue_one": "Numéro",
+    "type_issue_other": "Numéros",
+    "type_story_one": "Histoire",
+    "type_story_other": "Histoires",
+    "or_advanced": "Ou accédez à la",
+    "advanced_search_link": "recherche avancée",
+    "latest_releases_range": "7 derniers jours",
+    "no_releases": "Aucune sortie enregistrée dans les 7 derniers jours."
   },
   "header": {
-    "title": "InducksButBetter - Recherche avancée",
-    "subtitle": "Trouvez précisément ce que vous cherchez dans la base Inducks"
+    "title": "InducksButBetter",
+    "subtitle": "Trouvez précisément ce que vous cherchez dans la base Inducks",
+    "search": "Recherche"
   },
   "ai": {
     "welcome": "Bonjour ! Je suis votre expert Inducks. Je peux vous aider à écrire des requêtes SQL complexes. Que cherchez-vous ?",
@@ -322,7 +350,8 @@
     "cookie_desc": "Ce cookie permet d'accéder aux images haute résolution d'Inducks.",
     "cookie_saved": "Cookie sauvegardé !",
     "cookie_help": "Ce cookie permet d'accéder aux images haute résolution. Récupérez-le dans l'inspecteur du navigateur sur inducks.org.",
-    "download_isv": "Télécharger les fichiers ISV"
+    "download_isv": "Télécharger les fichiers ISV",
+    "translations": "Traductions"
   },
   "localDb": {
     "title": "Base de données Inducks locale",
@@ -341,7 +370,9 @@
     "error": "Échec du chargement de la base de données ISV.",
     "already_imported": "Attention : Vous avez déjà importé une base de données. Importer de nouveaux fichiers remplacera la base actuelle.",
     "imported_stats": "Fichiers actuellement chargés : {{count}} (Poids total : {{size}})",
-    "btn_cloud": "Importer automatiquement (Recommandé)"
+    "btn_cloud": "Importer automatiquement (Recommandé)",
+    "title": "Stockage local de l'application",
+    "clear_storage": "Effacer toutes les données locales"
   },
   "authors": {
     "biography": "Biographie",
@@ -502,5 +533,31 @@
       "title": "Participer au projet",
       "desc": "Vous pouvez contribuer au projet sur GitHub ou rejoindre notre serveur Discord !"
     }
+  },
+  "pwa": {
+    "installed_title": "Application installée",
+    "installed_desc": "Vous utilisez déjà InducksButBetter en tant qu'application.",
+    "install_title": "Installer l'application",
+    "install_desc": "Installez InducksButBetter sur votre appareil pour un accès rapide, un mode plein écran et une meilleure expérience.",
+    "install_button": "Installer",
+    "install_manual": "Sur iOS, appuyez sur le bouton de partage de Safari puis « Sur l'écran d'accueil ». Sur Android, utilisez le menu du navigateur."
+  },
+  "suggestions": {
+    "title": "Envoyez-nous vos suggestions",
+    "subtitle": "Une idée d'amélioration ? Un bug repéré ? Aidez-nous à rendre InducksButBetter encore plus génial !",
+    "label_name": "Nom ou pseudo (optionnel)",
+    "placeholder_name": "Comment vous appelez-vous ?",
+    "label_type": "Type de suggestion",
+    "type_idea": "Idée",
+    "type_bug": "Bug",
+    "type_db": "Données",
+    "type_other": "Autre",
+    "label_message": "Votre message",
+    "placeholder_message": "Détaillez votre idée ou le problème rencontré...",
+    "sending": "Envoi en cours...",
+    "sent": "Envoyé avec succès !",
+    "submit": "Envoyer la suggestion",
+    "error_short": "Votre message est trop court (min 10 caractères).",
+    "success": "Merci ! Votre suggestion a bien été envoyée."
   }
 }

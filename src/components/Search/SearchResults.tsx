@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Tag } from "@/components/ui/tag";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -89,9 +89,9 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
           )}
         </div>
         {totalCount > 0 && (
-          <Badge variant="secondary" className="bg-primary text-primary-foreground border-none px-3 font-bold">
-            {actualFoundLabel}
-          </Badge>
+          <Tag color="primary" className="px-3 text-sm">
+            {totalCount} {totalCount > 1 ? t('search.results_plural') || 'résultats' : t('search.result_singular') || 'résultat'}
+          </Tag>
         )}
       </div>
 

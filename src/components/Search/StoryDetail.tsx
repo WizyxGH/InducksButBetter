@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, Copy, Check, Calendar, BookOpen, User, Users, FileText, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowLeft, Copy, Check, Calendar, BookOpen, User, Users, FileText, ChevronDown, ChevronUp, AlignJustify } from "lucide-react"
 import { getStoryDetail } from "@/lib/turso"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
+import { Tag } from "@/components/ui/tag"
 import { Card, CardContent } from "@/components/ui/card"
 import { getFlagUrl, hasInducksCookie, isInvalidPlotsummary } from "@/lib/utils"
 import { toast } from "sonner"
 import { EntityBadge } from "@/components/EntityBadge"
 import { KindBadge } from "@/components/KindBadge"
 import { useMetadata } from "@/hooks/useMetadata"
+import { navigate } from "@/lib/navigation";
 
 interface StoryDetailProps {
   storycode: string
@@ -57,12 +59,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   }
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[400px] text-primary/40 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        <p className="text-sm font-medium">{t("common.loading")}</p>
-      </div>
-    )
+    return <PageLoadingSkeleton />
   }
 
   if (!story) {
@@ -123,13 +120,22 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
   const otherDescriptions = story.descriptions?.filter((d: any) => d.languagecode !== defaultDesc?.languagecode) || []
 
-  // Group creators by job type and deduplicate by personcode
-  const writers = (story.creators?.filter((c: any) => ["w", "p", "pw"].includes(c.role)) || [])
-    .filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.personcode === v.personcode) === i)
-  const artists = (story.creators?.filter((c: any) => ["a", "i", "pa"].includes(c.role)) || [])
-    .filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.personcode === v.personcode) === i)
-  const others = (story.creators?.filter((c: any) => !["w", "p", "pw", "a", "i", "pa"].includes(c.role)) || [])
-    .filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.personcode === v.personcode) === i)
+  // Group creators by personcode to show all their roles together
+  const creatorsMap = new Map<string, { code: string, name: string, roles: string[] }>()
+  story.creators?.forEach((c: any) => {
+    if (!creatorsMap.has(c.personcode)) {
+      creatorsMap.set(c.personcode, { code: c.personcode, name: c.fullname || c.personcode, roles: [] })
+    }
+    let roleName = c.role
+    if (["w", "p", "pw"].includes(c.role)) roleName = t("story.script", { defaultValue: "Scénario" })
+    else if (["a", "i", "pa"].includes(c.role)) roleName = t("story.art", { defaultValue: "Dessin" })
+    
+    const creator = creatorsMap.get(c.personcode)!
+    if (!creator.roles.includes(roleName)) {
+      creator.roles.push(roleName)
+    }
+  })
+  const unifiedCreators = Array.from(creatorsMap.values())
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 lg:p-8 space-y-6">
@@ -143,14 +149,15 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left/Middle Content: Main Story Info */}
         <div className="md:col-span-2 space-y-6">
-          <div className="space-y-3">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {/* Header */}
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground leading-tight">
               {(() => {
-                const translated = story.translated_title;
                 const original = story.original_title;
-                let mainTitle = original;
+                const translated = story.translated_title;
+                let mainTitle = original || t("story.no_title") || "Sans titre";
                 let subTitle = null;
-
+                
                 if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
                   mainTitle = translated;
                   if (original && original !== 'Untitled' && original !== translated) {
@@ -186,10 +193,14 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               <div className="flex items-center gap-1.5 ml-2">
                 <KindBadge kind={story.kind || "s"} />
                 {(story.entirepages || story.brokenpagenumerator) && (
-                  <Badge variant="outline" className="font-medium text-[10px] gap-1 bg-surface">
-                    <FileText className="w-3 h-3" />
+                  <Tag color="surface" icon={<FileText className="w-3 h-3" />}>
                     {story.entirepages ? `${story.entirepages} ${t("story.pages")}` : `${story.brokenpagenumerator}/${story.brokenpagedenominator} ${t("story.page")}`}
-                  </Badge>
+                  </Tag>
+                )}
+                {story.rowsperpage > 0 && (
+                  <Tag color="surface" icon={<AlignJustify className="w-3 h-3" />}>
+                    {story.rowsperpage} {story.rowsperpage > 1 ? t('story.strips', { defaultValue: 'bandes' }) : t('story.strip', { defaultValue: 'bande' })} / page
+                  </Tag>
                 )}
               </div>
             </div>
@@ -221,7 +232,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 {defaultDesc ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] uppercase font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] capitalize font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded">
                         {meta.languages.find((l) => l.languagecode === defaultDesc.languagecode)?.languagename || defaultDesc.languagecode.toUpperCase()}
                       </span>
                     </div>
@@ -253,7 +264,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                           return (
                             <div key={desc.languagecode} className="space-y-1 pt-3 border-t border-border-subtle/50 first:border-none first:pt-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-[9px] uppercase font-bold bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] capitalize font-bold bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded">
                                   {langName}
                                 </span>
                               </div>
@@ -275,57 +286,29 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               <Users className="w-4 h-4 text-primary" />
               {t("story.creators", { defaultValue: "Auteurs / Créateurs" })}
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Writers */}
-              <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
-                <CardContent className="p-4 space-y-3">
-                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-blue-500" />
-                    {t("story.script", { defaultValue: "Scénario" })}
-                  </h4>
-                  {writers.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {writers.map((c: any) => (
+            <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                {unifiedCreators.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {unifiedCreators.map((creator) => (
+                      <div key={creator.code} className="flex flex-col gap-1 items-start">
+                        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+                          {creator.roles.join(", ")}
+                        </span>
                         <EntityBadge
-                          key={`${c.personcode}-${c.role}`}
                           type="creator"
-                          code={c.personcode}
-                          name={c.fullname || c.personcode}
-                          onSelect={(code, name) => window.location.hash = `#/authors/${code}`}
+                          code={creator.code}
+                          name={creator.name}
+                          onSelect={(code) => navigate(`/authors/${code}`)}
                         />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-text-secondary italic">Non crédité.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Artists */}
-              <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
-                <CardContent className="p-4 space-y-3">
-                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-emerald-500" />
-                    {t("story.art", { defaultValue: "Dessin" })}
-                  </h4>
-                  {artists.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {artists.map((c: any) => (
-                        <EntityBadge
-                          key={`${c.personcode}-${c.role}`}
-                          type="creator"
-                          code={c.personcode}
-                          name={c.fullname || c.personcode}
-                          onSelect={(code, name) => window.location.hash = `#/authors/${code}`}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-text-secondary italic">Non crédité.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-text-secondary italic">Non crédité.</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -433,9 +416,9 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                         key={pub.entrycode + i}
                         onClick={() => {
                           if (pub.position) {
-                            const rootPrefix = window.location.hash.startsWith("#/publications") ? "publications" : "entries";
+                            const rootPrefix = window.location.pathname.startsWith("#/publications") ? "publications" : "entries";
                             const displayCode = pub.issuecode.replace(" ", "/");
-                            window.location.hash = `#/${rootPrefix}/issue/${encodeURIComponent(displayCode)}?pos=${encodeURIComponent(pub.position.trim().toLowerCase())}`;
+                            navigate(`#/${rootPrefix}/issue/${encodeURIComponent(displayCode)}?pos=${encodeURIComponent(pub.position.trim().toLowerCase())}`);
                           } else if (onSelectIssue) {
                             onSelectIssue(pub.issuecode);
                           }

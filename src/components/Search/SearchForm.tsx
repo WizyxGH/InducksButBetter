@@ -241,11 +241,6 @@ export function SearchForm({
 
   return (
     <div className="flex-none lg:flex-1 flex flex-col border-border-subtle/60 dark:border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl lg:overflow-hidden overflow-visible bg-surface">
-      <div className="px-8 py-5 border-b border-border-subtle bg-surface flex items-center justify-between shrink-0">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-3">
-          {t("search.title")}
-        </h2>
-      </div>
 
       <ScrollArea className="flex-1 mobile-no-scroll">
         <div className="p-4 sm:p-8">

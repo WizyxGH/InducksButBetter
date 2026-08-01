@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react"
+import { navigate, getBasePath } from "@/lib/navigation";
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -17,6 +18,7 @@ import { OnboardingModal } from "@/components/OnboardingModal"
 import { QuotaBanner } from "@/components/QuotaBanner"
 
 // Lazy load heavy components to code-split the application
+const Home = lazy(() => import("@/components/Home").then(module => ({ default: module.Home })))
 const AdvancedSearch = lazy(() => import("@/components/AdvancedSearch").then(module => ({ default: module.AdvancedSearch })))
 const SqlEditor = lazy(() => import("@/components/SqlEditor").then(module => ({ default: module.SqlEditor })))
 const AiAssistant = lazy(() => import("@/components/AiAssistant").then(module => ({ default: module.AiAssistant })))
@@ -29,19 +31,19 @@ const CountryList = lazy(() => import("@/components/Publications/CountryList").t
 const PublicationDetail = lazy(() => import("@/components/Publications/PublicationDetail").then(module => ({ default: module.PublicationDetail })))
 const PublisherDetail = lazy(() => import("@/components/Publications/PublisherDetail").then(module => ({ default: module.PublisherDetail })))
 const IssueDetail = lazy(() => import("@/components/Publications/IssueDetail").then(module => ({ default: module.IssueDetail })))
+const SuggestionForm = lazy(() => import("@/components/SuggestionForm").then(module => ({ default: module.SuggestionForm })))
+
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
+
+import { routes } from "@/lib/routes"
 
 // Reusable loading fallback
-const TabFallback = () => (
-  <div className="flex w-full h-full min-h-[300px] items-center justify-center text-primary/40">
-    <Loader2 className="w-8 h-8 animate-spin" />
-  </div>
-)
+const TabFallback = () => <PageLoadingSkeleton />
 
 function App() {
   const { i18n, t } = useTranslation();
   useTheme(); // initialise theme from localStorage / system preference
-  const [activeTab, setActiveTab] = useState("stories");
-  const [prevTab, setPrevTab] = useState("stories");
+  const [activeTab, setActiveTab] = useState("home");
   const [sqlQuery, setSqlQuery] = useState("SELECT * FROM inducks_story LIMIT 10");
 
   const [selectedStorycode, setSelectedStorycode] = useState<string | null>(null);
@@ -61,12 +63,38 @@ function App() {
     selectedCharactercode,
     selectedCountrycode,
     selectedPublicationcode,
+    selectedPublisherid
   });
 
   useEffect(() => {
     const handleUrlRouting = () => {
       incrementHistoryCount();
+      
+      const baseUrl = import.meta.env.BASE_URL || "/";
+      const pathname = window.location.pathname;
       const hash = window.location.hash;
+      
+      let rawPath = "";
+      if (hash && hash.length > 2) {
+        // Support legacy hash URLs
+        rawPath = hash.substring(2);
+      } else {
+        // Strip base URL
+        if (pathname.startsWith(baseUrl)) {
+          rawPath = pathname.substring(baseUrl.length);
+        } else {
+          rawPath = pathname.startsWith('/') ? pathname.substring(1) : pathname;
+        }
+      }
+
+      if (!rawPath || rawPath === "index.html") {
+        setActiveTab("home");
+        return;
+      }
+
+      // decodeURIComponent doesn't convert '+' to space automatically
+      const decodedPath = decodeURIComponent(rawPath.replace(/\+/g, "%20"));
+      const [pathPart, queryPart] = decodedPath.split("?");
       
       // Reset all codes
       setSelectedStorycode(null);
@@ -77,43 +105,43 @@ function App() {
       setSelectedPublicationcode(null);
       setSelectedPublisherid(null);
 
-      if (!hash) {
-        setActiveTab("stories");
-        return;
-      }
 
-      const decodedHash = decodeURIComponent(hash);
-      const [pathPart, queryPart] = decodedHash.split("?");
-      const parts = pathPart.replace("#/", "").split("/");
+      const parts = pathPart.split("/").filter(Boolean);
       const rootPart = parts[0];
 
-      if (rootPart === "settings") {
+      if (rootPart === "home") {
+        setActiveTab("home");
+      } else if (rootPart === "settings") {
         setActiveTab("settings");
       } else if (rootPart === "entries" || rootPart === "stories") {
         setActiveTab("stories");
         if (parts[1] === "story" && parts[2]) {
           const code = parts.slice(2).join("/");
           setSelectedStorycode(code);
-        } else if (parts[1] === "issue" && parts[2]) {
-          const code = parts.slice(2).join("/");
-          const partsArr = code.split("/");
-          const restoredCode = partsArr.length >= 3 ? `${partsArr[0]}/${partsArr[1]} ${partsArr.slice(2).join("/")}` : code;
-          setSelectedIssuecode(restoredCode);
-        }
-      } else if (rootPart === "publications") {
-        setActiveTab("publications");
-        setSelectedPublisherid(null);
-        if (parts[1] === "publication" && parts[2]) {
-          const code = parts.slice(2).join("/");
-          setSelectedPublicationcode(code);
-        } else if (parts[1] === "story" && parts[2]) {
-          const code = parts.slice(2).join("/");
+        } else if (parts[1] && parts[1] !== "story") {
+          const code = parts.slice(1).join("/");
           setSelectedStorycode(code);
-        } else if (parts[1] === "issue" && parts[2]) {
-          const code = parts.slice(2).join("/");
-          const partsArr = code.split("/");
-          const restoredCode = partsArr.length >= 3 ? `${partsArr[0]}/${partsArr[1]} ${partsArr.slice(2).join("/")}` : code;
-          setSelectedIssuecode(restoredCode);
+        }
+      } else if (rootPart === "countries" || rootPart === "publications") {
+        // We support both /countries/... and /publications/... for legacy links
+        if (parts.length >= 4) {
+          // e.g. /countries/de/LTB/613 -> issue de/LTB 613
+          const issueCode = `${parts[1]}/${parts[2]} ${parts.slice(3).join("/")}`;
+          setSelectedIssuecode(issueCode);
+          setActiveTab("publications");
+        } else if (parts.length === 3) {
+          // e.g. /countries/de/LTB -> publication de/LTB
+          const pubCode = `${parts[1]}/${parts[2]}`;
+          setSelectedPublicationcode(pubCode);
+          setActiveTab("publications");
+        } else if (parts.length === 2) {
+          // e.g. /countries/de -> country de
+          setSelectedCountrycode(parts[1]);
+          setActiveTab("countries");
+        } else if (rootPart === "countries") {
+          setActiveTab("countries");
+        } else {
+          setActiveTab("publications");
         }
       } else if (rootPart === "authors") {
         setActiveTab("authors");
@@ -121,9 +149,6 @@ function App() {
       } else if (rootPart === "characters") {
         setActiveTab("characters");
         if (parts[1]) setSelectedCharactercode(parts.slice(1).join("/"));
-      } else if (rootPart === "countries") {
-        setActiveTab("countries");
-        if (parts[1]) setSelectedCountrycode(parts.slice(1).join("/"));
       } else if (rootPart === "publishers") {
         setActiveTab("publications");
         setSelectedPublicationcode(null);
@@ -132,6 +157,8 @@ function App() {
         if (parts[1]) setSelectedPublisherid(parts.slice(1).join("/"));
       } else if (rootPart === "sql") {
         setActiveTab("sql");
+      } else if (rootPart === "suggestions") {
+        setActiveTab("suggestions");
       } else {
         setActiveTab("stories");
       }
@@ -157,19 +184,18 @@ function App() {
   }, []);
 
   const pushHashState = (expectedHash: string) => {
-    // Force the path to be the absolute base path to avoid nested relative paths
-    const baseUrl = import.meta.env.BASE_URL || "/";
-    const cleanBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+    const base = getBasePath();
+    const cleanHash = expectedHash.startsWith('/') ? expectedHash : `/${expectedHash}`;
     
     // Compare actual URL (path + hash without query) to avoid duplicate pushState calls
-    const currentCleanHash = window.location.hash.split("?")[0];
-    const expectedCleanHash = expectedHash.split("?")[0];
+    const currentCleanHash = window.location.pathname; // It's better to compare pathname since we use path routing now
+    // Actually expectedHash includes query string sometimes. Let's just compare the generated full path.
+    const expectedUrl = `${base}${cleanHash}`;
     
-    if (currentCleanHash === expectedCleanHash) {
+    if (window.location.pathname + window.location.search === expectedUrl) {
       return;
     }
     
-    const expectedUrl = `${cleanBase}${expectedHash}`;
     window.history.pushState(null, "", expectedUrl);
   };
 
@@ -182,23 +208,23 @@ function App() {
     const queryStr = queryIndex !== -1 ? currentHash.substring(queryIndex) : "";
     
     if (activeTab === "settings") {
-      pushHashState("#/settings" + queryStr);
+      pushHashState(routes.settings() + queryStr);
+    } else if (activeTab === "suggestions") {
+      pushHashState(routes.suggestions() + queryStr);
     } else if (selectedStorycode) {
-      pushHashState(`#/${rootPrefix}/story/${encodeURI(selectedStorycode)}` + queryStr);
+      pushHashState(routes.story(selectedStorycode) + queryStr);
     } else if (selectedIssuecode) {
-      // Replace the space with a slash for cleaner URLs
-      const displayCode = selectedIssuecode.replace(" ", "/");
-      pushHashState(`#/${rootPrefix}/issue/${encodeURI(displayCode)}` + queryStr);
+      pushHashState(routes.issue(selectedIssuecode) + queryStr);
     } else if (selectedPersoncode) {
-      pushHashState(`#/authors/${encodeURI(selectedPersoncode)}` + queryStr);
+      pushHashState(routes.author(selectedPersoncode) + queryStr);
     } else if (selectedCharactercode) {
-      pushHashState(`#/characters/${encodeURI(selectedCharactercode)}` + queryStr);
+      pushHashState(routes.character(selectedCharactercode) + queryStr);
     } else if (selectedPublisherid) {
-      pushHashState(`#/publishers/${encodeURI(selectedPublisherid)}` + queryStr);
-    } else if (selectedCountrycode) {
-      pushHashState(`#/countries/${encodeURI(selectedCountrycode)}` + queryStr);
+      pushHashState(routes.publisher(selectedPublisherid) + queryStr);
     } else if (selectedPublicationcode) {
-      pushHashState(`#/publications/publication/${encodeURI(selectedPublicationcode)}` + queryStr);
+      pushHashState(routes.publication(selectedPublicationcode) + queryStr);
+    } else if (selectedCountrycode) {
+      pushHashState(routes.country(selectedCountrycode) + queryStr);
     } else {
       pushHashState(`#/${rootPrefix}` + queryStr);
     }
@@ -230,12 +256,9 @@ function App() {
       <div id="main-content" className="h-screen overflow-y-auto overflow-x-hidden bg-background text-foreground">
         <div className="flex flex-col h-screen shrink-0">
           {/* Main Header */}
-          {/* Main Header */}
           <AppHeader
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            prevTab={prevTab}
-            setPrevTab={setPrevTab}
           />
 
         {/* Global Banner for Turso Quota Errors */}
@@ -243,10 +266,21 @@ function App() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0">
-          <NavigationTabs activeTab={activeTab} />
+          <NavigationTabs 
+            activeTab={activeTab} 
+            isDetailPage={!!(selectedStorycode || selectedIssuecode || selectedPersoncode || selectedCharactercode || selectedPublicationcode || selectedPublisherid || selectedCountrycode)} 
+          />
 
           {/* Content Viewport */}
           <div className="flex-1 min-h-0 overflow-hidden relative">
+            <TabsContent value="home" className="h-full m-0 p-0 border-none outline-none overflow-auto">
+              {activeTab === "home" && (
+                <Suspense fallback={<TabFallback />}>
+                  <Home />
+                </Suspense>
+              )}
+            </TabsContent>
+
             <TabsContent value="stories" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
               {activeTab === "stories" && (
                 <Suspense fallback={<TabFallback />}>
@@ -357,10 +391,18 @@ function App() {
               )}
             </TabsContent>
 
-            <TabsContent value="settings" className="h-full m-0 p-0 border-none outline-none overflow-auto bg-surface-2/40">
+            <TabsContent value="settings" className="h-full m-0 p-0 border-none outline-none overflow-y-auto">
               {activeTab === "settings" && (
                 <Suspense fallback={<TabFallback />}>
                   <Settings />
+                </Suspense>
+              )}
+            </TabsContent>
+
+            <TabsContent value="suggestions" className="h-full m-0 p-0 border-none outline-none overflow-y-auto">
+              {activeTab === "suggestions" && (
+                <Suspense fallback={<TabFallback />}>
+                  <SuggestionForm />
                 </Suspense>
               )}
             </TabsContent>

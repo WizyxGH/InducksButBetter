@@ -8,6 +8,7 @@ import { SearchResults } from "./Search/SearchResults";
 import { StoryDetail } from "./Search/StoryDetail";
 import { navigateBack } from "@/lib/utils";
 import { IssueDetail } from "./Publications/IssueDetail";
+import { navigate } from "@/lib/navigation";
 
 interface AdvancedSearchProps {
   selectedStorycode: string | null;
@@ -55,7 +56,7 @@ export function AdvancedSearch({
   });
 
   const handleSelectCharacter = (code: string, name: string) => {
-    window.location.hash = `#/characters/${encodeURIComponent(code)}`;
+    navigate(`#/characters/${encodeURIComponent(code)}`);
   };
 
   if (selectedIssuecode) {

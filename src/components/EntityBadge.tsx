@@ -12,7 +12,10 @@ interface EntityBadgeProps {
   onSelect?: (code: string, name: string) => void
 }
 
-export function EntityBadge({
+import { routes } from "@/lib/routes"
+import { Link } from "@/components/ui/link"
+
+export const EntityBadge = React.memo(function EntityBadge({
   type,
   code,
   name,
@@ -37,7 +40,7 @@ export function EntityBadge({
     photoUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${code.replace(/ /g, "_")}.jpg`)}`
   }
 
-  const href = isCharacter ? `#/characters/${code}` : `#/authors/${code}`
+  const targetHref = isCharacter ? routes.character(code) : routes.author(code)
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -69,8 +72,8 @@ export function EntityBadge({
     <div className="flex items-center gap-1.5 w-fit group/entity">
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <a
-            href={href}
+          <Link
+            to={targetHref}
             onClick={handleClick}
             className="flex items-center gap-1.5 hover:bg-surface-2 p-1 -m-1 rounded-md transition-colors cursor-pointer"
           >
@@ -78,7 +81,7 @@ export function EntityBadge({
             <span className={`${size === "sm" ? "text-[10px]" : "text-xs"} text-primary hover:underline font-medium whitespace-nowrap`}>
               {name}
             </span>
-          </a>
+          </Link>
         </TooltipTrigger>
         <TooltipContent className="max-w-[300px] text-xs leading-relaxed p-3">
           <div className="flex gap-3 items-start">
@@ -101,4 +104,4 @@ export function EntityBadge({
       )}
     </div>
   )
-}
+})

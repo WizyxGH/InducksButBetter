@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils"
 
 interface NavigationTabsProps {
   activeTab: string
+  isDetailPage?: boolean
 }
 
-export function NavigationTabs({ activeTab }: NavigationTabsProps) {
+export function NavigationTabs({ activeTab, isDetailPage }: NavigationTabsProps) {
   const { t } = useTranslation()
 
-  if (activeTab === "settings" || activeTab === "countries") {
+  // Tabs are only shown on the main search pages, not on home/settings/countries or detail pages
+  if (activeTab === "settings" || activeTab === "countries" || activeTab === "home" || isDetailPage) {
     return null
   }
 
@@ -20,7 +22,7 @@ export function NavigationTabs({ activeTab }: NavigationTabsProps) {
       <TabsList className="bg-surface-2/90 gap-1 h-12 p-1.5 rounded-2xl border border-border-subtle shadow-inner w-full flex justify-between items-center overflow-x-auto overflow-y-hidden">
         <TabsTrigger
           value="stories"
-          className="data-[state=active]:bg-surface data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-xl px-2 sm:px-6 py-2 flex gap-1.5 sm:gap-2 items-center justify-center text-xs sm:text-sm font-medium transition-all flex-1"
+          className="rounded-xl px-2 sm:px-6 py-2 flex gap-1.5 sm:gap-2 items-center justify-center text-xs sm:text-sm font-medium opacity-60 hover:opacity-100 data-[state=active]:opacity-100 data-[state=active]:bg-surface data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all flex-1"
         >
           <BookOpen className={cn("w-4 h-4 shrink-0", activeTab === "stories" ? "block" : "hidden sm:block")} /> <span className="truncate">{t('tabs.stories')}</span>
         </TabsTrigger>
@@ -52,3 +54,4 @@ export function NavigationTabs({ activeTab }: NavigationTabsProps) {
     </div>
   )
 }
+

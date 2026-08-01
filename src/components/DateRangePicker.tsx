@@ -109,7 +109,6 @@ export function DateRangePicker({
               </div>
             </div>
             <Calendar
-              initialFocus
               mode="range"
               month={month}
               onMonthChange={setMonth}
@@ -117,9 +116,9 @@ export function DateRangePicker({
               onSelect={setDate}
               numberOfMonths={isMobile ? 1 : 2}
               locale={i18n.language === 'fr' ? fr : enUS}
-              captionLayout="dropdown-buttons"
-              fromYear={1930}
-              toYear={currentYear + 2}
+              captionLayout="dropdown"
+              startMonth={new Date(1930, 0)}
+              endMonth={new Date(currentYear + 2, 11)}
               classNames={{
                 caption_label: "hidden",
               }}

@@ -12,7 +12,7 @@
 
 <br />
 
-Welcome to **InducksButBetter**! This project is a complete reimagining of the classic Inducks search experience. Built with modern web technologies and a cutting-edge serverless database architecture, it offers instant searches, an elegant dark-mode UI, and powerful SQL exploration tools.
+**InducksButBetter** is a complete reimagining of the classic Inducks search experience. Built with modern web technologies and a cutting-edge serverless database architecture, it offers instant searches, an elegant dark-mode UI, and powerful SQL exploration tools.
 
 ---
 

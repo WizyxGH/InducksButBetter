@@ -239,13 +239,6 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 p-4 lg:p-8 gap-8 px-4 lg:px-12 pb-12 lg:pb-8">
         {/* Left Side: Search Form Card */}
         <div className="flex-none lg:flex-1 flex flex-col border border-border-subtle/60 shadow-2xl shadow-blue-900/5 rounded-3xl overflow-visible lg:overflow-hidden bg-surface">
-          <div className="px-6 py-4 border-b border-border-subtle bg-surface flex items-center justify-between shrink-0">
-            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-primary" />
-              {t("authors.title")}
-            </h2>
-          </div>
-
           <ScrollArea className="flex-1 mobile-no-scroll">
             <form onSubmit={(e) => handleSearch(e)} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-8 gap-y-4 md:gap-y-7">
               <div className="space-y-1.5">

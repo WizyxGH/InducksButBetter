@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { HelpCircle, ExternalLink, Scale, Languages } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DiscordIcon } from "@/components/icons/DiscordIcon"
-import { Github } from "lucide-react"
+import { GithubIcon } from "@/components/icons/GithubIcon"
 import { LegalModal } from "@/components/LegalModal"
 
 export function CommunityLinksCard() {
@@ -44,7 +44,7 @@ export function CommunityLinksCard() {
           className="flex items-center justify-between p-4 rounded-xl border border-border-subtle bg-surface/50 hover:bg-surface-2 hover:-translate-y-0.5 active:scale-98 hover:shadow-xs transition-all duration-300 group"
         >
           <div className="flex items-center gap-3">
-            <Github className="w-5 h-5 text-foreground shrink-0 group-hover:scale-105 transition-transform" />
+            <GithubIcon className="w-5 h-5 text-foreground shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5">
               <p className="text-xs font-bold text-foreground">GitHub</p>
               <p className="text-[10px] text-muted-foreground">{t("settings.contribute") || "Contribuer au projet"}</p>
@@ -62,7 +62,7 @@ export function CommunityLinksCard() {
           <div className="flex items-center gap-3">
             <Languages className="w-5 h-5 text-green-500 shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5">
-              <p className="text-xs font-bold text-foreground">Translations</p>
+              <p className="text-xs font-bold text-foreground">{t("settings.translations", "Traductions")}</p>
               <p className="text-[10px] text-muted-foreground">{t("settings.translate") || "Traduire le projet"}</p>
             </div>
           </div>

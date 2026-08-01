@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { getIssueDetail } from "@/lib/turso"
 import { Button } from "@/components/ui/button"
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { getFlagUrl } from "@/lib/utils"
 import { toast } from "sonner"
@@ -74,12 +75,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   }, [issue?.issue_thumb])
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[400px] text-primary/40 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        <p className="text-sm font-medium">{t("common.loading")}</p>
-      </div>
-    )
+    return <PageLoadingSkeleton />
   }
 
   if (!issue) {
@@ -213,7 +209,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                 className="w-5 h-3.5 rounded-sm object-cover shrink-0"
                 alt=""
               />
-              <span className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-md">
+              <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                 {issue.countryname}
               </span>
             </div>

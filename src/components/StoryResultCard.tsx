@@ -13,6 +13,8 @@ import {
 import { EntityBadge } from "@/components/EntityBadge"
 import { FlagBadge } from "@/components/FlagBadge"
 import { KindBadge } from "@/components/KindBadge"
+import { Link } from "@/components/ui/link"
+import { routes } from "@/lib/routes"
 
 interface StoryResultCardProps {
   row: any
@@ -164,7 +166,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
     };
   }, [row.story_thumb]);
 
-  const targetHref = `#/entries/story/${encodeURIComponent(row.storycode)}`;
+  const targetHref = routes.story(row.storycode);
 
   const handleClick = (e: React.MouseEvent) => {
     // If user command-clicked or control-clicked, let the browser handle it (open in new tab)
@@ -173,18 +175,14 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
     }
     
     if (onSelect) {
-      e.preventDefault();
       onSelect(row.storycode);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
       if (onSelect) {
         onSelect(row.storycode);
-      } else {
-        window.location.hash = targetHref;
       }
     }
   };
@@ -192,8 +190,8 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   const hasCookie = React.useMemo(() => hasInducksCookie(), []);
 
   return (
-    <a
-      href={targetHref}
+    <Link
+      to={targetHref}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -421,6 +419,6 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
           )}
         </div>
       </div>
-    </a>
+    </Link>
   )
 }

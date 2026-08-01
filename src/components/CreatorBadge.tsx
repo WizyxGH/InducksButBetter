@@ -1,5 +1,6 @@
 import React from "react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { Link } from "@/components/ui/link";
 
 interface CreatorBadgeProps {
   code: string
@@ -17,8 +18,7 @@ export function CreatorBadge({ code, name, size = "md" }: CreatorBadgeProps) {
   return (
     <Tooltip delayDuration={300}>
       <TooltipTrigger asChild>
-        <a
-          href={`#/authors/${code}`}
+        <Link to={`#/authors/${code}`}
           onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1 bg-surface border border-border-subtle px-1.5 py-0.5 rounded-md shadow-sm hover:border-blue-300 dark:hover:border-blue-700 hover:bg-surface-2 transition-all cursor-pointer"
         >
@@ -38,7 +38,7 @@ export function CreatorBadge({ code, name, size = "md" }: CreatorBadgeProps) {
           </div>
           )}
           <span className="text-text-secondary font-medium text-[11px]">{name}</span>
-        </a>
+        </Link>
       </TooltipTrigger>
       <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
         <div className="flex flex-col gap-0.5">

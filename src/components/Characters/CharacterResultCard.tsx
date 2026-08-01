@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 import { hasInducksCookie } from "@/lib/utils";
+import { Link } from "@/components/ui/link";
+import { routes } from "@/lib/routes";
 
 export interface Character {
   charactercode: string;
@@ -27,21 +29,22 @@ export function CharacterResultCard({ char, onSelect }: CharacterResultCardProps
     ? `/api/proxy-image?url=${encodeURIComponent(char.imageUrl!.split("|")[1])}`
     : null;
 
-  const targetHref = `#/characters/${encodeURIComponent(char.charactercode)}`;
+  // Use path-routing via centralized routes
+  const targetHref = routes.character(char.charactercode);
 
   const handleClick = (e: React.MouseEvent) => {
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
       return;
     }
+    // We let the Link perform navigation cleanly (updating path)
+    // instead of calling e.preventDefault() which blocks standard navigation routing.
     if (onSelect) {
-      e.preventDefault();
       onSelect(char.charactercode);
     }
   };
 
   return (
-    <a
-      href={targetHref}
+    <Link to={targetHref}
       onClick={handleClick}
       className="group block p-0 cursor-pointer hover:bg-surface-2 hover:border-primary/25 hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row items-start border border-border-subtle bg-surface-2/20 rounded-2xl h-auto sm:h-[120px] overflow-hidden"
     >
@@ -89,6 +92,6 @@ export function CharacterResultCard({ char, onSelect }: CharacterResultCardProps
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }

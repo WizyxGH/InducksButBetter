@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, ExternalLink, Calendar, MapPin, Award, BookOpen, Users, User, Cat, Globe, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, Calendar, MapPin, Award, BookOpen, Users, User, Cat, Globe, ChevronDown, ChevronUp } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { getFlagUrl } from "@/lib/utils";
+import { navigate } from "@/lib/navigation";
 
 interface AuthorDetailData {
   personcode: string;
@@ -139,11 +142,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
   }, [personcode, i18n.language]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   if (!author) {
@@ -419,7 +418,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                         if (onSelectStory) {
                           onSelectStory(story.storycode);
                         } else {
-                          window.location.hash = `#/entries/story/${encodeURIComponent(story.storycode)}`;
+                          navigate(`#/entries/story/${encodeURIComponent(story.storycode)}`);
                         }
                       }}
                       className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
