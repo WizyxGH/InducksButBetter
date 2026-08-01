@@ -136,6 +136,7 @@
     "present": "Present"
   },
   "story": {
+    "not_found": "Story not found.",
     "no_title": "Untitled",
     "pagination": "Pagination",
     "release_date": "Release date",
@@ -175,6 +176,7 @@
     "L": "Painting (landscape)"
   },
   "tabs": {
+    "home": "Home",
     "stories": "Stories",
     "publications": "Publications",
     "authors": "Authors",
@@ -185,11 +187,37 @@
       "authors": "Authors explorer coming soon...",
       "characters": "Characters explorer coming soon..."
     },
-    "countries": "Countries"
+    "countries": "Countries",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "InducksButBetter",
+    "subtitle": "Explore the Inducks database",
+    "search_placeholder": "Search for a code, author, character, magazine...",
+    "db_stats_title": "Database Statistics",
+    "latest_releases_title": "Latest releases",
+    "db_missing": "Please load a local database in Settings to view statistics and publications.",
+    "db_statistics": "Statistics",
+    "no_results": "No results found",
+    "type_author_one": "Author",
+    "type_author_other": "Authors",
+    "type_character_one": "Character",
+    "type_character_other": "Characters",
+    "type_publication_one": "Magazine",
+    "type_publication_other": "Magazines",
+    "type_issue_one": "Issue",
+    "type_issue_other": "Issues",
+    "type_story_one": "Story",
+    "type_story_other": "Stories",
+    "or_advanced": "Or go to",
+    "advanced_search_link": "advanced search",
+    "latest_releases_range": "last 7 days",
+    "no_releases": "No releases recorded in the last 7 days."
   },
   "header": {
-    "title": "InducksButBetter - Advanced search",
-    "subtitle": "Find exactly what you are looking for in the Inducks database"
+    "title": "InducksButBetter",
+    "subtitle": "Find exactly what you are looking for in the Inducks database",
+    "search": "Search"
   },
   "ai": {
     "welcome": "Hello! I am your Inducks expert. I can help you write complex SQL queries. What are you looking for?",
@@ -321,8 +349,9 @@
     "inducks_cookie": "Inducks cookie",
     "cookie_desc": "This cookie allows you to load high-resolution cover images from Inducks.",
     "cookie_saved": "Cookie saved!",
-    "cookie_help": "This cookie allows access to high-resolution images. Retrieve it from the browser inspector on inducks.org.",
-    "download_isv": "Download ISV files"
+    "cookie_help": "This cookie allows access to high-resolution images. Get it from the browser inspector on inducks.org.",
+    "download_isv": "Download ISV files",
+    "translations": "Translations"
   },
   "localDb": {
     "title": "Import Inducks database",
@@ -459,7 +488,7 @@
     "pub_code": "Code",
     "issues_count": "Issues count",
     "search_placeholder": "Filter publications...",
-    "desc": "Explore Disney magazines and series published in this country.",
+    "desc": "Explore Disney comics published in this country.",
     "title_prefix": "Publications from"
   },
   "publication": {
@@ -502,5 +531,13 @@
       "title": "Join the project",
       "desc": "You can contribute to the project on GitHub or join our Discord server!"
     }
+  },
+  "pwa": {
+    "installed_title": "App installed",
+    "installed_desc": "You are already using InducksButBetter as an installed app.",
+    "install_title": "Install the app",
+    "install_desc": "Install InducksButBetter on your device for quick access, full-screen mode, and a better experience.",
+    "install_button": "Install",
+    "install_manual": "On iOS, tap Safari's share button then \"Add to Home Screen\". On Android, use the browser menu."
   }
 }
