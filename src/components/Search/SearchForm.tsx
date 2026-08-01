@@ -19,7 +19,7 @@ import { hasInducksCookie } from "@/lib/utils";
 import { SearchFilters } from "@/lib/searchService";
 import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
 import { AUTHOR_NATIONALITIES, KIND_LABELS } from "@/lib/constants";
-import { autocompleteStorycode, autocompletePublisher, autocompletePerson, autocompleteCharacter } from "@/lib/turso";
+import { autocompleteStorycode, autocompletePublisher, autocompletePerson, autocompleteCharacter } from "@/lib/dataService";
 import { getFlagUrl } from "@/lib/utils";
 import { useSearchDisabled } from "@/hooks/useSearchDisabled";
 

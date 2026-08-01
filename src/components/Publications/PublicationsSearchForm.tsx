@@ -12,7 +12,7 @@ import { parseISO, format } from "date-fns";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { PublicationsSearchFilters } from "@/lib/searchService";
 import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
-import { autocompletePublisher, autocompletePerson, autocompletePublicationTitle, autocompleteIndexer } from "@/lib/turso";
+import { autocompletePublisher, autocompletePerson, autocompletePublicationTitle, autocompleteIndexer } from "@/lib/dataService";
 
 import { getFlagUrl } from "@/lib/utils";
 import { useSearchDisabled } from "@/hooks/useSearchDisabled";

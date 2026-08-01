@@ -113,7 +113,7 @@
     "i": "Inks"
   },
   "sort": {
-    "pubdate_desc": "Most recent",
+    "pubdate_desc": "Newest",
     "pubdate_asc": "Oldest",
     "title_az": "Title A-Z",
     "title_za": "Title Z-A",
@@ -273,10 +273,6 @@
     "africa": "Africa",
     "oceania": "Oceania",
     "other": "Other"
-  },
-  "dates": {
-    "any_time": "Any time",
-    "last_year": "Last year"
   },
   "theme": {
     "label": "Theme",

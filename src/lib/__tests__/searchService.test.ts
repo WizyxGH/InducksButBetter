@@ -28,6 +28,15 @@ describe('searchService', () => {
       expect(result.countParams).toEqual(['s']);
     });
 
+    it('generates a query for kind "n" correctly by including empty strings', () => {
+      const filters = { kind: 'n' };
+      const result = buildAdvancedSearchQuery(filters);
+      
+      expect(result.query).toContain("(sv.kind = '' OR sv.kind IS NULL)");
+      expect(result.query).toContain("sv.kind IN (?)");
+      expect(result.countParams).toEqual(['n']);
+    });
+
     it('generates a query for BOTH charactercode AND kind with CORRECT parameter order', () => {
       const filters = {
         charactercode: 'DD',
@@ -36,7 +45,7 @@ describe('searchService', () => {
       const result = buildAdvancedSearchQuery(filters);
       
       // charactercode adds an IN clause to `where`
-      const characterClause = 'app_c.charactercode = ?';
+      const characterClause = 'app_c.charactercode COLLATE NOCASE = ?';
       // kind adds a condition to `svWhere` which wraps in an EXISTS clause at the end of `where`
       const kindClause = 'sv.kind IN (?)';
       

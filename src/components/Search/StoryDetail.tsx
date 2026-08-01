@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, Copy, Check, Calendar, FileText, ChevronDown, ChevronUp, AlignJustify, Users } from "lucide-react"
-import { getStoryDetail } from "@/lib/turso"
+import { getStoryDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 import { Tag } from "@/components/ui/tag"

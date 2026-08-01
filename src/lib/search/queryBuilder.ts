@@ -190,11 +190,27 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     svWhere.push(descClause);
   }
 
-  if (filters.kind) {
-    const kinds = (Array.isArray(filters.kind) ? filters.kind : String(filters.kind).split(",")).map(k => k.trim()).filter(Boolean);
+  if (filters.kind !== undefined && filters.kind !== null) {
+    const kinds = (Array.isArray(filters.kind) ? filters.kind : String(filters.kind).split(",")).map(k => k.trim());
     if (kinds.length > 0) {
-      svWhere.push(`sv.kind IN (${kinds.map(() => "?").join(",")})`);
-      svWhereParams.push(...kinds);
+      // Inducks uses 'n' for "Histoire" (which is technically narrative text story).
+      // Standard comic stories have no kind (NULL or empty string). 
+      // If the user selects "Histoire" ('n'), we should also include empty kinds.
+      const hasN = kinds.includes("n");
+      const hasEmpty = kinds.includes("") || hasN;
+      const otherKinds = kinds.filter(k => k !== "");
+      
+      let clauses = [];
+      if (hasEmpty) {
+        clauses.push("(sv.kind = '' OR sv.kind IS NULL)");
+      }
+      if (otherKinds.length > 0) {
+        clauses.push(`sv.kind IN (${otherKinds.map(() => "?").join(",")})`);
+        svWhereParams.push(...otherKinds);
+      }
+      if (clauses.length > 0) {
+        svWhere.push(`(${clauses.join(" OR ")})`);
+      }
     }
   }
 

@@ -2,7 +2,7 @@ import * as React from "react"
 import { Search, Loader2, User, Cat, BookOpen, LibraryBig, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { routes } from "@/lib/routes"
-import { unifiedAutocomplete, UnifiedSearchResult } from "@/lib/turso"
+import { unifiedAutocomplete, UnifiedSearchResult } from "@/lib/dataService"
 import { handleDbError } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import {

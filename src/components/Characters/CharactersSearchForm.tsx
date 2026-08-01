@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchableMultiSelect } from "@/components/SearchableMultiSelect";
 import { Autocomplete } from "@/components/Autocomplete";
-import { autocompleteCharacter } from "@/lib/turso";
+import { autocompleteCharacter } from "@/lib/dataService";
 import { CharactersSearchFilters } from "@/lib/queries/characters";
 import { useSearchDisabled } from "@/hooks/useSearchDisabled";
 

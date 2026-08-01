@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp } from "lucide-react"
-import { getIssueDetail } from "@/lib/turso"
+import { getIssueDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 import { Card, CardContent } from "@/components/ui/card"

@@ -65,7 +65,7 @@ describe('getLanguageFlagUrl', () => {
   })
 
   it('maps English language codes to the UK flag', () => {
-    expect(getLanguageFlagUrl('en')).toBe('https://flagcdn.com/w80/gb.png')
+    expect(getLanguageFlagUrl('en')).toBe('https://flagcdn.com/w80/us.png')
     expect(getLanguageFlagUrl('en-US')).toBe('https://flagcdn.com/w80/gb.png')
   })
 

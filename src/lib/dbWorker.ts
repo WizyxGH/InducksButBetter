@@ -1,79 +1,58 @@
-import initSqlJs, { Database } from "sql.js";
+import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { DEFAULT_DB_SCHEMA } from "./defaultSchema";
 
-const DB_NAME = "InducksCache";
-const STORE_NAME = "dbStore";
-const DB_VERSION = 1;
+const DB_FILENAME = "/inducks.sqlite3";
 
-function openIDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e: any) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-    req.onsuccess = (e: any) => resolve(e.target.result);
-    req.onerror = (e: any) => reject(e.target.error);
-  });
-}
-
-async function saveToIDB(key: string, data: any): Promise<void> {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.put(data, key);
-    req.onsuccess = () => resolve();
-    req.onerror = (e: any) => reject(e.target.error);
-  });
-}
-
-async function loadFromIDB(key: string): Promise<any> {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.get(key);
-    req.onsuccess = (e: any) => resolve(e.target.result);
-    req.onerror = (e: any) => reject(e.target.error);
-  });
-}
-
-async function clearIDB(key: string): Promise<void> {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.delete(key);
-    req.onsuccess = () => resolve();
-    req.onerror = (e: any) => reject(e.target.error);
-  });
-}
-
-let db: Database | null = null;
+let db: any = null;
+let sqlite3: any = null;
+let poolUtil: any = null;
 
 const isSharedWorker = typeof (self as any).onconnect !== 'undefined';
+
+async function initSqlite() {
+  if (!sqlite3) {
+    sqlite3 = await sqlite3InitModule();
+  }
+  return sqlite3;
+}
 
 const handleMessage = async (e: MessageEvent, port: any) => {
   const { id, action, payload } = e.data;
 
   try {
+    const s3 = await initSqlite();
+
     switch (action) {
       case "loadIsv": {
         const { files, baseUrl } = payload;
         
-        const SQL = await initSqlJs({
-          locateFile: (file) => file.endsWith('.wasm') 
-            ? `${baseUrl}sql-wasm.wasm` 
-            : `${baseUrl}${file}`
-        });
-        
-        db = new SQL.Database();
-        db.run("PRAGMA journal_mode = OFF;");
-        db.run("PRAGMA synchronous = OFF;");
-        db.run("PRAGMA temp_store = MEMORY;");
+        let opfsSupported = false;
+        try {
+          if (s3.installOpfsSAHPoolVfs) {
+            if (!poolUtil) {
+              poolUtil = await s3.installOpfsSAHPoolVfs({
+                clearOnInit: false
+              });
+            }
+            opfsSupported = true;
+          }
+        } catch (e) {
+          console.warn("OPFS SAH Pool not supported:", e);
+        }
+
+        if (opfsSupported) {
+          if (poolUtil.getFileCount() > 0) {
+             poolUtil.removeOpfsSAHPoolFile(DB_FILENAME);
+          }
+          db = new poolUtil.OpfsSAHPoolDb(DB_FILENAME);
+        } else {
+          db = new s3.oo1.DB(DB_FILENAME, 'c');
+        }
+
+        db.exec("PRAGMA journal_mode = OFF;");
+        db.exec("PRAGMA synchronous = OFF;");
+        db.exec("PRAGMA temp_store = MEMORY;");
+
         let processed = 0;
         let totalGlobalBytes = files.reduce((acc: number, f: any) => acc + (f.size || 0), 0);
         let globalBytesRead = 0;
@@ -113,8 +92,8 @@ const handleMessage = async (e: MessageEvent, port: any) => {
             stream = file.stream().pipeThrough(new TextDecoderStream());
           }
           
-          db.run(`CREATE TABLE ${tableName} (${columns.map(c => `"${c}" TEXT`).join(", ")});`);
-          db.run("BEGIN TRANSACTION;");
+          db.exec(`CREATE TABLE ${tableName} (${columns.map(c => `"${c}" TEXT`).join(", ")});`);
+          db.exec("BEGIN TRANSACTION;");
           
           let stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
           const colCount = columns.length;
@@ -151,13 +130,13 @@ const handleMessage = async (e: MessageEvent, port: any) => {
               for (let i = 0; i < colCount; i++) {
                 boundValues[i] = values[i] !== undefined ? values[i] : null;
               }
-              stmt.run(boundValues);
+              stmt.bind(boundValues).stepReset();
               rowCount++;
               
-              if (rowCount % 25000 === 0) {
-                stmt.free();
-                db.run("COMMIT;");
-                db.run("BEGIN TRANSACTION;");
+              if (rowCount % 150000 === 0) {
+                stmt.finalize();
+                db.exec("COMMIT;");
+                db.exec("BEGIN TRANSACTION;");
                 stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
               }
             }
@@ -191,12 +170,12 @@ const handleMessage = async (e: MessageEvent, port: any) => {
               for (let i = 0; i < colCount; i++) {
                 boundValues[i] = values[i] !== undefined ? values[i] : null;
               }
-              stmt.run(boundValues);
+              stmt.bind(boundValues).stepReset();
             }
           }
           
-          stmt.free();
-          db.run("COMMIT;");
+          stmt.finalize();
+          db.exec("COMMIT;");
           globalBytesRead += fileSize;
           processed++;
         }
@@ -229,29 +208,21 @@ const handleMessage = async (e: MessageEvent, port: any) => {
           inducks_indexer: ["indexer"]
         };
 
-        db.run("BEGIN TRANSACTION;");
+        db.exec("BEGIN TRANSACTION;");
         for (const [table, columns] of Object.entries(INDEXES_TO_CREATE)) {
           for (const col of columns) {
             try {
-              db.run(`CREATE INDEX IF NOT EXISTS idx_${table}_${col} ON ${table}(${col});`);
+              db.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_${col} ON ${table}(${col});`);
             } catch (err) {}
           }
         }
         try {
-          db.run(`CREATE INDEX IF NOT EXISTS idx_inducks_person_numissues ON inducks_person(CAST(numberofindexedissues AS INTEGER));`);
+          db.exec(`CREATE INDEX IF NOT EXISTS idx_inducks_person_numissues ON inducks_person(CAST(numberofindexedissues AS INTEGER));`);
         } catch (err) {}
-        db.run("COMMIT;");
+        db.exec("COMMIT;");
         
         if (processed < files.length) {
           throw new Error(`Seulement ${processed}/${files.length} fichiers ont pu être importés. L'importation a échoué.`);
-        }
-        port.postMessage({ type: 'progress', table: "caching", percent: 100, current: files.length, total: files.length });
-        
-        try {
-          const exported = db.export();
-          await saveToIDB("inducks", exported);
-        } catch (cacheErr) {
-          console.warn("Failed to save to IndexedDB cache:", cacheErr);
         }
         
         port.postMessage({ id, type: "success" });
@@ -259,53 +230,62 @@ const handleMessage = async (e: MessageEvent, port: any) => {
       }
       
       case "loadCachedDb": {
-        const { baseUrl } = payload;
-        
-        // In a SharedWorker, if the DB is already loaded in RAM from another tab, 
-        // we can instantly return success without reloading it from IndexedDB!
         if (db) {
           let count = 0;
           try {
              const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
              while(tablesQuery.step()) { count++; }
-             tablesQuery.free();
+             tablesQuery.finalize();
           } catch(e) {}
-          // Assuming size is unknown if already loaded without exporting, we just return a placeholder or cached size.
           port.postMessage({ id, type: "success", stats: { size: 100000000, count } });
           break;
         }
         
-        const data = await loadFromIDB("inducks");
-        if (!data) {
+        let found = false;
+        let opfsSupported = false;
+        try {
+          if (s3.installOpfsSAHPoolVfs) {
+            if (!poolUtil) {
+              poolUtil = await s3.installOpfsSAHPoolVfs({
+                clearOnInit: false
+              });
+            }
+            opfsSupported = true;
+          }
+        } catch (e) {
+          console.warn("OPFS SAH Pool not supported:", e);
+        }
+
+        if (opfsSupported) {
+          if (poolUtil.getFileCount() > 0) {
+             found = true;
+             db = new poolUtil.OpfsSAHPoolDb(DB_FILENAME);
+          }
+        }
+        
+        if (!found) {
           port.postMessage({ id, type: "not_found" });
           break;
         }
-
-        const SQL = await initSqlJs({
-          locateFile: (file) => file.endsWith('.wasm') 
-            ? `${baseUrl}sql-wasm.wasm` 
-            : `${baseUrl}${file}`
-        });
         
-        db = new SQL.Database(data);
-        
-        let dbSize = data.byteLength || 0;
         let count = 0;
         try {
            const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
            while(tablesQuery.step()) { count++; }
-           tablesQuery.free();
+           tablesQuery.finalize();
         } catch(e) {}
         
-        port.postMessage({ id, type: "success", stats: { size: dbSize, count } });
+        port.postMessage({ id, type: "success", stats: { size: 100000000, count } });
         break;
       }
       
       case "clearCache": {
-        await clearIDB("inducks");
         if (db) {
            db.close();
            db = null;
+        }
+        if (poolUtil) {
+           poolUtil.removeOpfsSAHPoolFile(DB_FILENAME);
         }
         port.postMessage({ id, type: "success" });
         break;
@@ -316,14 +296,16 @@ const handleMessage = async (e: MessageEvent, port: any) => {
         const { sql, args, stream } = payload;
         
         const stmt = db.prepare(sql);
-        stmt.bind(args || []);
+        if (args && args.length > 0) {
+            stmt.bind(args);
+        }
         
         const columns = stmt.getColumnNames();
         const rows = [];
         let count = 0;
         
         while (stmt.step()) {
-          const row = stmt.getAsObject();
+          const row = stmt.get({});
           if (stream) {
             port.postMessage({ id, type: "row", row, index: count });
           } else {
@@ -332,15 +314,12 @@ const handleMessage = async (e: MessageEvent, port: any) => {
           count++;
         }
         
-        stmt.free();
+        stmt.finalize();
         port.postMessage({ id, type: "success", rows: stream ? undefined : rows, columns, count });
         break;
       }
       
       case "unload": {
-        // In a SharedWorker, unloading the DB from one tab might break other tabs.
-        // We only close it if explicitly requested, but maybe we shouldn't.
-        // For now, we will honor it, but usually tabs shouldn't unload the SharedWorker DB.
         if (!isSharedWorker) {
            if (db) {
              db.close();

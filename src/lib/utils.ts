@@ -27,7 +27,7 @@ export function handleDbError(err: any, customMessage?: string) {
   
   if (errMsg.includes("SQL read operations are forbidden") || errMsg.includes("BLOCKED") || errMsg.includes("Quota Exceeded")) {
     window.dispatchEvent(new Event('db-quota-error'));
-    toast.error(i18n.t("common.error_quota", "La base de données en ligne est actuellement surchargée. Pour continuer à faire des recherches, veuillez importer la base de données locale (fichiers .isv) dans les paramètres."), {
+    toast.error(i18n.t("common.error_quota", "veuillez importer la base de données locale (fichiers .isv) dans les paramètres."), {
       duration: 10000,
       action: {
         label: i18n.t("common.go_to_settings", "Aller aux paramètres"),

@@ -14,7 +14,7 @@ import { executeQuery } from "@/lib/db";
 import AuthorDetail from "./AuthorDetail";
 import { getFlagUrl, handleDbError } from "@/lib/utils";
 import { Autocomplete } from "@/components/Autocomplete";
-import { autocompletePerson } from "@/lib/turso";
+import { autocompletePerson } from "@/lib/dataService";
 import { SearchResults } from "@/components/Search/SearchResults";
 import { useSearchDisabled } from "@/hooks/useSearchDisabled";
 

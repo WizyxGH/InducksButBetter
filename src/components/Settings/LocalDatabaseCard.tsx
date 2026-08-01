@@ -150,9 +150,7 @@ export function LocalDatabaseCard() {
       if (isvAssets.length === 0) throw new Error("No .isv files found in the GitHub release")
 
       await loadFromCloud(isvAssets, (progress) => {
-        const msg = progress.table === "caching" 
-          ? t("localDb.caching_step") || "Mise en cache (cela peut prendre quelques secondes)..."
-          : t("localDb.progress_importing", {
+        const msg = t("localDb.progress_importing", {
               table: progress.table,
               current: progress.current,
               total: progress.total,
