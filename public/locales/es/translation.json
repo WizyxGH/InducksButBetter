@@ -346,7 +346,8 @@
     "confirm_clear": "¿Estás seguro de que quieres borrar la caché de la base de datos local?",
     "cache_cleared": "La caché ha sido borrada.",
     "clear_cache": "Borrar caché",
-    "caching_step": "Almacenando en caché (esto puede tardar unos segundos)..."
+    "caching_step": "Almacenando en caché (esto puede tardar unos segundos)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biografía",

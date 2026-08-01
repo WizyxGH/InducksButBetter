@@ -388,7 +388,8 @@
     "confirm_clear": "Voulez-vous vraiment vider le cache de la base de données locale ?",
     "cache_cleared": "Le cache a été vidé.",
     "clear_cache": "Vider le cache",
-    "caching_step": "Mise en cache (cela peut prendre quelques secondes)..."
+    "caching_step": "Mise en cache (cela peut prendre quelques secondes)...",
+    "global_progress": "Progression globale"
   },
   "authors": {
     "biography": "Biographie",

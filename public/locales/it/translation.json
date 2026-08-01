@@ -346,7 +346,8 @@
     "confirm_clear": "Sei sicuro di voler svuotare la cache del database locale?",
     "cache_cleared": "La cache è stata svuotata.",
     "clear_cache": "Svuota cache",
-    "caching_step": "Salvataggio in cache (potrebbe richiedere alcuni secondi)..."
+    "caching_step": "Salvataggio in cache (potrebbe richiedere alcuni secondi)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biografia",

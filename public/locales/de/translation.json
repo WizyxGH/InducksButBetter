@@ -346,7 +346,8 @@
     "confirm_clear": "Möchten Sie den lokalen Datenbank-Cache wirklich leeren?",
     "cache_cleared": "Cache wurde geleert.",
     "clear_cache": "Cache leeren",
-    "caching_step": "Zwischenspeichern (dies kann einige Sekunden dauern)..."
+    "caching_step": "Zwischenspeichern (dies kann einige Sekunden dauern)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biografie",

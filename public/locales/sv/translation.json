@@ -346,7 +346,8 @@
     "confirm_clear": "Är du säker på att du vill rensa den lokala databasens cache?",
     "cache_cleared": "Cachen har rensats.",
     "clear_cache": "Rensa cache",
-    "caching_step": "Cachning (detta kan ta några sekunder)..."
+    "caching_step": "Cachning (detta kan ta några sekunder)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biography",

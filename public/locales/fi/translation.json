@@ -345,7 +345,8 @@
     "confirm_clear": "Haluatko varmasti tyhjentää paikallisen tietokannan välimuistin?",
     "cache_cleared": "Välimuisti on tyhjennetty.",
     "clear_cache": "Tyhjennä välimuisti",
-    "caching_step": "Tallennetaan välimuistiin (tämä voi kestää muutaman sekunnin)..."
+    "caching_step": "Tallennetaan välimuistiin (tämä voi kestää muutaman sekunnin)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biography",

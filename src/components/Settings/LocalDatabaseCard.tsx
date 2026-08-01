@@ -14,11 +14,15 @@ import { loadFromIsvFiles, loadFromCloud, hasLocalDb, getLocalDbStats, clearLoca
  * Sonner's content area is narrower than the full toast width.
  */
 function ToastProgress({ msg, percent }: { msg: string; percent: number }) {
+  const { t } = useTranslation()
   return (
-    <div className="flex flex-col gap-2 w-full mt-1">
-      <div className="flex items-start justify-between gap-4">
-        <span className="text-sm font-medium leading-tight flex-1 break-words">{msg}</span>
-        <span className="text-xs font-mono font-bold text-primary shrink-0 mt-0.5">{percent}%</span>
+    <div className="flex flex-col gap-2 w-full min-w-[260px] mt-1">
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-sm font-semibold">{t("localDb.global_progress", "Progression globale")}</span>
+          <span className="text-sm font-mono font-bold text-primary">{percent}%</span>
+        </div>
+        <span className="text-xs text-muted-foreground truncate" title={msg}>{msg}</span>
       </div>
       <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
         <div

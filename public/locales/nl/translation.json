@@ -345,7 +345,8 @@
     "confirm_clear": "Weet u zeker dat u de lokale databasecache wilt wissen?",
     "cache_cleared": "Cache is gewist.",
     "clear_cache": "Cache wissen",
-    "caching_step": "Cachen (dit kan enkele seconden duren)..."
+    "caching_step": "Cachen (dit kan enkele seconden duren)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biography",

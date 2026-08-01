@@ -346,7 +346,8 @@
     "confirm_clear": "Tem certeza de que deseja limpar o cache do banco de dados local?",
     "cache_cleared": "O cache foi limpo.",
     "clear_cache": "Limpar cache",
-    "caching_step": "Armazenando em cache (isso pode levar alguns segundos)..."
+    "caching_step": "Armazenando em cache (isso pode levar alguns segundos)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biografia",

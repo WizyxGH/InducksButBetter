@@ -387,7 +387,8 @@
     "confirm_clear": "Are you sure you want to clear the local database cache?",
     "cache_cleared": "Cache has been cleared.",
     "clear_cache": "Clear cache",
-    "caching_step": "Caching (this may take a few seconds)..."
+    "caching_step": "Caching (this may take a few seconds)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biography",

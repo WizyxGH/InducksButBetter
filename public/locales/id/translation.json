@@ -345,7 +345,8 @@
     "confirm_clear": "Apakah Anda yakin ingin menghapus cache basis data lokal?",
     "cache_cleared": "Cache telah dibersihkan.",
     "clear_cache": "Bersihkan cache",
-    "caching_step": "Menyimpan ke cache (ini mungkin memakan waktu beberapa detik)..."
+    "caching_step": "Menyimpan ke cache (ini mungkin memakan waktu beberapa detik)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biography",

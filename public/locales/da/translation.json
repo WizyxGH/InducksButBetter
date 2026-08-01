@@ -345,7 +345,8 @@
     "confirm_clear": "Er du sikker på, at du vil rydde den lokale databasecache?",
     "cache_cleared": "Cachen er ryddet.",
     "clear_cache": "Ryd cache",
-    "caching_step": "Gemmer i cache (dette kan tage et par sekunder)..."
+    "caching_step": "Gemmer i cache (dette kan tage et par sekunder)...",
+    "global_progress": "Global progress"
   },
   "authors": {
     "biography": "Biography",
