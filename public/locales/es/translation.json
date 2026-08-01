@@ -1,7 +1,13 @@
 {
   "dates": {
     "any_time": "Any time",
-    "last_year": "Last year"
+    "last_year": "Last year",
+    "clear_period": "Clear period",
+    "decades": "{{decade}}s",
+    "quarter_1": "1st quarter, {{year}}",
+    "quarter_2": "2nd quarter, {{year}}",
+    "quarter_3": "3rd quarter, {{year}}",
+    "quarter_4": "4th quarter, {{year}}"
   },
   "search": {
     "cookie_help": "This cookie allows access to high-resolution images. Retrieve it from the browser inspector on inducks.org.",
@@ -107,7 +113,7 @@
     "i": "Inks"
   },
   "sort": {
-    "pubdate_desc": "Most recent",
+    "pubdate_desc": "Newest",
     "pubdate_asc": "Oldest",
     "title_az": "Title A-Z",
     "title_za": "Title Z-A",
