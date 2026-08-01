@@ -89,7 +89,11 @@
     "display": "Anzeige",
     "all_stories": "Alle Geschichten",
     "with_image_only": "Nur mit Bild",
-    "without_image": "Nur ohne Bild"
+    "without_image": "Nur ohne Bild",
+    "from_date": "Start",
+    "to_date": "Ende",
+    "result_singular": "Ergebnis",
+    "results_plural": "Ergebnisse"
   },
   "roles": {
     "any": "Beliebig",
@@ -185,7 +189,7 @@
     "countries": "Länder"
   },
   "header": {
-    "title": "InducksButBetter - Erweiterte Suche",
+    "title": "InducksButBetter",
     "subtitle": "Finde genau das, was Du suchst in der Inducks-Datenbank"
   },
   "ai": {
@@ -338,7 +342,11 @@
     "error": "Fehler beim Laden der ISV-Datenbank.",
     "already_imported": "Warnung: Du hast bereits eine lokale Datenbank importiert. Das Importieren neuer Dateien ersetzt die aktuelle.",
     "imported_stats": "Derzeit geladene Dateien: {{count}} (Gesamtgröße: {{size}})",
-    "btn_cloud": "Automatisch importieren (Empfohlen)"
+    "btn_cloud": "Automatisch importieren (Empfohlen)",
+    "confirm_clear": "Möchten Sie den lokalen Datenbank-Cache wirklich leeren?",
+    "cache_cleared": "Cache wurde geleert.",
+    "clear_cache": "Cache leeren",
+    "caching_step": "Zwischenspeichern (dies kann einige Sekunden dauern)..."
   },
   "authors": {
     "biography": "Biografie",

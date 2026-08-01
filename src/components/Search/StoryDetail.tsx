@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, Copy, Check, Calendar, BookOpen, User, Users, FileText, ChevronDown, ChevronUp, AlignJustify } from "lucide-react"
+import { ArrowLeft, Copy, Check, Calendar, FileText, ChevronDown, ChevronUp, AlignJustify, Users } from "lucide-react"
 import { getStoryDetail } from "@/lib/turso"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 import { Tag } from "@/components/ui/tag"
 import { Card, CardContent } from "@/components/ui/card"
-import { getFlagUrl, hasInducksCookie, isInvalidPlotsummary } from "@/lib/utils"
+import { getFlagUrl, hasInducksCookie, isInvalidPlotsummary, formatInducksDate } from "@/lib/utils"
 import { toast } from "sonner"
 import { EntityBadge } from "@/components/EntityBadge"
 import { KindBadge } from "@/components/KindBadge"
 import { useMetadata } from "@/hooks/useMetadata"
 import { navigate } from "@/lib/navigation";
+import { routes } from "@/lib/routes";
 
 interface StoryDetailProps {
   storycode: string
@@ -74,26 +75,9 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
     )
   }
 
-  // Format date
   const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr === "0000-00-00" || dateStr === "9999-99-99") return t("story.unknown_date") || "Date inconnue"
-    const parts = dateStr.split("-")
-    if (parts.length < 2) return dateStr
-    const year = parts[0]
-    const month = parts[1]
-    const day = parts.length > 2 ? parts[2] : "00"
-    if (month === "00") return year
-    try {
-      const date = new Date(parseInt(year), parseInt(month) - 1, day === "00" ? 1 : parseInt(day))
-      return new Intl.DateTimeFormat(i18n.language === "en" ? "en-US" : "fr-FR", {
-        year: "numeric",
-        month: "long",
-        day: day !== "00" ? "numeric" : undefined,
-      }).format(date)
-    } catch {
-      return dateStr
-    }
-  }
+    return formatInducksDate(dateStr, i18n.language);
+  };
 
   // Group publications by country
   const publicationsByCountry: Record<string, any[]> = {}
@@ -199,7 +183,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 )}
                 {story.rowsperpage > 0 && (
                   <Tag color="surface" icon={<AlignJustify className="w-3 h-3" />}>
-                    {story.rowsperpage} {story.rowsperpage > 1 ? t('story.strips', { defaultValue: 'bandes' }) : t('story.strip', { defaultValue: 'bande' })} / page
+                    {story.rowsperpage} {story.rowsperpage > 1 ? t('story.strips') : t('story.strip')} {t('story.per_page')}
                   </Tag>
                 )}
               </div>
@@ -354,8 +338,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               </CardContent>
             </Card>
           </div>
-
-      </div>
+        </div>
       </div>
 
       {/* Publications by Country (Full Width) */}
@@ -416,9 +399,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                         key={pub.entrycode + i}
                         onClick={() => {
                           if (pub.position) {
-                            const rootPrefix = window.location.pathname.startsWith("#/publications") ? "publications" : "entries";
-                            const displayCode = pub.issuecode.replace(" ", "/");
-                            navigate(`#/${rootPrefix}/issue/${encodeURIComponent(displayCode)}?pos=${encodeURIComponent(pub.position.trim().toLowerCase())}`);
+                            navigate(`${routes.issue(pub.issuecode)}?pos=${encodeURIComponent(pub.position.trim().toLowerCase())}`);
                           } else if (onSelectIssue) {
                             onSelectIssue(pub.issuecode);
                           }
@@ -450,31 +431,5 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
         </div>
       </div>
     </div>
-  )
-}
-
-// Simple loader helper inline
-function Loader2({ className }: { className?: string }) {
-  return (
-    <svg
-      className={`animate-spin ${className}`}
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
   )
 }

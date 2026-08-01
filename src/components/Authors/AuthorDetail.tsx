@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
-import { getFlagUrl } from "@/lib/utils";
+import { getFlagUrl, hasInducksCookie } from "@/lib/utils";
 import { navigate } from "@/lib/navigation";
 
 interface AuthorDetailData {
@@ -45,6 +45,7 @@ interface AuthorDetailProps {
 
 export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetailProps) {
   const { t, i18n } = useTranslation();
+  const hasCookie = hasInducksCookie();
   const [author, setAuthor] = useState<AuthorDetailData | null>(null);
   const [aliases, setAliases] = useState<any[]>([]);
   const [urls, setUrls] = useState<any[]>([]);
@@ -159,15 +160,17 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
       <div className="flex flex-col md:flex-row gap-6 items-start justify-between bg-surface-2/30 border border-border-subtle p-6 rounded-3xl">
         <div className="flex gap-6 items-start min-w-0">
           <div className="w-24 h-32 shrink-0 bg-surface border border-border-subtle rounded-2xl overflow-hidden shadow-sm flex items-center justify-center relative group">
-            <img
-              src={`/api/proxy-image?url=${encodeURIComponent('https://inducks.org/b/creator/' + author.personcode + '.jpg')}`}
-              alt={author.fullname}
-              className="w-full h-full object-cover transition-opacity duration-300"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-              }}
-            />
+            {hasCookie ? (
+              <img
+                src={`/api/proxy-image?url=${encodeURIComponent('https://inducks.org/b/creator/' + author.personcode + '.jpg')}`}
+                alt={author.fullname}
+                className="w-full h-full object-cover transition-opacity duration-300"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                }}
+              />
+            ) : null}
             <User className="w-10 h-10 text-muted-foreground/30 hidden fallback-icon absolute" />
           </div>
           
@@ -323,15 +326,17 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                     <div key={coa.copersoncode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
-                           <img
-                             src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${coa.copersoncode.replace(/ /g, "_")}.jpg`)}`}
-                             alt={coa.fullname}
-                             className="w-full h-full object-cover"
-                             onError={(e) => {
-                               e.currentTarget.style.display = 'none';
-                               e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                             }}
-                           />
+                           {hasCookie ? (
+                             <img
+                               src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${coa.copersoncode.replace(/ /g, "_")}.jpg`)}`}
+                               alt={coa.fullname}
+                               className="w-full h-full object-cover"
+                               onError={(e) => {
+                                 e.currentTarget.style.display = 'none';
+                                 e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                               }}
+                             />
+                           ) : null}
                            <User className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
                         </div>
                         <div className="min-w-0">
@@ -362,15 +367,17 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                     <div key={char.charactercode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
-                           <img
-                             src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${char.charactercode}`)}`}
-                             alt={char.charactername}
-                             className="w-full h-full object-cover"
-                             onError={(e) => {
-                               e.currentTarget.style.display = 'none';
-                               e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                             }}
-                           />
+                           {hasCookie ? (
+                             <img
+                               src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${char.charactercode}`)}`}
+                               alt={char.charactername}
+                               className="w-full h-full object-cover"
+                               onError={(e) => {
+                                 e.currentTarget.style.display = 'none';
+                                 e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                               }}
+                             />
+                           ) : null}
                            <Cat className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
                         </div>
                         <div className="min-w-0">

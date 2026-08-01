@@ -15,6 +15,7 @@ import { MultiAutocomplete } from "@/components/MultiAutocomplete";
 import { SearchableMultiSelect } from "@/components/SearchableMultiSelect";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { AvatarWithFallback } from "@/components/AvatarWithFallback";
+import { hasInducksCookie } from "@/lib/utils";
 import { SearchFilters } from "@/lib/searchService";
 import { MetaData, COUNTRY_CONTINENTS } from "@/lib/types";
 import { AUTHOR_NATIONALITIES, KIND_LABELS } from "@/lib/constants";

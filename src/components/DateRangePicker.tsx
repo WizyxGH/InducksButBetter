@@ -1,9 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { format, subDays, startOfYear, endOfYear, subYears, startOfMonth, endOfMonth } from "date-fns"
+import { format, subDays, startOfYear, endOfYear, endOfMonth } from "date-fns"
 import { fr, enUS } from "date-fns/locale"
-import { Calendar as CalendarIcon, ChevronDown } from "lucide-react"
+import { Calendar as CalendarIcon, ChevronDown, X } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
@@ -40,23 +40,23 @@ export function DateRangePicker({
     { label: "Gold Age (1938-1956)", value: { from: new Date(1938, 5, 1), to: new Date(1956, 11, 31) } },
   ];
 
-  const [month, setMonth] = React.useState<Date | undefined>(date?.from);
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  const [fromMonth, setFromMonth] = React.useState<Date | undefined>(date?.from);
+  const [toMonth, setToMonth] = React.useState<Date | undefined>(date?.to || date?.from);
 
   React.useEffect(() => {
     if (date?.from) {
-      setMonth(date.from);
+      setFromMonth(date.from);
+    } else {
+      setFromMonth(undefined);
     }
-  }, [date?.from]);
+    if (date?.to) {
+      setToMonth(date.to);
+    } else if (date?.from) {
+      setToMonth(date.from);
+    } else {
+      setToMonth(undefined);
+    }
+  }, [date?.from, date?.to]);
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -83,24 +83,37 @@ export function DateRangePicker({
             ) : (
               <span className="text-zinc-400 truncate">{t('search.all_periods')}</span>
             )}
-            <ChevronDown className="ml-auto h-4 w-4 opacity-50 flex-shrink-0" />
+            {date?.from ? (
+              <span
+                role="button"
+                tabIndex={0}
+                className="ml-auto mr-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 hover:bg-surface-2 rounded-md transition-colors shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDate(undefined);
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </span>
+            ) : (
+              <ChevronDown className="ml-auto h-4 w-4 opacity-50 flex-shrink-0" />
+            )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border border-border-subtle bg-surface" align="start">
+        <PopoverContent className="w-[calc(100vw-2rem)] max-w-[800px] sm:w-auto p-0 rounded-2xl shadow-2xl border border-border-subtle bg-surface" align="start">
           <div className="flex flex-col md:flex-row">
-            <div className="p-4 border-b md:border-b-0 md:border-r border-border-subtle min-w-[200px] bg-surface-2/90">
+            <div className="p-4 border-b md:border-b-0 md:border-r border-border-subtle min-w-[160px] bg-surface-2/90">
               <h4 className="text-xs font-bold text-text-hint uppercase tracking-widest mb-4 px-2">Presets</h4>
-              <div className="grid grid-cols-2 md:grid-cols-1 gap-1">
+              <div className="space-y-1">
                 {presets.map((preset) => (
                   <Button
                     key={preset.label}
                     variant="ghost"
-                    className="justify-start font-medium text-xs h-8 rounded-lg hover:bg-surface hover:shadow-sm transition-all"
+                    className="justify-start font-medium text-xs h-8 rounded-lg hover:bg-surface hover:shadow-sm transition-all w-full"
                     onClick={() => {
                       setDate(preset.value)
-                      if (preset.value?.from) {
-                        setMonth(preset.value.from)
-                      }
+                      if (preset.value?.from) setFromMonth(preset.value.from);
+                      if (preset.value?.to) setToMonth(preset.value.to);
                     }}
                   >
                     {preset.label}
@@ -108,22 +121,62 @@ export function DateRangePicker({
                 ))}
               </div>
             </div>
-            <Calendar
-              mode="range"
-              month={month}
-              onMonthChange={setMonth}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={isMobile ? 1 : 2}
-              locale={i18n.language === 'fr' ? fr : enUS}
-              captionLayout="dropdown"
-              startMonth={new Date(1930, 0)}
-              endMonth={new Date(currentYear + 2, 11)}
-              classNames={{
-                caption_label: "hidden",
-              }}
-            />
+            <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x border-border-subtle bg-surface">
+              <div className="p-4 w-full sm:min-w-[280px]">
+                <div className="text-sm font-semibold mb-3 text-foreground">{t('search.from_date') || "Start"}</div>
+                <Calendar
+                  mode="single"
+                  month={fromMonth}
+                  onMonthChange={(newMonth) => {
+                    setFromMonth(newMonth);
+                    setDate({ ...date, from: newMonth });
+                  }}
+                  selected={date?.from}
+                  onSelect={(d) => {
+                    setFromMonth(d);
+                    setDate({ ...date, from: d });
+                  }}
+                  locale={i18n.language === 'fr' ? fr : enUS}
+                  captionLayout="dropdown-buttons"
+                  fromYear={1930}
+                  toYear={currentYear + 2}
+                />
+              </div>
+              <div className="p-4 w-full sm:min-w-[280px]">
+                <div className="text-sm font-semibold mb-3 text-foreground">{t('search.to_date') || "End"}</div>
+                <Calendar
+                  mode="single"
+                  month={toMonth || fromMonth}
+                  onMonthChange={(newMonth) => {
+                    setToMonth(newMonth);
+                    setDate({ ...date, from: date?.from, to: endOfMonth(newMonth) });
+                  }}
+                  selected={date?.to}
+                  onSelect={(d) => {
+                    setToMonth(d);
+                    setDate({ ...date, from: date?.from, to: d });
+                  }}
+                  locale={i18n.language === 'fr' ? fr : enUS}
+                  captionLayout="dropdown-buttons"
+                  fromYear={1930}
+                  toYear={currentYear + 2}
+                />
+              </div>
+            </div>
           </div>
+          {date?.from && (
+            <div className="p-2 border-t border-border-subtle flex justify-end items-center bg-surface-2/40">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 text-destructive hover:bg-destructive/10 hover:text-destructive font-semibold px-3 rounded-lg"
+                onClick={() => setDate(undefined)}
+              >
+                <X className="w-3.5 h-3.5 mr-1" />
+                {t('dates.clear_period')}
+              </Button>
+            </div>
+          )}
         </PopoverContent>
       </Popover>
     </div>

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn, hasInducksCookie } from "@/lib/utils"
 
 interface AvatarWithFallbackProps {
   src: string
@@ -29,6 +29,8 @@ export function AvatarWithFallback({
     .substring(0, 2)
     .toUpperCase();
 
+  const shouldShowImage = hasInducksCookie() && Boolean(src);
+
   return (
     <div 
       className={cn(
@@ -44,14 +46,16 @@ export function AvatarWithFallback({
       </span>
       
       {/* Image (hides fallback when loaded successfully) */}
-      <img 
-        src={src} 
-        alt={alt || name} 
-        loading="lazy"
-        decoding="async"
-        className="w-full h-full object-cover z-10 relative"
-        onError={(e) => (e.currentTarget.style.display = 'none')}
-      />
+      {shouldShowImage && (
+        <img 
+          src={src} 
+          alt={alt || name} 
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-cover z-10 relative"
+          onError={(e) => (e.currentTarget.style.display = 'none')}
+        />
+      )}
     </div>
   )
 }

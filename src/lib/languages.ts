@@ -1,3 +1,5 @@
+import { getLanguageFlagUrl } from "./utils";
+
 /**
  * Master list of all **actively displayed** interface languages.
  *
@@ -19,18 +21,18 @@ export interface SupportedLanguage {
 }
 
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
-  { code: "fr", name: "Français (FR)",   flag: "https://flagcdn.com/w20/fr.png" },
-  { code: "en", name: "English (US)",    flag: "https://flagcdn.com/w20/us.png" },
-  { code: "de", name: "Deutsch (DE)",    flag: "https://flagcdn.com/w20/de.png" },
-  { code: "es", name: "Español (ES)",    flag: "https://flagcdn.com/w20/es.png" },
-  { code: "it", name: "Italiano (IT)",   flag: "https://flagcdn.com/w20/it.png" },
-  { code: "pt", name: "Português (PT)",  flag: "https://flagcdn.com/w20/pt.png" },
+  { code: "fr", name: "Français (FR)", flag: getLanguageFlagUrl("fr") },
+  { code: "en", name: "English (US)", flag: getLanguageFlagUrl("en") },
+  { code: "de", name: "Deutsch (DE)", flag: getLanguageFlagUrl("de") },
+  { code: "es", name: "Español (ES)", flag: getLanguageFlagUrl("es") },
+  { code: "it", name: "Italiano (IT)", flag: getLanguageFlagUrl("it") },
+  { code: "pt", name: "Português (PT)", flag: getLanguageFlagUrl("pt") },
   // Uncomment each entry once its Crowdin coverage is sufficient:
-  // { code: "nl", name: "Nederlands (NL)", flag: "https://flagcdn.com/w20/nl.png" },
-  // { code: "da", name: "Dansk (DA)",      flag: "https://flagcdn.com/w20/dk.png" },
-  // { code: "sv", name: "Svenska (SV)",    flag: "https://flagcdn.com/w20/se.png" },
-  // { code: "fi", name: "Suomi (FI)",      flag: "https://flagcdn.com/w20/fi.png" },
-  // { code: "id", name: "Indonesia (ID)",  flag: "https://flagcdn.com/w20/id.png" },
+  // { code: "nl", name: "Nederlands (NL)", flag: getLanguageFlagUrl("nl") },
+  // { code: "da", name: "Dansk (DA)", flag: getLanguageFlagUrl("da") },
+  // { code: "sv", name: "Svenska (SV)", flag: getLanguageFlagUrl("sv") },
+  // { code: "fi", name: "Suomi (FI)", flag: getLanguageFlagUrl("fi") },
+  // { code: "id", name: "Indonesia (ID)", flag: getLanguageFlagUrl("id") },
 ];
 
 /** Fallback language if the browser/stored code is not in the list. */

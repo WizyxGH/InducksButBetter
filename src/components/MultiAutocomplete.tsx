@@ -1,7 +1,8 @@
 import * as React from "react"
 import { Check, ChevronDown, LibraryBig, Loader2, User, X, Search } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, hasInducksCookie } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { FilterChip } from "@/components/FilterChip"
 import {
   Command,
   CommandEmpty,
@@ -25,6 +26,7 @@ interface MultiAutocompleteProps {
   onClear: () => void
   type?: "characters" | "authors" | "publishers"
   maxDisplay?: number
+  hideChevron?: boolean
 }
 
 export function MultiAutocomplete({
@@ -38,6 +40,7 @@ export function MultiAutocomplete({
   onClear,
   type = "characters",
   maxDisplay = 3,
+  hideChevron = false,
 }: MultiAutocompleteProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
@@ -104,34 +107,17 @@ export function MultiAutocomplete({
         >
           <div className="flex flex-wrap gap-1.5 flex-1 text-left min-w-0">
             {selected.slice(0, maxDisplay).map((id) => {
-              const showAvatar = type === "characters";
+              const showAvatar = type === "characters" && hasInducksCookie();
               const avatarUrl = showAvatar 
                 ? `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${id}`)}` 
                 : null;
               return (
-                <Badge
+                <FilterChip
                   key={id}
-                  variant="secondary"
-                  className="bg-surface-2 text-text-body shadow-sm border border-border-subtle hover:border-border transition-all text-[10px] font-bold tracking-tight rounded-lg px-2 py-0.5 flex items-center gap-1.5 group shrink-0"
-                >
-                  {showAvatar && avatarUrl && (
-                    <img 
-                      src={avatarUrl} 
-                      alt="" 
-                      className="w-3.5 h-3.5 rounded-full object-cover bg-zinc-200 dark:bg-zinc-800 shrink-0"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  )}
-                  <span>{selectedLabels[id] || id}</span>
-                  <span
-                    className="cursor-pointer text-text-secondary hover:text-destructive transition-colors -mr-1 p-0.5"
-                    onMouseDown={(e) => handleRemove(id, e)}
-                  >
-                    <X className="w-3 h-3" />
-                  </span>
-                </Badge>
+                  label={selectedLabels[id] || id}
+                  avatarUrl={showAvatar ? avatarUrl : undefined}
+                  onRemove={(e) => handleRemove(id, e)}
+                />
               );
             })}
              
@@ -166,7 +152,7 @@ export function MultiAutocomplete({
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-text-secondary opacity-70 shrink-0" />
+              !hideChevron && <ChevronDown className="h-4 w-4 text-text-secondary opacity-70 shrink-0" />
             )}
           </div>
         </Button>
@@ -196,11 +182,12 @@ export function MultiAutocomplete({
                 const id = item.charactercode || item.personcode || item.storycode || item.publisherid;
                 const name = item.charactername || item.fullname || item.storyname || item.publishername || item.storycode;
                 
+                const hasCookie = hasInducksCookie();
                 let imageUrl = "";
-                if (item.personcode) {
+                if (hasCookie && item.personcode) {
                   const formattedCode = item.personcode.replace(/ /g, "_");
                   imageUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${formattedCode}.jpg`)}`;
-                } else if (item.charactercode) {
+                } else if (hasCookie && item.charactercode) {
                   if (item.imageUrl) {
                     const [site, path] = item.imageUrl.split('|');
                     if (site === 'webusers') {
@@ -222,7 +209,7 @@ export function MultiAutocomplete({
                     className="cursor-pointer"
                   >
                     <div className="flex items-center gap-3 w-full">
-                      {imageUrl ? (
+                      {hasCookie && imageUrl ? (
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface-2 border border-border-subtle">
                           <img 
                             src={imageUrl} 

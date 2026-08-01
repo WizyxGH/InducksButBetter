@@ -23,7 +23,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function handleDbError(err: any, customMessage?: string) {
-  console.error(err);
   const errMsg = err?.message || "";
   
   if (errMsg.includes("SQL read operations are forbidden") || errMsg.includes("BLOCKED") || errMsg.includes("Quota Exceeded")) {
@@ -54,7 +53,29 @@ export function getFlagUrl(countryCode: string): string {
     sf: "fi",
   };
   code = map[code] || code;
-  return `https://flagcdn.com/w20/${code}.png`;
+  return `https://flagcdn.com/w80/${code}.png`;
+}
+
+export function getLanguageFlagUrl(languageCode: string): string {
+  if (!languageCode) return "";
+  const code = languageCode.toLowerCase().trim().split("-")[0];
+  const map: Record<string, string> = {
+    en: "us",
+    fr: "fr",
+    de: "de",
+    es: "es",
+    it: "it",
+    pt: "pt",
+    nl: "nl",
+    da: "dk",
+    sv: "se",
+    fi: "fi",
+    id: "id",
+  };
+  const resolvedCode = map[code] || code;
+  return resolvedCode === "gb" || resolvedCode === "fr" || resolvedCode === "de" || resolvedCode === "es" || resolvedCode === "it" || resolvedCode === "pt" || resolvedCode === "nl" || resolvedCode === "dk" || resolvedCode === "se" || resolvedCode === "fi" || resolvedCode === "id"
+    ? `https://flagcdn.com/w80/${resolvedCode}.png`
+    : `https://flagcdn.com/w80/${resolvedCode}.png`;
 }
 
 export function hasInducksCookie(): boolean {
@@ -84,5 +105,94 @@ export function isInvalidPlotsummary(text?: string): boolean {
   const isCreditHeader = /^(Art|Script|Plot|Des|Desenhos|Roteiro|Ink|Pencils|Pencil|Inks|Colors|Letters|Texte|Dessin|Scénario|Scenario|Translation|Aut|Dis)\s*:/i.test(trimmed);
   
   return isCodeList || isCreditHeader || trimmed.length <= 5;
+}
+
+/**
+ * Port of Inducks official util05_treatPubdate (from programs/coa/util05-date.php)
+ * Handles UTC timezone to avoid date shifts, quarters (YYYY-Q1), decades (1940s),
+ * trailing '?' (unsure), and partial dates (YYYY-MM-00 / YYYY-00-00 / -mm-dd).
+ */
+export function formatInducksDate(dateStr: string | null | undefined, lang: string = 'fr'): string {
+  if (!dateStr || dateStr.trim() === '' || dateStr.startsWith('9') || dateStr === '0000-00-00') {
+    return '?';
+  }
+
+  let text = dateStr.trim();
+  let isUnsure = false;
+
+  if (text.endsWith('?')) {
+    isUnsure = true;
+    text = text.slice(0, -1).trim();
+  }
+
+  // Decades (e.g. 1940s)
+  const decadeMatch = text.match(/^([12][890][0-9]0)s$/i);
+  if (decadeMatch) {
+    const decade = decadeMatch[1];
+    const formattedDecade = i18n.t('dates.decades', { decade, defaultValue: lang === 'fr' ? `années ${decade}` : `${decade}s` });
+    return isUnsure ? `${formattedDecade} (?)` : formattedDecade;
+  }
+
+  // Clean -mm-dd and -mm
+  text = text.replace(/-mm-dd/gi, '').replace(/-mm/gi, '');
+
+  // Quarters (e.g. 1950-Q1)
+  const quarterMatch = text.match(/^([0-9]{4})-Q([1-4])/i);
+  if (quarterMatch) {
+    const year = quarterMatch[1];
+    const q = quarterMatch[2];
+    const qKey = `dates.quarter_${q}`;
+    const fallbackStr = lang === 'fr' ? `${q}e trimestre ${year}` : `Quarter ${q}, ${year}`;
+    const qStr = i18n.t(qKey, { year, defaultValue: fallbackStr });
+    return isUnsure ? `${qStr} (?)` : qStr;
+  }
+
+  // Match YYYY-MM-DD or YYYY-MM-00 or YYYY-00-00
+  const parts = text.split('-');
+  if (parts.length >= 1) {
+    const year = parts[0];
+    const month = parts[1] && parts[1] !== '00' ? parts[1] : null;
+    const day = parts[2] && parts[2] !== '00' ? parts[2] : null;
+
+    if (!month) {
+      return isUnsure ? `${year} (?)` : year;
+    }
+
+    try {
+      const yNum = parseInt(year, 10);
+      const mNum = parseInt(month, 10) - 1;
+      const dNum = day ? parseInt(day, 10) : 1;
+
+      // Construct date in UTC to prevent timezone shifts
+      const date = new Date(Date.UTC(yNum, mNum, dNum));
+
+      if (isNaN(date.getTime())) {
+        return isUnsure ? `${text} (?)` : text;
+      }
+
+      const locale = lang === 'en' ? 'en-US' : 'fr-FR';
+      
+      if (!day) {
+        const formatted = new Intl.DateTimeFormat(locale, {
+          year: 'numeric',
+          month: 'long',
+          timeZone: 'UTC'
+        }).format(date);
+        return isUnsure ? `${formatted} (?)` : formatted;
+      }
+
+      const formatted = new Intl.DateTimeFormat(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'UTC'
+      }).format(date);
+      return isUnsure ? `${formatted} (?)` : formatted;
+    } catch {
+      return isUnsure ? `${text} (?)` : text;
+    }
+  }
+
+  return isUnsure ? `${text} (?)` : text;
 }
 

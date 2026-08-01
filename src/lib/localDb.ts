@@ -1,38 +1,51 @@
-import DbWorker from './dbWorker?worker';
+import DbWorker from './dbWorker?sharedworker';
 
-let worker: Worker | null = null;
+let workerInst: any = null;
+let workerPort: MessagePort | Worker | null = null;
 let queryIdCounter = 0;
 const pendingQueries = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void, onRow?: (row: any) => void }>();
 let onProgressCallback: ((progress: { table: string; current: number; total: number; percent: number }) => void) | null = null;
 
-function getWorker(): Worker {
-  if (!worker) {
-    worker = new DbWorker();
-    worker.onmessage = (e) => {
-      const { id, type, error, row, rows, count, table, current, total, percent } = e.data;
-      
-      if (type === 'progress' && onProgressCallback) {
-        onProgressCallback({ table, current, total, percent: percent || 0 });
-        return;
-      }
-      
-      const pending = pendingQueries.get(id);
-      if (pending) {
-        if (type === 'row' && pending.onRow) {
-          pending.onRow(row);
-          return;
-        }
-        
-        if (type === 'error') {
-          pending.reject(new Error(error));
-        } else if (type === 'success') {
-          pending.resolve(rows ? { rows } : { rows: [], count });
-        }
-        pendingQueries.delete(id);
-      }
-    };
+function getWorker(): any {
+  if (!workerPort) {
+    workerInst = new DbWorker();
+    
+    if (workerInst.port) {
+      workerPort = workerInst.port;
+      (workerPort as MessagePort).onmessage = handleMessage;
+      (workerPort as MessagePort).start();
+    } else {
+      workerPort = workerInst as Worker;
+      (workerPort as Worker).onmessage = handleMessage;
+    }
   }
-  return worker;
+  return workerPort;
+}
+
+function handleMessage(e: MessageEvent) {
+  const { id, type, error, row, rows, count, table, current, total, percent } = e.data;
+  
+  if (type === 'progress' && onProgressCallback) {
+    onProgressCallback({ table, current, total, percent: percent || 0 });
+    return;
+  }
+  
+  const pending = pendingQueries.get(id);
+  if (pending) {
+    if (type === 'row' && pending.onRow) {
+      pending.onRow(row);
+      return;
+    }
+    
+    if (type === 'error') {
+      pending.reject(new Error(error));
+    } else if (type === 'success') {
+      pending.resolve(rows ? { rows, columns: e.data.columns } : { rows: [], columns: e.data.columns, count, stats: e.data.stats });
+    } else if (type === 'not_found') {
+      pending.resolve(null);
+    }
+    pendingQueries.delete(id);
+  }
 }
 
 export async function loadLocalDb(file: File): Promise<void> {
@@ -42,7 +55,7 @@ export async function loadLocalDb(file: File): Promise<void> {
 let localDbStats: { count: number, size: number } | null = null;
 
 export function hasLocalDb(): boolean {
-  return worker !== null && localDbStats !== null;
+  return workerPort !== null && localDbStats !== null;
 }
 
 export function getLocalDbStats() {
@@ -100,17 +113,62 @@ export async function loadFromCloud(
 
 
 export function unloadLocalDb() {
-  if (worker) {
-    worker.postMessage({ id: ++queryIdCounter, action: "unload", payload: {} });
-    // We don't wait for response, we just terminate it
-    worker.terminate();
-    worker = null;
+  if (workerPort) {
+    workerPort.postMessage({ id: ++queryIdCounter, action: "unload", payload: {} });
+    if (workerInst instanceof Worker) {
+      workerInst.terminate();
+    }
+    workerPort = null;
+    workerInst = null;
     localDbStats = null;
   }
 }
 
+let dbLoadPromise: Promise<boolean> | null = null;
+
+export async function loadCachedDb(): Promise<boolean> {
+  if (dbLoadPromise) return dbLoadPromise;
+
+  const w = getWorker();
+  
+  dbLoadPromise = new Promise((resolve) => {
+    const id = ++queryIdCounter;
+    pendingQueries.set(id, {
+      resolve: (data) => {
+        if (data && data.stats) {
+          localDbStats = { count: data.stats.count, size: data.stats.size };
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      },
+      reject: () => resolve(false)
+    });
+    
+    w.postMessage({
+      id,
+      action: "loadCachedDb",
+      payload: { baseUrl: import.meta.env.BASE_URL }
+    });
+  });
+  
+  return dbLoadPromise;
+}
+
+export async function clearLocalDbCache(): Promise<void> {
+  const w = getWorker();
+  return new Promise((resolve, reject) => {
+    const id = ++queryIdCounter;
+    pendingQueries.set(id, { resolve, reject });
+    w.postMessage({ id, action: "clearCache", payload: {} });
+  });
+}
+
 export async function executeLocal(query: { sql: string, args?: any[] } | string, onRow?: (row: any) => void) {
-  if (!worker) throw new Error("Local database is not loaded.");
+  if (dbLoadPromise) {
+    await dbLoadPromise;
+  }
+  if (!workerPort) throw new Error("Local database is not loaded.");
   
   const sqlString = typeof query === "string" ? query : query.sql;
   const args = typeof query === "string" ? [] : (query.args || []);
@@ -119,7 +177,7 @@ export async function executeLocal(query: { sql: string, args?: any[] } | string
     const id = ++queryIdCounter;
     pendingQueries.set(id, { resolve, reject, onRow });
     
-    worker!.postMessage({
+    workerPort!.postMessage({
       id,
       action: "execute",
       payload: { sql: sqlString, args, stream: !!onRow }

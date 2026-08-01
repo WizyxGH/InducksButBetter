@@ -5,10 +5,14 @@ import { useSearchFilters } from "@/hooks/useSearchFilters";
 import { useSearchExecution } from "@/hooks/useSearchExecution";
 import { SearchForm } from "./Search/SearchForm";
 import { SearchResults } from "./Search/SearchResults";
+import { exportSearchResultsToCsv } from "@/lib/searchService";
+import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { StoryDetail } from "./Search/StoryDetail";
 import { navigateBack } from "@/lib/utils";
 import { IssueDetail } from "./Publications/IssueDetail";
 import { navigate } from "@/lib/navigation";
+import StoryResultSkeleton from "./StoryResultSkeleton";
 
 interface AdvancedSearchProps {
   selectedStorycode: string | null;
@@ -50,10 +54,62 @@ export function AdvancedSearch({
     setTotalCount,
     handleSearch,
     lastSearchFilters,
+    lastExecutedQuery,
+    executeLocalQuery,
   } = useSearchExecution({
     filters,
     pagesSliderMoved,
   });
+
+  const { t, i18n } = useTranslation();
+  const [isExporting, setIsExporting] = React.useState(false);
+
+  const handleExportCsv = async () => {
+    if (!lastSearchFilters) return;
+    try {
+      setIsExporting(true);
+      const blob = await exportSearchResultsToCsv(lastSearchFilters, i18n.language, executeLocalQuery, t);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `inducks_stories_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Export réussi");
+    } catch (e) {
+      console.error(e);
+      toast.error("Échec de l'exportation CSV");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleCopySql = () => {
+    if (!lastExecutedQuery) return;
+    
+    // Simple regex to replace ? with actual params
+    // We remove the pagination limit so the query returns all results
+    let sql = lastExecutedQuery.sql.replace(/LIMIT \? OFFSET \?/g, "");
+    const args = lastExecutedQuery.args ? [...lastExecutedQuery.args] : [];
+    
+    // The last two arguments are always pageSize and offset. 
+    // Remove them from the copied arguments.
+    if (args.length >= 2) {
+      args.splice(args.length - 2, 2);
+    }
+    
+    let argIndex = 0;
+    sql = sql.replace(/\?/g, () => {
+      const val = args[argIndex++];
+      if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
+      if (val === null || val === undefined) return "NULL";
+      return String(val);
+    });
+
+    navigator.clipboard.writeText(sql).catch(console.error);
+  };
 
   const handleSelectCharacter = (code: string, name: string) => {
     navigate(`#/characters/${encodeURIComponent(code)}`);
@@ -120,8 +176,12 @@ export function AdvancedSearch({
           setFilters={setFilters}
           handleSearch={handleSearch}
           isInitialState={lastSearchFilters === null}
+          renderSkeleton={(i) => <StoryResultSkeleton key={i} />}
           onSelect={(code) => setSelectedStorycode(code)}
           onSelectCharacter={handleSelectCharacter}
+          exportCsv={handleExportCsv}
+          isExporting={isExporting}
+          copySql={handleCopySql}
         />
       </div>
     </div>

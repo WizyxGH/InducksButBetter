@@ -8,6 +8,7 @@ import { UnifiedSearchBar } from "./Search/UnifiedSearchBar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { navigate } from "@/lib/navigation";
 import { Link } from "@/components/ui/link";
+import { getFlagUrl } from "@/lib/utils";
 
 interface DBStats {
   storiesCount: number
@@ -99,7 +100,7 @@ export function Home() {
   if (!loading && !dbAvailable) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-12 max-w-xl mx-auto text-center gap-6">
-        <div className="p-4 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 rounded-full">
+        <div className="p-4 bg-primary/10 border border-primary/20 text-primary rounded-full">
           <Database className="w-12 h-12" />
         </div>
         <div className="space-y-2">
@@ -185,7 +186,7 @@ export function Home() {
           <>
             {/* Latest releases — compact cards */}
             <div className="space-y-4">
-              <h3 className="text-lg font-bold tracking-tight flex items-center gap-2">
+              <h3 className="text-lg font-semibold tracking-tight flex items-center gap-2">
                 <LibraryBig className="w-4.5 h-4.5 text-primary" />
                 {t("home.latest_releases_title", "Dernières sorties")}
               </h3>
@@ -207,7 +208,7 @@ export function Home() {
                       >
                         <div className="w-6 h-4 shrink-0 rounded-sm overflow-hidden border border-border-subtle/50 shadow-sm flex items-center justify-center bg-surface-2">
                           <img
-                            src={`https://flagicons.lipis.dev/flags/4x3/${row.countrycode?.toLowerCase()}.svg`}
+                            src={getFlagUrl(row.countrycode)}
                             className="w-full h-full object-cover"
                             alt={row.countrycode}
                             loading="lazy"

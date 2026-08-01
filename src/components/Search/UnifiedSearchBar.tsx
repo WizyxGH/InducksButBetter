@@ -59,7 +59,6 @@ export function UnifiedSearchBar() {
           setItems(combined)
         }
       } catch (err) {
-        console.error(err)
         handleDbError(err, t("common.autocomplete_error", "Erreur lors de l'autocomplétion."))
       } finally {
         if (isActive) setLoading(false)

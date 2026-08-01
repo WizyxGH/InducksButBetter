@@ -18,7 +18,6 @@ export function useSpeechToText() {
     recognition.lang = i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US'
 
     recognition.onstart = () => {
-      console.log("WebSpeech Hook: Started")
       setIsRecording(true)
     }
 
@@ -31,7 +30,6 @@ export function useSpeechToText() {
     }
 
     recognition.onerror = (e: any) => {
-      console.error("WebSpeech Hook: Error", e.error)
       setIsRecording(false)
       
       if (e.error === 'not-allowed') {
@@ -44,7 +42,6 @@ export function useSpeechToText() {
     }
 
     recognition.onend = () => {
-      console.log("WebSpeech Hook: Ended")
       setIsRecording(false)
     }
 
@@ -54,15 +51,22 @@ export function useSpeechToText() {
 
   const toggleRecording = () => {
     if (!recognitionRef.current) return
+
     if (isRecording) {
-      try { recognitionRef.current.stop() } catch (err) { setIsRecording(false) }
-    } else {
       try {
-        setTranscript("") // Clear previous
-        recognitionRef.current.start()
-      } catch (err: any) {
-        if (err.name === 'InvalidStateError') setIsRecording(true)
-        else console.error("WebSpeech Hook: Start failed", err)
+        recognitionRef.current.stop()
+      } catch {
+        setIsRecording(false)
+      }
+      return
+    }
+
+    try {
+      setTranscript("")
+      recognitionRef.current.start()
+    } catch (err: any) {
+      if (err.name !== 'InvalidStateError') {
+        toast.error("Impossible de démarrer l’enregistrement vocal.")
       }
     }
   }

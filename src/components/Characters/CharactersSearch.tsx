@@ -14,7 +14,6 @@ import { Character, CharacterResultCard } from "./CharacterResultCard";
 
 const initialFilters: CharactersSearchFilters = {
   characterName: "",
-  characterCode: "",
   heroOnly: false,
   oneTime: false,
   official: false,

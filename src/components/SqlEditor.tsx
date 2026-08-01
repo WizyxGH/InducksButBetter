@@ -54,17 +54,17 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
 
   const [columnOrder, setColumnOrder] = useState<string[]>([])
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set())
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalRows, setTotalRows] = useState<number | null>(null)
+  const ROWS_PER_PAGE = 1000
 
-  // Reset columns when results change
+  // Ensure fallback works if columns is not set but results are
   useEffect(() => {
-    if (results.length > 0) {
-      setColumnOrder(Object.keys(results[0]))
-      setHiddenColumns(new Set())
-    } else {
-      setColumnOrder([])
+    if (results.length > 0 && columnOrder.length === 0) {
+      setColumnOrder(Object.keys(results[0]).filter(k => isNaN(Number(k))))
       setHiddenColumns(new Set())
     }
-  }, [results])
+  }, [results, columnOrder])
 
   const visibleColumns = useMemo(() => {
     return columnOrder.filter((col) => !hiddenColumns.has(col))
@@ -156,12 +156,12 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
   })
   const [historyIndex, setHistoryIndex] = useState<number>(-1)
 
-  const handleRunQuery = async () => {
+  const executeQueryWithPage = async (page: number) => {
     setLoading(true)
     setError(null)
     setSortConfig({ key: "", direction: null })
 
-    if (query.trim()) {
+    if (query.trim() && page === 1) {
       setHistory((prev) => {
         const filtered = prev.filter((q) => q.trim() !== query.trim())
         const nextHistory = [...filtered, query]
@@ -173,16 +173,43 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
     }
 
     try {
-      // Direct Turso connection for standalone mode
-      if (!query.trim().toLowerCase().startsWith("select")) {
-        throw new Error("Only SELECT queries are allowed.")
+      const lowerQuery = query.trim().toLowerCase()
+      if (!lowerQuery.startsWith("select") && !lowerQuery.startsWith("with") && !lowerQuery.startsWith("pragma")) {
+        throw new Error("Only SELECT, WITH, and PRAGMA queries are allowed.")
       }
-      const result = await executeQuery({ sql: query, args: [] })
-      setResults(result.rows || [])
+
+      let executableSql = query.trim()
+      let finalTotalRows = null
+      let hasLimit = /\blimit\s+\d+/i.test(executableSql)
+
+      if (!hasLimit && !lowerQuery.startsWith("pragma")) {
+        try {
+          const countRes = await executeQuery({ sql: `SELECT COUNT(*) as count FROM (${executableSql})`, args: [] })
+          if (countRes.rows && countRes.rows[0]) {
+            finalTotalRows = Number(countRes.rows[0].count)
+          }
+        } catch(e) {
+          console.error("Failed to count rows:", e)
+        }
+        executableSql = `${executableSql} LIMIT ${ROWS_PER_PAGE} OFFSET ${(page - 1) * ROWS_PER_PAGE}`
+      }
+
+      const result = await executeQuery({ sql: executableSql, args: [] })
+      const rows = result.rows || []
+      const columns = result.columns || (rows.length > 0 ? Object.keys(rows[0]).filter(k => isNaN(Number(k))) : [])
       
-      const count = result.rows?.length || 0
+      setColumnOrder(columns as string[])
+      setHiddenColumns(new Set())
+      setResults(rows)
+      
+      setTotalRows(finalTotalRows)
+      setCurrentPage(page)
+      
+      const count = rows.length
+      const displayTotal = finalTotalRows !== null ? finalTotalRows : count
+      
       toast.success(
-        t("sql.results_count", { count, defaultValue: `${count} result(s) found` }), 
+        t("sql.results_count", { count: displayTotal, defaultValue: `${displayTotal} result(s) found` }), 
         { description: t("sql.query_success", { defaultValue: "Query executed successfully." }) }
       )
     } catch (err: any) {
@@ -191,6 +218,8 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
       setLoading(false)
     }
   }
+
+  const handleRunQuery = () => executeQueryWithPage(1)
 
   const handleGoBack = () => {
     if (history.length === 0) return
@@ -335,7 +364,7 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
         <Card className="rounded-2xl border border-border shadow-xl overflow-hidden bg-surface">
           <div className="max-h-[600px] overflow-auto">
             <table className="min-w-full text-sm text-left border-collapse">
-              <thead className="sticky top-0 z-10 text-xs text-text-hint uppercase border-b border-border font-bold tracking-wider">
+              <thead className="sticky top-0 z-10 text-xs text-text-hint uppercase border-b border-border font-bold tracking-wider bg-surface">
                 <tr>
                   {visibleColumns.map((col) => (
                     <SortableTh
@@ -365,6 +394,32 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
               </tbody>
             </table>
           </div>
+          
+          {totalRows !== null && totalRows > ROWS_PER_PAGE && (
+            <div className="p-4 bg-surface-2 border-t border-border flex items-center justify-between text-sm">
+              <div className="text-text-hint">
+                Affichage de {(currentPage - 1) * ROWS_PER_PAGE + 1} à {Math.min(currentPage * ROWS_PER_PAGE, totalRows)} sur {totalRows} résultats
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  disabled={currentPage === 1 || loading} 
+                  onClick={() => executeQueryWithPage(currentPage - 1)} 
+                  variant="outline" 
+                  size="sm"
+                >
+                  Précédent
+                </Button>
+                <Button 
+                  disabled={currentPage * ROWS_PER_PAGE >= totalRows || loading} 
+                  onClick={() => executeQueryWithPage(currentPage + 1)} 
+                  variant="outline" 
+                  size="sm"
+                >
+                  Suivant
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 

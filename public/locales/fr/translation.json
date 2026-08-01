@@ -1,4 +1,14 @@
 {
+  "dates": {
+    "any_time": "Toute période",
+    "last_year": "Dernière année",
+    "clear_period": "Effacer la période",
+    "decades": "années {{decade}}",
+    "quarter_1": "1er trimestre {{year}}",
+    "quarter_2": "2e trimestre {{year}}",
+    "quarter_3": "3e trimestre {{year}}",
+    "quarter_4": "4e trimestre {{year}}"
+  },
   "search": {
     "cookie_help": "Ce cookie permet d'accéder aux images haute résolution. Récupérez-le dans l'inspecteur du navigateur sur inducks.org.",
     "title": "Paramètres de recherche",
@@ -12,6 +22,8 @@
     "all_types": "Tous types",
     "publication_period": "Période de publication",
     "all_periods": "Toutes périodes",
+    "from_date": "Début",
+    "to_date": "Fin",
     "to": "à",
     "publisher": "Éditeur",
     "publisher_placeholder": "Ex: Disney, Egmont...",
@@ -89,7 +101,9 @@
     "display": "Affichage",
     "all_stories": "Toutes les histoires",
     "with_image_only": "Avec image uniquement",
-    "without_image": "Sans image uniquement"
+    "without_image": "Sans image uniquement",
+    "result_singular": "résultat",
+    "results_plural": "résultats"
   },
   "roles": {
     "any": "N'importe",
@@ -149,6 +163,9 @@
     "read_more": "Lire plus",
     "read_less": "Moins",
     "none": "Aucune",
+    "strip": "bande",
+    "strips": "bandes",
+    "per_page": "/ page",
     "description": "Description",
     "issue_label": "N°",
     "issue_symbol": "n°",
@@ -170,7 +187,7 @@
     "q": "Quiz",
     "w": "Inconnu",
     "n": "Histoire",
-    "k": "Bande quotidienne, hebdomadaire",
+    "k": "Newspaper strip",
     "t": "Texte",
     "P": "Peinture (portrait)",
     "L": "Peinture (paysage)"
@@ -256,10 +273,6 @@
     "africa": "Afrique",
     "oceania": "Océanie",
     "other": "Indéterminé"
-  },
-  "dates": {
-    "any_time": "Toute période",
-    "last_year": "Dernière année"
   },
   "theme": {
     "label": "Thème",
@@ -354,7 +367,7 @@
     "translations": "Traductions"
   },
   "localDb": {
-    "title": "Base de données Inducks locale",
+    "title": "Stockage local de l'application",
     "desc_1": "Par défaut, InducksButBetter utilise un service d'hébergement distant soumis à des quotas. Vous pouvez contourner cette limite en chargeant votre propre base de données !",
     "desc_2": "Étape 1 : Téléchargez tous les fichiers ISV via le lien ci-dessous sur votre appareil.\nÉtape 2 : Cliquez sur la zone d'importation ci-dessous et sélectionnez la totalité de ces fichiers (se terminant par .isv).",
     "instructions_title": "Comment installer la base locale ?",
@@ -371,8 +384,11 @@
     "already_imported": "Attention : Vous avez déjà importé une base de données. Importer de nouveaux fichiers remplacera la base actuelle.",
     "imported_stats": "Fichiers actuellement chargés : {{count}} (Poids total : {{size}})",
     "btn_cloud": "Importer automatiquement (Recommandé)",
-    "title": "Stockage local de l'application",
-    "clear_storage": "Effacer toutes les données locales"
+    "clear_storage": "Effacer toutes les données locales",
+    "confirm_clear": "Voulez-vous vraiment vider le cache de la base de données locale ?",
+    "cache_cleared": "Le cache a été vidé.",
+    "clear_cache": "Vider le cache",
+    "caching_step": "Mise en cache (cela peut prendre quelques secondes)..."
   },
   "authors": {
     "biography": "Biographie",

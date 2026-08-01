@@ -1,10 +1,19 @@
-import { defineConfig } from 'vite'
+import { defineConfig, createLogger } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
+const logger = createLogger()
+const originalError = logger.error
+logger.error = (msg, options) => {
+  // Silence specific proxy errors when the local backend isn't running
+  if (msg.includes('http proxy error') && msg.includes('/api/proxy-image')) return
+  originalError(msg, options)
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  customLogger: logger,
   base: '/InducksButBetter/',
   plugins: [
     react(),
@@ -13,7 +22,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'pwa-icon.svg', 'pwa-icon-512.jpg', 'ogimage.jpg'],
       manifest: {
         name: 'InducksButBetter',
-        short_name: 'Inducks+',
+        short_name: 'InducksButBetter',
         description: 'Find exactly what you are looking for in the Inducks database',
         theme_color: '#2563eb',
         background_color: '#0a0a0f',
@@ -115,10 +124,13 @@ export default defineConfig({
         timeout: 500,
         proxyTimeout: 500,
         configure: (proxy, _options) => {
-          proxy.on('error', (err, req, res) => {
-            if (!res.headersSent) {
-              res.writeHead(502, { 'Content-Type': 'text/plain' });
-              res.end('Proxy error: ' + (err as any).code);
+          proxy.on('error', (err, _req, res) => {
+            if (res && typeof res === 'object' && 'headersSent' in res && 'writeHead' in res && typeof res.writeHead === 'function') {
+              const serverResponse = res as import('http').ServerResponse;
+              if (!serverResponse.headersSent) {
+                serverResponse.writeHead(502, { 'Content-Type': 'text/plain' });
+                serverResponse.end('Proxy error: ' + (err as any).code);
+              }
             }
           });
         }

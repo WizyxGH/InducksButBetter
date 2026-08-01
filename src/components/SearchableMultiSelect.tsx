@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Check, ChevronDown, X } from "lucide-react"
+import { FilterChip } from "@/components/FilterChip"
 import { cn } from "@/lib/utils"
 import { Tag } from "@/components/ui/tag"
 import {
@@ -114,19 +115,11 @@ export function SearchableMultiSelect({
             ) : (
               <>
                 {selectedLabels.slice(0, maxDisplay).map((label, i) => (
-                  <Tag
+                  <FilterChip
                     key={selected[i]}
-                    color="surface"
-                    className="pr-1 font-medium bg-surface-2 border-border-subtle text-xs"
-                  >
-                    <span className="leading-none">{label}</span>
-                    <span
-                      className="cursor-pointer text-text-secondary hover:text-destructive transition-colors ml-1 p-0.5"
-                      onMouseDown={(e) => remove(selected[i], e)}
-                    >
-                      <X className="w-3 h-3" />
-                    </span>
-                  </Tag>
+                    label={label}
+                    onRemove={(e) => remove(selected[i], e)}
+                  />
                 ))}
                 <Tag color="surface" className="font-medium bg-surface-2 border-dashed border-border-subtle text-text-secondary h-6 px-2 text-xs">
                   +{selected.length - maxDisplay}

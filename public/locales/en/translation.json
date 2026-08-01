@@ -1,4 +1,14 @@
 {
+  "dates": {
+    "any_time": "Any time",
+    "last_year": "Last year",
+    "clear_period": "Clear period",
+    "decades": "{{decade}}s",
+    "quarter_1": "1st quarter, {{year}}",
+    "quarter_2": "2nd quarter, {{year}}",
+    "quarter_3": "3rd quarter, {{year}}",
+    "quarter_4": "4th quarter, {{year}}"
+  },
   "search": {
     "cookie_help": "This cookie allows access to high-resolution images. Retrieve it from the browser inspector on inducks.org.",
     "title": "Search settings",
@@ -89,7 +99,11 @@
     "display": "Display",
     "all_stories": "All stories",
     "with_image_only": "With image only",
-    "without_image": "Without image only"
+    "without_image": "Without image only",
+    "from_date": "Start",
+    "to_date": "End",
+    "result_singular": "result",
+    "results_plural": "results"
   },
   "roles": {
     "any": "Any",
@@ -149,6 +163,9 @@
     "read_more": "Read more",
     "read_less": "Less",
     "none": "None",
+    "strip": "strip",
+    "strips": "strips",
+    "per_page": "/ page",
     "description": "Description",
     "issue_label": "Issue",
     "issue_symbol": "#",
@@ -170,7 +187,7 @@
     "q": "Quiz",
     "w": "Unknown",
     "n": "Story",
-    "k": "Daily/Weekly strip",
+    "k": "Newspaper strip",
     "t": "Text",
     "P": "Painting (portrait)",
     "L": "Painting (landscape)"
@@ -370,7 +387,11 @@
     "error": "Failed to load ISV database.",
     "already_imported": "Warning: You have already imported a local database. Importing new files will replace the current one.",
     "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})",
-    "btn_cloud": "Import automatically (Recommended)"
+    "btn_cloud": "Import automatically (Recommended)",
+    "confirm_clear": "Are you sure you want to clear the local database cache?",
+    "cache_cleared": "Cache has been cleared.",
+    "clear_cache": "Clear cache",
+    "caching_step": "Caching (this may take a few seconds)..."
   },
   "authors": {
     "biography": "Biography",

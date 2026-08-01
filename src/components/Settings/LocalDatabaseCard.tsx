@@ -5,7 +5,8 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { loadFromIsvFiles, loadFromCloud, hasLocalDb, getLocalDbStats } from "@/lib/localDb"
+import { Button } from "@/components/ui/button"
+import { loadFromIsvFiles, loadFromCloud, hasLocalDb, getLocalDbStats, clearLocalDbCache, unloadLocalDb } from "@/lib/localDb"
 
 /**
  * Renders a progress bar inside a toast notification.
@@ -59,6 +60,13 @@ export function LocalDatabaseCard() {
   const [isActiveDb, setIsActiveDb] = useState(hasLocalDb())
   const dbStats = getLocalDbStats()
 
+  // Listen to db load events to update UI
+  React.useEffect(() => {
+    const handleDbLoaded = () => setIsActiveDb(true);
+    window.addEventListener("db-local-loaded", handleDbLoaded);
+    return () => window.removeEventListener("db-local-loaded", handleDbLoaded);
+  }, []);
+
   // ─── Shared progress toast helper ──────────────────────────────────────────
 
   /**
@@ -84,11 +92,13 @@ export function LocalDatabaseCard() {
 
     try {
       await loadFromIsvFiles(Array.from(files), (progress) => {
-        const msg = t("localDb.progress_importing", {
-          table: progress.table,
-          current: progress.current,
-          total: progress.total,
-        })
+        const msg = progress.table === "caching" 
+          ? t("localDb.caching_step") || "Mise en cache (cela peut prendre quelques secondes)..."
+          : t("localDb.progress_importing", {
+              table: progress.table,
+              current: progress.current,
+              total: progress.total,
+            })
         showProgressToast(toastId, msg, progress.percent)
       })
 
@@ -140,11 +150,13 @@ export function LocalDatabaseCard() {
       if (isvAssets.length === 0) throw new Error("No .isv files found in the GitHub release")
 
       await loadFromCloud(isvAssets, (progress) => {
-        const msg = t("localDb.progress_importing", {
-          table: progress.table,
-          current: progress.current,
-          total: progress.total,
-        })
+        const msg = progress.table === "caching" 
+          ? t("localDb.caching_step") || "Mise en cache (cela peut prendre quelques secondes)..."
+          : t("localDb.progress_importing", {
+              table: progress.table,
+              current: progress.current,
+              total: progress.total,
+            })
         showProgressToast(toastId, msg, progress.percent)
       })
 
@@ -158,6 +170,17 @@ export function LocalDatabaseCard() {
       toast.error(e.message || "Failed to load cloud database", { id: toastId })
     } finally {
       setIsLoadingDb(false)
+    }
+  }
+
+  // ─── Clear Cache ────────────────────────────────────────────────────────────
+
+  const handleClearCache = async () => {
+    if (window.confirm(t("localDb.confirm_clear") || "Voulez-vous vraiment vider le cache de la base de données locale ?")) {
+      await clearLocalDbCache();
+      unloadLocalDb();
+      setIsActiveDb(false);
+      toast.success(t("localDb.cache_cleared") || "Le cache a été vidé.");
     }
   }
 
@@ -222,6 +245,16 @@ export function LocalDatabaseCard() {
                 }) || `${dbStats.count} tables importées (${formatBytes(dbStats.size)})`}
               </p>
             )}
+            <div className="mt-3 flex justify-end">
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleClearCache}
+                className="h-8 text-xs bg-red-500 hover:bg-red-600 text-white border-0"
+              >
+                {t("localDb.clear_cache") || "Vider le cache"}
+              </Button>
+            </div>
           </div>
         )}
 

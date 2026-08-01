@@ -1,6 +1,5 @@
 export interface CharactersSearchFilters {
   characterName: string;
-  characterCode: string;
   heroOnly: boolean;
   oneTime: boolean;
   official: boolean;
@@ -17,20 +16,17 @@ export const buildCharactersSearchQuery = (searchFilters: CharactersSearchFilter
 
   if (searchFilters.characterName.trim()) {
     const likeVal = `%${searchFilters.characterName.trim()}%`;
-    where.push(`(c.charactername LIKE ? OR EXISTS (
+    where.push(`(c.charactername LIKE ? OR c.charactercode LIKE ? OR EXISTS (
       SELECT 1 FROM inducks_characteralias ca 
       WHERE ca.charactercode = c.charactercode AND ca.charactername LIKE ?
     ) OR EXISTS (
       SELECT 1 FROM inducks_charactername cn 
       WHERE cn.charactercode = c.charactercode AND cn.charactername LIKE ?
     ))`);
-    params.push(likeVal, likeVal, likeVal);
+    params.push(likeVal, likeVal, likeVal, likeVal);
   }
 
-  if (searchFilters.characterCode.trim()) {
-    where.push("c.charactercode LIKE ?");
-    params.push(`%${searchFilters.characterCode.trim()}%`);
-  }
+
 
   if (searchFilters.heroOnly) {
     where.push("c.heroonly = 'Y'");

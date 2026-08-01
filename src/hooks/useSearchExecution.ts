@@ -15,6 +15,13 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [lastSearchFilters, setLastSearchFilters] = useState<SearchFilters | null>(null);
+  const [lastExecutedQuery, setLastExecutedQuery] = useState<{ sql: string; args: any[] } | null>(null);
+
+  const executeLocalQuery = async (query: string, params: any[]) => {
+    const res: any[] = [];
+    await executeQuery({ sql: query, args: params }, (row) => res.push(row));
+    return res;
+  };
 
   const performSearch = async (searchFilters: SearchFilters) => {
     setLoading(true);
@@ -58,6 +65,8 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
       };
 
       const { query, countQuery, params, countParams } = buildAdvancedSearchQuery(filtersForQuery);
+
+      setLastExecutedQuery({ sql: query, args: params });
 
       setResults([]);
       
@@ -104,5 +113,7 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
     setLastSearchFilters,
     performSearch,
     handleSearch,
+    lastExecutedQuery,
+    executeLocalQuery,
   };
 }

@@ -64,7 +64,6 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
         const data = await fetchOptions(query)
         if (isActive) setItems(data)
       } catch (err) {
-        console.error(err)
         handleDbError(err, t("common.autocomplete_error") || "Erreur lors de l'autocomplétion.")
       } finally {
         if (isActive) setLoading(false)

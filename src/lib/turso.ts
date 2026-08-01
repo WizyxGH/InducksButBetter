@@ -1,34 +1,4 @@
-import { createClient } from "@libsql/client/web";
 import { executeQuery } from "./db";
-
-const url = import.meta.env.VITE_TURSO_DATABASE_URL || "libsql://dummy.turso.io";
-const authToken = import.meta.env.VITE_TURSO_AUTH_TOKEN || "";
-
-if (!import.meta.env.VITE_TURSO_DATABASE_URL) {
-  console.warn("VITE_TURSO_DATABASE_URL is not set. Database queries will fail.");
-}
-
-export const tursoClient = createClient({
-  url,
-  authToken,
-});
-
-// Use local API instead
-// export const tursoClient = {
-//   execute: async (query: { sql: string, args?: any[] } | string) => {
-//     const sql = typeof query === 'string' ? query : query.sql;
-//     const args = typeof query === 'string' ? [] : (query.args || []);
-//     const res = await fetch('/api/sql', {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ query: sql, args })
-//     });
-//     if (!res.ok) throw new Error("API error: " + res.statusText);
-//     const json = await res.json();
-//     if (!json.success) throw new Error(json.error);
-//     return { rows: json.rows };
-//   }
-// };
 
 // Polyfill for autocomplete queries
 export async function autocompleteCharacter(q: string, lang: string = 'fr') {

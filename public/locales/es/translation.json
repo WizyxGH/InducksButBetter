@@ -89,7 +89,11 @@
     "display": "Visualización",
     "all_stories": "Todas las historias",
     "with_image_only": "Solo con imagen",
-    "without_image": "Solo sin imagen"
+    "without_image": "Solo sin imagen",
+    "from_date": "Inicio",
+    "to_date": "Fin",
+    "result_singular": "resultado",
+    "results_plural": "resultados"
   },
   "roles": {
     "any": "Any",
@@ -338,7 +342,11 @@
     "error": "Error al cargar la base de datos ISV.",
     "already_imported": "Advertencia: Ya ha importado una base de datos local. La importación de nuevos archivos reemplazará la actual.",
     "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})",
-    "btn_cloud": "Importar automáticamente (Recomendado)"
+    "btn_cloud": "Importar automáticamente (Recomendado)",
+    "confirm_clear": "¿Estás seguro de que quieres borrar la caché de la base de datos local?",
+    "cache_cleared": "La caché ha sido borrada.",
+    "clear_cache": "Borrar caché",
+    "caching_step": "Almacenando en caché (esto puede tardar unos segundos)..."
   },
   "authors": {
     "biography": "Biografía",

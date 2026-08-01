@@ -1,5 +1,5 @@
 import React from "react"
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipArrow } from "@/components/ui/tooltip"
+import { HoverTooltip } from "@/components/HoverTooltip"
 
 interface EntityBadgeProps {
   type: "character" | "creator"
@@ -70,20 +70,7 @@ export const EntityBadge = React.memo(function EntityBadge({
 
   return (
     <div className="flex items-center gap-1.5 w-fit group/entity">
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <Link
-            to={targetHref}
-            onClick={handleClick}
-            className="flex items-center gap-1.5 hover:bg-surface-2 p-1 -m-1 rounded-md transition-colors cursor-pointer"
-          >
-            {hasCookie && renderAvatar(avatarSize, size === "sm" ? "text-[6px]" : "text-[8px]")}
-            <span className={`${size === "sm" ? "text-[10px]" : "text-xs"} text-primary hover:underline font-medium whitespace-nowrap`}>
-              {name}
-            </span>
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-[300px] text-xs leading-relaxed p-3">
+      <HoverTooltip delayDuration={300} content={
           <div className="flex gap-3 items-start">
             {hasCookie && renderAvatar(tooltipAvatarSize, "text-[16px]")}
             <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
@@ -94,9 +81,18 @@ export const EntityBadge = React.memo(function EntityBadge({
               {charComment && <p className="text-muted-foreground italic leading-snug">{charComment}</p>}
             </div>
           </div>
-          <TooltipArrow className="fill-popover" />
-        </TooltipContent>
-      </Tooltip>
+      }>
+          <Link
+            to={targetHref}
+            onClick={handleClick}
+            className="flex items-center gap-1.5 hover:bg-surface-2 p-1 -m-1 rounded-md transition-colors cursor-pointer"
+          >
+            {hasCookie && renderAvatar(avatarSize, size === "sm" ? "text-[6px]" : "text-[8px]")}
+            <span className={`${size === "sm" ? "text-[10px]" : "text-xs"} text-primary hover:underline font-medium whitespace-nowrap`}>
+              {name}
+            </span>
+          </Link>
+      </HoverTooltip>
       {appComment && (
         <span className="text-[10px] text-muted-foreground italic whitespace-nowrap">
           ({appComment})

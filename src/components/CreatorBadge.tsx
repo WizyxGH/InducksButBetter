@@ -1,5 +1,5 @@
 import React from "react"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { HoverTooltip } from "@/components/HoverTooltip"
 import { Link } from "@/components/ui/link";
 
 interface CreatorBadgeProps {
@@ -16,8 +16,12 @@ export function CreatorBadge({ code, name, size = "md" }: CreatorBadgeProps) {
   const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), [])
 
   return (
-    <Tooltip delayDuration={300}>
-      <TooltipTrigger asChild>
+    <HoverTooltip delayDuration={300} content={
+        <div className="flex flex-col gap-0.5">
+          <p className="font-bold text-foreground">{name}</p>
+          <p className="text-[10px] text-muted-foreground font-mono">{code}</p>
+        </div>
+    }>
         <Link to={`#/authors/${code}`}
           onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1 bg-surface border border-border-subtle px-1.5 py-0.5 rounded-md shadow-sm hover:border-blue-300 dark:hover:border-blue-700 hover:bg-surface-2 transition-all cursor-pointer"
@@ -39,13 +43,6 @@ export function CreatorBadge({ code, name, size = "md" }: CreatorBadgeProps) {
           )}
           <span className="text-text-secondary font-medium text-[11px]">{name}</span>
         </Link>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
-        <div className="flex flex-col gap-0.5">
-          <p className="font-bold text-foreground">{name}</p>
-          <p className="text-[10px] text-muted-foreground font-mono">{code}</p>
-        </div>
-      </TooltipContent>
-    </Tooltip>
+    </HoverTooltip>
   )
 }

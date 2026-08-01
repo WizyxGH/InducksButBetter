@@ -1,9 +1,62 @@
 import initSqlJs, { Database } from "sql.js";
 import { DEFAULT_DB_SCHEMA } from "./defaultSchema";
 
+const DB_NAME = "InducksCache";
+const STORE_NAME = "dbStore";
+const DB_VERSION = 1;
+
+function openIDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e: any) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = (e: any) => resolve(e.target.result);
+    req.onerror = (e: any) => reject(e.target.error);
+  });
+}
+
+async function saveToIDB(key: string, data: any): Promise<void> {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.put(data, key);
+    req.onsuccess = () => resolve();
+    req.onerror = (e: any) => reject(e.target.error);
+  });
+}
+
+async function loadFromIDB(key: string): Promise<any> {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(key);
+    req.onsuccess = (e: any) => resolve(e.target.result);
+    req.onerror = (e: any) => reject(e.target.error);
+  });
+}
+
+async function clearIDB(key: string): Promise<void> {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = (e: any) => reject(e.target.error);
+  });
+}
+
 let db: Database | null = null;
 
-self.onmessage = async (e: MessageEvent) => {
+const isSharedWorker = typeof (self as any).onconnect !== 'undefined';
+
+const handleMessage = async (e: MessageEvent, port: any) => {
   const { id, action, payload } = e.data;
 
   try {
@@ -41,7 +94,7 @@ self.onmessage = async (e: MessageEvent) => {
             ? Math.min(99, Math.round((globalBytesRead / totalGlobalBytes) * 100)) 
             : Math.round((processed / files.length) * 100);
           
-          self.postMessage({ 
+          port.postMessage({ 
             type: 'progress', 
             table: tableName, 
             percent: startPercent,
@@ -51,7 +104,6 @@ self.onmessage = async (e: MessageEvent) => {
           
           let stream;
           if (isUrl) {
-            // Fetch directly from our local path or CDN deployment (no proxy needed)
             const res = await fetch(file.url);
             if (!res.ok || !res.body) {
               throw new Error(`Failed to download ${fileName} (status ${res.status})`);
@@ -79,7 +131,7 @@ self.onmessage = async (e: MessageEvent) => {
             const { value, done } = await reader.read();
             if (done) break;
             
-            bytesRead += value.length; // value is decoded string, length is approx bytes
+            bytesRead += value.length;
             
             const lines = (partialLine + value).split('\n');
             partialLine = lines.pop() || "";
@@ -102,7 +154,6 @@ self.onmessage = async (e: MessageEvent) => {
               stmt.run(boundValues);
               rowCount++;
               
-              // Periodically commit transaction and free statement to keep WASM memory small
               if (rowCount % 25000 === 0) {
                 stmt.free();
                 db.run("COMMIT;");
@@ -111,7 +162,6 @@ self.onmessage = async (e: MessageEvent) => {
               }
             }
 
-            // Report progress within the current file every 1% of global progress
             if (fileSize > 0) {
               let globalPercent = 0;
               if (totalGlobalBytes > 0) {
@@ -122,7 +172,7 @@ self.onmessage = async (e: MessageEvent) => {
 
               if (globalPercent > lastReportedGlobalPercent) {
                 lastReportedGlobalPercent = globalPercent;
-                self.postMessage({
+                port.postMessage({
                   type: 'progress',
                   table: tableName,
                   percent: globalPercent,
@@ -135,8 +185,6 @@ self.onmessage = async (e: MessageEvent) => {
           
           if (partialLine && partialLine !== "\r") {
             const cleanLine = partialLine.endsWith('\r') ? partialLine.slice(0, -1) : partialLine;
-            
-            // Only insert if it's not the header line (in case the file is only 1 line)
             if (!isFirstLine) {
               const values = cleanLine.split('^');
               const boundValues = new Array(colCount);
@@ -153,7 +201,7 @@ self.onmessage = async (e: MessageEvent) => {
           processed++;
         }
         
-        self.postMessage({ type: 'progress', table: "Creating indexes...", percent: 100, current: files.length, total: files.length });
+        port.postMessage({ type: 'progress', table: "Creating indexes...", percent: 100, current: files.length, total: files.length });
         
         const INDEXES_TO_CREATE: Record<string, string[]> = {
           inducks_story: ["storycode", "storyheadercode", "firstpublicationdate"],
@@ -197,8 +245,69 @@ self.onmessage = async (e: MessageEvent) => {
         if (processed < files.length) {
           throw new Error(`Seulement ${processed}/${files.length} fichiers ont pu être importés. L'importation a échoué.`);
         }
+        port.postMessage({ type: 'progress', table: "caching", percent: 100, current: files.length, total: files.length });
         
-        self.postMessage({ id, type: "success" });
+        try {
+          const exported = db.export();
+          await saveToIDB("inducks", exported);
+        } catch (cacheErr) {
+          console.warn("Failed to save to IndexedDB cache:", cacheErr);
+        }
+        
+        port.postMessage({ id, type: "success" });
+        break;
+      }
+      
+      case "loadCachedDb": {
+        const { baseUrl } = payload;
+        
+        // In a SharedWorker, if the DB is already loaded in RAM from another tab, 
+        // we can instantly return success without reloading it from IndexedDB!
+        if (db) {
+          let count = 0;
+          try {
+             const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
+             while(tablesQuery.step()) { count++; }
+             tablesQuery.free();
+          } catch(e) {}
+          // Assuming size is unknown if already loaded without exporting, we just return a placeholder or cached size.
+          port.postMessage({ id, type: "success", stats: { size: 100000000, count } });
+          break;
+        }
+        
+        const data = await loadFromIDB("inducks");
+        if (!data) {
+          port.postMessage({ id, type: "not_found" });
+          break;
+        }
+
+        const SQL = await initSqlJs({
+          locateFile: (file) => file.endsWith('.wasm') 
+            ? `${baseUrl}sql-wasm.wasm` 
+            : `${baseUrl}${file}`
+        });
+        
+        db = new SQL.Database(data);
+        
+        let dbSize = data.byteLength || 0;
+        let count = 0;
+        try {
+           const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
+           while(tablesQuery.step()) { count++; }
+           tablesQuery.free();
+        } catch(e) {}
+        
+        port.postMessage({ id, type: "success", stats: { size: dbSize, count } });
+        break;
+      }
+      
+      case "clearCache": {
+        await clearIDB("inducks");
+        if (db) {
+           db.close();
+           db = null;
+        }
+        port.postMessage({ id, type: "success" });
         break;
       }
       
@@ -209,14 +318,14 @@ self.onmessage = async (e: MessageEvent) => {
         const stmt = db.prepare(sql);
         stmt.bind(args || []);
         
+        const columns = stmt.getColumnNames();
         const rows = [];
         let count = 0;
         
         while (stmt.step()) {
           const row = stmt.getAsObject();
           if (stream) {
-            // Send each row individually for progressive rendering
-            self.postMessage({ id, type: "row", row, index: count });
+            port.postMessage({ id, type: "row", row, index: count });
           } else {
             rows.push(row);
           }
@@ -224,20 +333,35 @@ self.onmessage = async (e: MessageEvent) => {
         }
         
         stmt.free();
-        self.postMessage({ id, type: "success", rows: stream ? undefined : rows, count });
+        port.postMessage({ id, type: "success", rows: stream ? undefined : rows, columns, count });
         break;
       }
       
       case "unload": {
-        if (db) {
-          db.close();
-          db = null;
+        // In a SharedWorker, unloading the DB from one tab might break other tabs.
+        // We only close it if explicitly requested, but maybe we shouldn't.
+        // For now, we will honor it, but usually tabs shouldn't unload the SharedWorker DB.
+        if (!isSharedWorker) {
+           if (db) {
+             db.close();
+             db = null;
+           }
         }
-        self.postMessage({ id, type: "success" });
+        port.postMessage({ id, type: "success" });
         break;
       }
     }
   } catch (error: any) {
-    self.postMessage({ id, type: "error", error: error.message || String(error) });
+    port.postMessage({ id, type: "error", error: error.message || String(error) });
   }
 };
+
+if (isSharedWorker) {
+  (self as any).onconnect = (e: MessageEvent) => {
+    const port = e.ports[0];
+    port.onmessage = (msg: MessageEvent) => handleMessage(msg, port);
+    port.start();
+  };
+} else {
+  self.onmessage = (msg: MessageEvent) => handleMessage(msg, self);
+}

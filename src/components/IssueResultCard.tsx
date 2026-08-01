@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn, hasInducksCookie } from "@/lib/utils"
+import { cn, hasInducksCookie, formatInducksDate } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
 import { Maximize2, BookOpen } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -34,30 +34,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr === '0000-00-00' || dateStr === '9999-99-99') return t('story.unknown_date');
-    const parts = dateStr.split('-');
-    if (parts.length < 2) return dateStr;
-
-    const year = parts[0];
-    const month = parts[1];
-    const day = parts.length > 2 ? parts[2] : '00';
-
-    if (month === '00') return year;
-
-    try {
-      const date = new Date(parseInt(year), parseInt(month) - 1, day === '00' ? 1 : parseInt(day));
-      if (isNaN(date.getTime())) return dateStr;
-
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-      };
-      if (day !== '00') options.day = 'numeric';
-
-      return new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-US' : 'fr-FR', options).format(date);
-    } catch (e) {
-      return dateStr;
-    }
+    return formatInducksDate(dateStr, i18n.language);
   };
 
   const issueUrl = `https://inducks.org/issue.php?c=${row.issuecode}`;

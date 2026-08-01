@@ -10,7 +10,7 @@ export function FlagBadge({ country, name, className }: FlagBadgeProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 bg-surface-2 border border-border-subtle px-1.5 py-0.5 rounded text-[10px] font-medium text-text-secondary",
+        "inline-flex items-center gap-1.5 px-1 py-0.5 text-[10px] font-medium text-text-secondary",
         className
       )}
     >

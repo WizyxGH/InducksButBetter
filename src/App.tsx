@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Toaster } from "sonner"
 import { useRouteMetadata } from "@/hooks/useRouteMetadata"
 import { incrementHistoryCount, navigateBack } from "@/lib/utils"
+import { loadCachedDb, hasLocalDb } from "@/lib/localDb"
 import { OnboardingModal } from "@/components/OnboardingModal"
-import { QuotaBanner } from "@/components/QuotaBanner"
 
 // Lazy load heavy components to code-split the application
 const Home = lazy(() => import("@/components/Home").then(module => ({ default: module.Home })))
@@ -36,6 +36,7 @@ const SuggestionForm = lazy(() => import("@/components/SuggestionForm").then(mod
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 
 import { routes } from "@/lib/routes"
+import { parseRoutePath } from "@/lib/routeParser"
 
 // Reusable loading fallback
 const TabFallback = () => <PageLoadingSkeleton />
@@ -54,6 +55,9 @@ function App() {
   const [selectedPublicationcode, setSelectedPublicationcode] = useState<string | null>(null);
   const [selectedPublisherid, setSelectedPublisherid] = useState<string | null>(null);
 
+  const [isInitialized, setIsInitialized] = useState(false);
+  const isRoutingRef = useState(() => ({ current: false }))[0];
+
   // Call route metadata hook to update page title and description
   useRouteMetadata({
     activeTab,
@@ -65,6 +69,16 @@ function App() {
     selectedPublicationcode,
     selectedPublisherid
   });
+
+  useEffect(() => {
+    if (!hasLocalDb()) {
+      loadCachedDb().then(loaded => {
+        if (loaded) {
+          window.dispatchEvent(new Event("db-local-loaded"));
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const handleUrlRouting = () => {
@@ -94,7 +108,7 @@ function App() {
 
       // decodeURIComponent doesn't convert '+' to space automatically
       const decodedPath = decodeURIComponent(rawPath.replace(/\+/g, "%20"));
-      const [pathPart, queryPart] = decodedPath.split("?");
+      const [pathPart] = decodedPath.split("?");
       
       // Reset all codes
       setSelectedStorycode(null);
@@ -105,63 +119,18 @@ function App() {
       setSelectedPublicationcode(null);
       setSelectedPublisherid(null);
 
+      const routeResult = parseRoutePath(pathPart);
+      setActiveTab(routeResult.tab);
+      if (routeResult.storycode) setSelectedStorycode(routeResult.storycode);
+      if (routeResult.issuecode) setSelectedIssuecode(routeResult.issuecode);
+      if (routeResult.personcode) setSelectedPersoncode(routeResult.personcode);
+      if (routeResult.charactercode) setSelectedCharactercode(routeResult.charactercode);
+      if (routeResult.countrycode) setSelectedCountrycode(routeResult.countrycode);
+      if (routeResult.publicationcode) setSelectedPublicationcode(routeResult.publicationcode);
+      if (routeResult.publisherid) setSelectedPublisherid(routeResult.publisherid);
 
-      const parts = pathPart.split("/").filter(Boolean);
-      const rootPart = parts[0];
-
-      if (rootPart === "home") {
-        setActiveTab("home");
-      } else if (rootPart === "settings") {
-        setActiveTab("settings");
-      } else if (rootPart === "entries" || rootPart === "stories") {
-        setActiveTab("stories");
-        if (parts[1] === "story" && parts[2]) {
-          const code = parts.slice(2).join("/");
-          setSelectedStorycode(code);
-        } else if (parts[1] && parts[1] !== "story") {
-          const code = parts.slice(1).join("/");
-          setSelectedStorycode(code);
-        }
-      } else if (rootPart === "countries" || rootPart === "publications") {
-        // We support both /countries/... and /publications/... for legacy links
-        if (parts.length >= 4) {
-          // e.g. /countries/de/LTB/613 -> issue de/LTB 613
-          const issueCode = `${parts[1]}/${parts[2]} ${parts.slice(3).join("/")}`;
-          setSelectedIssuecode(issueCode);
-          setActiveTab("publications");
-        } else if (parts.length === 3) {
-          // e.g. /countries/de/LTB -> publication de/LTB
-          const pubCode = `${parts[1]}/${parts[2]}`;
-          setSelectedPublicationcode(pubCode);
-          setActiveTab("publications");
-        } else if (parts.length === 2) {
-          // e.g. /countries/de -> country de
-          setSelectedCountrycode(parts[1]);
-          setActiveTab("countries");
-        } else if (rootPart === "countries") {
-          setActiveTab("countries");
-        } else {
-          setActiveTab("publications");
-        }
-      } else if (rootPart === "authors") {
-        setActiveTab("authors");
-        if (parts[1]) setSelectedPersoncode(parts.slice(1).join("/"));
-      } else if (rootPart === "characters") {
-        setActiveTab("characters");
-        if (parts[1]) setSelectedCharactercode(parts.slice(1).join("/"));
-      } else if (rootPart === "publishers") {
-        setActiveTab("publications");
-        setSelectedPublicationcode(null);
-        setSelectedStorycode(null);
-        setSelectedIssuecode(null);
-        if (parts[1]) setSelectedPublisherid(parts.slice(1).join("/"));
-      } else if (rootPart === "sql") {
-        setActiveTab("sql");
-      } else if (rootPart === "suggestions") {
-        setActiveTab("suggestions");
-      } else {
-        setActiveTab("stories");
-      }
+      setIsInitialized(true);
+      setTimeout(() => { isRoutingRef.current = false; }, 0);
     };
 
     handleUrlRouting();
@@ -200,6 +169,7 @@ function App() {
   };
 
   useEffect(() => {
+    if (!isInitialized || isRoutingRef.current) return;
     const rootPrefix = activeTab === "stories" ? "entries" : activeTab;
     
     // Get existing query parameters to preserve them (like pos)
@@ -260,9 +230,6 @@ function App() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
           />
-
-        {/* Global Banner for Turso Quota Errors */}
-        <QuotaBanner onGoToSettings={() => setActiveTab("settings")} />
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0">

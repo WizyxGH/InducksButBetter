@@ -42,10 +42,10 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
               "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
               ["stories", "publications", "authors", "characters", "sql"].includes(activeTab) && "border-border-subtle bg-surface-2 text-primary"
             )}
-            title={t("tabs.stories") || "Recherche"}
+            title={t("header.search") || "Recherche"}
           >
             <Search className="w-5 h-5" />
-            <span className="hidden sm:inline">{t('tabs.stories')}</span>
+            <span className="hidden sm:inline">{t('header.search') || "Recherche"}</span>
           </Button>
 
           {/* Countries / Publications shortcut */}
@@ -57,10 +57,10 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
               "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
               activeTab === "countries" && "border-border-subtle bg-surface-2 text-primary"
             )}
-            title={t("tabs.countries") || "Pays"}
+            title={t("tabs.publications") || "Publications"}
           >
             <LibraryBig className="w-5 h-5" />
-            <span className="hidden sm:inline">{t('tabs.countries') || "Pays"}</span>
+            <span className="hidden sm:inline">{t('tabs.publications') || "Publications"}</span>
           </Button>
 
           {/* Settings shortcut */}

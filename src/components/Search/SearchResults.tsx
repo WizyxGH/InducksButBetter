@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, Download, Code, Check } from "lucide-react";
 import { Tag } from "@/components/ui/tag";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,9 @@ interface SearchResultsProps<TFilters = any> {
   onSelect?: (code: string) => void;
   onSelectCharacter?: (code: string, name: string) => void;
   foundLabel?: string;
+  exportCsv?: () => void;
+  isExporting?: boolean;
+  copySql?: () => void;
 }
 
 export function SearchResults<TFilters extends { sort?: string; page?: number | string; rowsperpage?: string | number } = any>({
@@ -36,11 +39,23 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
   sortOptions,
   renderResultCard,
   renderSkeleton,
-  foundLabel,
   onSelect,
   onSelectCharacter,
+  foundLabel,
+  exportCsv,
+  isExporting,
+  copySql,
 }: SearchResultsProps<TFilters>) {
   const { t } = useTranslation();
+  const [hasCopiedSql, setHasCopiedSql] = React.useState(false);
+
+  const handleCopySql = () => {
+    if (copySql) {
+      copySql();
+      setHasCopiedSql(true);
+      setTimeout(() => setHasCopiedSql(false), 2000);
+    }
+  };
   const rowsPerPage = parseInt(String(filters.rowsperpage || "24"), 10) || 24;
   const currentPage = parseInt(String(filters.page || "1"), 10) || 1;
   const totalPages = Math.ceil(totalCount / rowsPerPage);
@@ -65,7 +80,7 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
     <div className="flex-1 flex flex-col min-w-0 h-full">
       <div className="flex items-center justify-between mb-6 px-2 shrink-0">
         <div className="flex items-center gap-4">
-          <h2 className="text-sm font-bold tracking-tight text-text-body">{t("search.results")}</h2>
+          <h2 className="text-sm font-semibold tracking-tight text-text-body">{t("search.results")}</h2>
           {totalCount > 0 && (
             <Select
               value={filters.sort}
@@ -87,11 +102,34 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
               </SelectContent>
             </Select>
           )}
+          {exportCsv && totalCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportCsv}
+              disabled={isExporting}
+              className="h-10 border-border-subtle bg-surface/80 rounded-xl hover:bg-surface-2 transition-all font-medium text-sm flex items-center gap-2 px-3"
+            >
+              <Download className={`w-4 h-4 ${isExporting ? 'animate-bounce' : ''}`} />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+          )}
+          {copySql && totalCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopySql}
+              className="h-10 border-border-subtle bg-surface/80 rounded-xl hover:bg-surface-2 transition-all font-medium text-sm flex items-center gap-2 px-3"
+              title="Copier la requête SQL"
+            >
+              {hasCopiedSql ? <Check className="w-4 h-4 text-green-500" /> : <Code className="w-4 h-4" />}
+            </Button>
+          )}
         </div>
         {totalCount > 0 && (
-          <Tag color="primary" className="px-3 text-sm">
-            {totalCount} {totalCount > 1 ? t('search.results_plural') || 'résultats' : t('search.result_singular') || 'résultat'}
-          </Tag>
+          <span className="px-3 text-sm font-medium text-blue-600 dark:text-blue-400">
+            {totalCount.toLocaleString()} {foundLabel || (totalCount > 1 ? t('search.results_plural') || 'résultats' : t('search.result_singular') || 'résultat')}
+          </span>
         )}
       </div>
 

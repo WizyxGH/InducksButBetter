@@ -89,7 +89,11 @@
     "display": "Display",
     "all_stories": "All stories",
     "with_image_only": "With image only",
-    "without_image": "Without image only"
+    "without_image": "Without image only",
+    "from_date": "Mulai",
+    "to_date": "Selesai",
+    "result_singular": "hasil",
+    "results_plural": "hasil"
   },
   "roles": {
     "any": "Any",
@@ -165,7 +169,7 @@
     "q": "Quiz",
     "w": "Unknown",
     "n": "Story",
-    "k": "Daily/Weekly strip",
+    "k": "Newspaper strip",
     "t": "Text",
     "P": "Painting (portrait)",
     "L": "Painting (landscape)"
@@ -337,7 +341,11 @@
     "error": "Failed to load ISV database.",
     "already_imported": "Warning: You have already imported a local database. Importing new files will replace the current one.",
     "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})",
-    "btn_cloud": "Import automatically (Recommended)"
+    "btn_cloud": "Import automatically (Recommended)",
+    "confirm_clear": "Apakah Anda yakin ingin menghapus cache basis data lokal?",
+    "cache_cleared": "Cache telah dibersihkan.",
+    "clear_cache": "Bersihkan cache",
+    "caching_step": "Menyimpan ke cache (ini mungkin memakan waktu beberapa detik)..."
   },
   "authors": {
     "biography": "Biography",

@@ -37,7 +37,7 @@ export function CharactersSearchForm({
       <ScrollArea className="flex-1 mobile-no-scroll">
         <form onSubmit={onSearch} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-8 gap-y-4 md:gap-y-7">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("characters.name") || "Nom"}</Label>
+            <Label className="text-xs font-semibold">{t("characters.name_or_code") || "Personnages"}</Label>
             <Autocomplete
               placeholder={t("characters.name_placeholder") || "Ex: Mickey, Donald..."}
               value={filters.characterName}
@@ -49,16 +49,6 @@ export function CharactersSearchForm({
               type="characters"
               hideSearchIcon
               hideIcon
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("characters.code") || "Code personnage"}</Label>
-            <Input
-              placeholder={t("characters.code_placeholder") || "Ex: MM, DD..."}
-              value={filters.characterCode}
-              onChange={(e) => setFilters({ ...filters, characterCode: e.target.value })}
-              className="h-10 rounded-xl bg-surface"
             />
           </div>
 

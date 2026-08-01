@@ -1,19 +1,13 @@
 import * as React from "react"
-import { cn, hasInducksCookie } from "@/lib/utils"
+import { cn, hasInducksCookie, formatInducksDate } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
 import { Maximize2, BookOpen } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipArrow,
-} from "@/components/ui/tooltip"
+import { HoverTooltip } from '@/components/HoverTooltip';
 import { EntityBadge } from "@/components/EntityBadge"
 import { FlagBadge } from "@/components/FlagBadge"
 import { KindBadge } from "@/components/KindBadge"
-import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
 
 interface StoryResultCardProps {
@@ -47,32 +41,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr === '0000-00-00' || dateStr === '9999-99-99') return t('story.unknown_date');
-
-    // Handle Inducks specific partial dates (YYYY-MM-00 or YYYY-00-00)
-    const parts = dateStr.split('-');
-    if (parts.length < 3) return dateStr;
-
-    const year = parts[0];
-    const month = parts[1];
-    const day = parts[2];
-
-    if (month === '00') return year;
-
-    try {
-      const date = new Date(parseInt(year), parseInt(month) - 1, day === '00' ? 1 : parseInt(day));
-      if (isNaN(date.getTime())) return dateStr;
-
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-      };
-      if (day !== '00') options.day = 'numeric';
-
-      return new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-US' : 'fr-FR', options).format(date);
-    } catch (e) {
-      return dateStr;
-    }
+    return formatInducksDate(dateStr, i18n.language);
   };
 
   const charactersRaw = row.character_list ? row.character_list.split(';').map((c: string) => {
@@ -90,8 +59,8 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   const characters = charactersRaw.filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.name === v.name) === i);
 
   const publications = row.publication_list ? row.publication_list.split(',').map((p: string) => {
-    const [country, name] = p.split('|');
-    return { country, name: cleanText(name) };
+    const parts = p.split('|');
+    return { country: parts[0], name: cleanText(parts[1]), issueNumber: parts[2] ? cleanText(parts[2]) : '' };
   }) : [];
 
   const creatorsRaw = row.creators ? row.creators.split(';') : [];
@@ -169,8 +138,14 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   const targetHref = routes.story(row.storycode);
 
   const handleClick = (e: React.MouseEvent) => {
-    // If user command-clicked or control-clicked, let the browser handle it (open in new tab)
+    // Let EntityBadge or other links handle their own clicks
+    if ((e.target as HTMLElement).closest('a')) {
+      return;
+    }
+
+    // If user command-clicked or control-clicked, open in new tab manually
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+      window.open(import.meta.env.BASE_URL + targetHref.replace(/^\//, ''), "_blank");
       return;
     }
     
@@ -190,12 +165,12 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   const hasCookie = React.useMemo(() => hasInducksCookie(), []);
 
   return (
-    <Link
-      to={targetHref}
+    <div
+      role="button"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="group block overflow-hidden border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 hover:bg-zinc-50/10 dark:hover:bg-zinc-800/10 transition-all duration-300 rounded-lg bg-white dark:bg-zinc-900 cursor-pointer active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className="group block overflow-hidden border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 hover:bg-zinc-50/10 dark:hover:bg-zinc-800/10 transition-all duration-300 rounded-lg bg-white dark:bg-zinc-900 cursor-pointer active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-left"
     >
       <div className="p-0 flex flex-col sm:flex-row">
         {/* Left: Thumbnail */}
@@ -302,7 +277,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                 <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('story.release_date')} :</span> {formatDate(row.firstpublicationdate)}
                 {row.rowsperpage > 0 && (
                   <span className="ml-2 px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded text-[9px] font-bold uppercase tracking-tight">
-                    {row.rowsperpage} {row.rowsperpage > 1 ? t('story.strips') || 'bandes' : t('story.strip') || 'bande'} / page
+                    {row.rowsperpage} {row.rowsperpage > 1 ? t('story.strips') : t('story.strip')} {t('story.per_page')}
                   </span>
                 )}
               </div>
@@ -311,16 +286,11 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                 {publications.length > 0 ? (
                   <div className="inline-flex flex-wrap gap-2 ml-1">
                     {publications.slice(0, 3).map((p: any, i: number) => (
-                      <FlagBadge key={i} country={p.country} name={p.name} />
+                      <FlagBadge key={i} country={p.country} name={`${p.name} ${p.issueNumber}`.trim()} />
                     ))}
                     {publications.length > 3 && (
-                      <Tooltip delayDuration={200}>
-                        <TooltipTrigger asChild>
-                          <span className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold cursor-help self-center ml-1">
-                            +{publications.length - 3}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[320px] max-h-[240px] overflow-y-auto p-3 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl" asChild>
+                      <HoverTooltip
+                        content={
                           <div className="flex flex-col gap-2">
                             <p className="font-bold text-xs text-zinc-700 dark:text-zinc-300 border-b pb-1 mb-1">
                               {t('story.other_publications') || 'Autres publications'}
@@ -328,14 +298,17 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                             <div className="flex flex-col gap-1.5">
                               {publications.slice(3).map((p: any, i: number) => (
                                 <div key={i} className="flex items-center gap-2 text-xs">
-                                  <FlagBadge country={p.country} name={p.name} />
-                                  <span className="text-zinc-600 dark:text-zinc-400 truncate">{p.name}</span>
+                                  <FlagBadge country={p.country} name={`${p.name} ${p.issueNumber}`.trim()} />
                                 </div>
                               ))}
                             </div>
                           </div>
-                        </TooltipContent>
-                      </Tooltip>
+                        }
+                      >
+                        <span className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold cursor-help self-center ml-1">
+                          +{publications.length - 3}
+                        </span>
+                      </HoverTooltip>
                     )}
                   </div>
                 ) : (
@@ -419,6 +392,6 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
           )}
         </div>
       </div>
-    </Link>
+    </div>
   )
 }

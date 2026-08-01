@@ -88,7 +88,7 @@ export function LocalDbUploader() {
         <button
           className={`flex items-center gap-2 px-3 py-2 h-10 text-sm font-medium rounded-xl border transition-all ${
             isActive && !isLoading
-              ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 hover:bg-green-500/20" 
+              ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20" 
               : isLoading 
               ? "bg-primary/10 text-primary border-primary/20"
               : "bg-surface/80 text-muted-foreground border-border-subtle hover:bg-surface-2 hover:text-foreground"

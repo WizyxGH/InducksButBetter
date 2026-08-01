@@ -89,7 +89,11 @@
     "display": "Visualizzazione",
     "all_stories": "Tutte le storie",
     "with_image_only": "Solo con immagine",
-    "without_image": "Solo senza immagine"
+    "without_image": "Solo senza immagine",
+    "from_date": "Inizio",
+    "to_date": "Fine",
+    "result_singular": "risultato",
+    "results_plural": "risultati"
   },
   "roles": {
     "any": "Any",
@@ -338,7 +342,11 @@
     "error": "Impossibile caricare il database ISV.",
     "already_imported": "Attenzione: Hai già importato un database locale. L'importazione di nuovi file sostituirà quello attuale.",
     "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})",
-    "btn_cloud": "Importa automaticamente (Consigliato)"
+    "btn_cloud": "Importa automaticamente (Consigliato)",
+    "confirm_clear": "Sei sicuro di voler svuotare la cache del database locale?",
+    "cache_cleared": "La cache è stata svuotata.",
+    "clear_cache": "Svuota cache",
+    "caching_step": "Salvataggio in cache (potrebbe richiedere alcuni secondi)..."
   },
   "authors": {
     "biography": "Biografia",

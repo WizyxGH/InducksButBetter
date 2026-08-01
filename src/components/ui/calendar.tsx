@@ -26,54 +26,45 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("p-2 sm:p-3", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 relative",
-        month: "space-y-4",
-        month_caption: "flex justify-center pt-1 relative items-center gap-1",
-        caption_label: "text-sm font-medium flex-1",
-        dropdowns: "flex justify-center gap-1 h-7",
-        dropdown_root: "flex-1 peer",
-        nav: "space-x-1 flex items-center absolute right-1",
-        button_previous: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1"
-        ),
-        button_next: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
-        ),
-        month_grid: "w-full border-collapse space-y-1",
-        weekdays: "flex",
-        weekday:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-        week: "flex w-full mt-2",
-        day: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day_button: cn(
+        months: "flex flex-col lg:flex-row gap-3 lg:gap-4 relative w-full",
+        month: "space-y-3 w-full",
+        caption_label: "flex justify-center pt-1 relative items-center gap-1 text-xs sm:text-sm font-medium flex-1",
+        caption_dropdowns: "flex justify-center items-center gap-1 h-7",
+        dropdown: "flex-1 peer min-w-[70px]",
+        nav: "hidden",
+        nav_button_previous: "hidden",
+        nav_button_next: "hidden",
+        table: "w-full border-collapse space-y-1",
+        head_row: "flex gap-1 w-full",
+        head_cell:
+          "text-muted-foreground rounded-md w-8 sm:w-9 font-normal text-[0.75rem] sm:text-[0.8rem]",
+        row: "flex w-full mt-1 sm:mt-2",
+        day: "h-8 w-8 sm:h-9 sm:w-9 text-center text-xs sm:text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        button: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "h-8 w-8 sm:h-9 sm:w-9 p-0 font-normal text-xs sm:text-sm aria-selected:opacity-100"
         ),
-        range_end: "day-range-end",
-        selected:
-          "bg-zinc-900 text-zinc-50 hover:bg-zinc-900 hover:text-zinc-50 focus:bg-zinc-900 focus:text-zinc-50",
-        today: "bg-accent text-accent-foreground",
-        outside:
-          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        disabled: "text-muted-foreground opacity-50",
-        range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        hidden: "invisible",
+        day_range_end: "day-range-end",
+        day_selected:
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground font-bold",
+        day_today: "bg-surface-3 text-text-body font-bold",
+        day_outside:
+          "day-outside text-text-hint opacity-50 aria-selected:bg-surface-3 aria-selected:text-text-hint aria-selected:opacity-30",
+        day_disabled: "text-text-hint opacity-50",
+        day_range_middle:
+          "aria-selected:bg-surface-2 aria-selected:text-text-body",
+        day_hidden: "invisible",
+        vhidden: "sr-only",
         ...classNames,
       }}
       components={{
-        Chevron: ({ className, orientation, ...props }) => {
-          if (orientation === "left") {
-            return <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-          }
-          return <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-        },
-        Dropdown: ({ value, onChange, options, ...props }: DropdownProps) => {
-          const selected = options?.find((child) => child.value === value)
+        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
+          const options = React.Children.toArray(children) as React.ReactElement<React.HTMLProps<HTMLOptionElement>>[]
+          const selected = options.find((child) => child.props.value === value)
           const handleChange = (val: string) => {
             const changeEvent = {
               target: { value: val },
@@ -87,17 +78,15 @@ function Calendar({
                 handleChange(val)
               }}
             >
-              <SelectTrigger className="pr-2 focus:ring-0 border-0 bg-transparent h-7 text-xs font-bold hover:bg-accent hover:text-accent-foreground transition-colors">
-                <SelectValue>{selected?.label}</SelectValue>
+              <SelectTrigger className="p-0 focus:ring-0 border-0 bg-transparent h-7 text-xs font-bold hover:bg-accent hover:text-accent-foreground transition-colors min-w-0">
+                <SelectValue>{selected?.props?.children}</SelectValue>
               </SelectTrigger>
-              <SelectContent position="popper">
-                <ScrollArea className="h-80">
-                  {options?.map((option, id: number) => (
-                    <SelectItem key={`${option.value}-${id}`} value={option.value?.toString() ?? ""} disabled={option.disabled}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </ScrollArea>
+              <SelectContent position="popper" className="max-h-[300px] bg-surface border-border-subtle shadow-xl rounded-xl z-[200]">
+                {options.map((option, id: number) => (
+                  <SelectItem key={`${option.props.value}-${id}`} value={option.props.value?.toString() ?? ""} disabled={option.props.disabled} className="cursor-pointer focus:bg-surface-2 rounded-lg">
+                    {option.props.children}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           )
