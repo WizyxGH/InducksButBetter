@@ -174,7 +174,12 @@
     "creators": "Creators / Authors",
     "characters": "Characters",
     "uncredited": "Uncredited.",
-    "original_title": "Original title"
+    "original_title": "Original title",
+    "no_characters": "No characters listed.",
+    "xrefs": "Cross-references",
+    "hide_languages": "Hide other languages",
+    "show_languages": "Show descriptions in other languages",
+    "pages_short": "p."
   },
   "kinds": {
     "c": "Cover",
