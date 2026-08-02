@@ -458,7 +458,7 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
   }
 };
 
-self.onconnect = (e: MessageEvent) => {
+(self as any).onconnect = (e: MessageEvent) => {
   const port = e.ports[0];
   connections.push(port);
   port.onmessage = (msg: MessageEvent) => handleMessage(msg, port);
