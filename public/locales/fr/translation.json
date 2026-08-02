@@ -393,7 +393,13 @@
     "cache_cleared": "Cache has been cleared.",
     "clear_cache": "Clear cache",
     "caching_step": "Loading cache...",
-    "global_progress": "Progress"
+    "global_progress": "Progress",
+    "error_download": "Failed to download database: {{msg}}",
+    "error_validation": "Validation failed: {{msg}}",
+    "error_no_url": "No database URL or file provided.",
+    "error_empty": "Empty database stream.",
+    "error_deserialize": "Failed to deserialize database (code {{code}}).",
+    "error_not_loaded": "Database not loaded."
   },
   "authors": {
     "biography": "Biography",
