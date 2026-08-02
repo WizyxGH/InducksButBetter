@@ -1,23 +1,16 @@
-import DbWorker from './dbWorker?sharedworker';
+import DbWorker from './dbWorker?worker';
 
 let workerInst: any = null;
-let workerPort: MessagePort | Worker | null = null;
+let workerPort: Worker | null = null;
 let queryIdCounter = 0;
 const pendingQueries = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void, onRow?: (row: any) => void }>();
 let onProgressCallback: ((progress: { step: string; current: number; total: number; percent: number }) => void) | null = null;
 
-function getWorker(): any {
+function getWorker(): Worker {
   if (!workerPort) {
     workerInst = new DbWorker();
-    
-    if (workerInst.port) {
-      workerPort = workerInst.port;
-      (workerPort as MessagePort).onmessage = handleMessage;
-      (workerPort as MessagePort).start();
-    } else {
-      workerPort = workerInst as Worker;
-      (workerPort as Worker).onmessage = handleMessage;
-    }
+    workerPort = workerInst as Worker;
+    workerPort.onmessage = handleMessage;
   }
   return workerPort;
 }
@@ -102,7 +95,7 @@ export async function installDatabase(
 export function unloadLocalDb() {
   if (workerPort) {
     workerPort.postMessage({ id: ++queryIdCounter, action: "unload", payload: {} });
-    if (typeof Worker !== 'undefined' && workerInst instanceof Worker) {
+    if (workerInst) {
       workerInst.terminate();
     }
     workerPort = null;

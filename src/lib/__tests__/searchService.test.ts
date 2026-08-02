@@ -94,7 +94,7 @@ describe('searchService', () => {
       // we'll count the number of '?' in the query (excluding the SELECT portion which has fixed placeholders for OFFSET/LIMIT or SELECTs)
       
       // Count ? in countQuery but exclude the literal '?' used in indexingIncomplete
-      const queryWithoutLiterals = result.countQuery.replace(/'\?'/g, '');
+      const queryWithoutLiterals = result.countQuery.replace(/'\?'/g, '').replace(/'\?%'/g, '');
       const countQuestionMarks = (queryWithoutLiterals.match(/\?/g) || []).length;
       expect(result.countParams.length).toBe(countQuestionMarks);
     });

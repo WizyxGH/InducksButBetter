@@ -377,13 +377,15 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     if (hasDateBefore) {
       const db = filters.dateBefore!.trim();
       let dbParam = db;
-      if (dbParam.endsWith('-12-31')) dbParam = dbParam.substring(0, 4) + '-99-99';
+      if (dbParam.endsWith('-12-31') || dbParam.endsWith('-01-01')) {
+        dbParam = dbParam.substring(0, 4) + '-99-99';
+      }
       mainDateConds.push("s.firstpublicationdate <= ?");
       issueDateConds.push(`${issueDateSubquery} <= ?`);
       whereParams.push(dbParam);
     }
 
-    where.push(`((s.firstpublicationdate != '' AND ${mainDateConds.join(" AND ")}) OR ((s.firstpublicationdate = '' OR s.firstpublicationdate IS NULL) AND ${issueDateConds.join(" AND ")}))`);
+    where.push(`((s.firstpublicationdate != '' AND s.firstpublicationdate NOT LIKE '?%' AND ${mainDateConds.join(" AND ")}) OR ((s.firstpublicationdate = '' OR s.firstpublicationdate IS NULL OR s.firstpublicationdate LIKE '?%') AND ${issueDateConds.join(" AND ")}))`);
     
     if (hasDateAfter) {
       const da = filters.dateAfter!.trim();
@@ -394,7 +396,9 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     if (hasDateBefore) {
       const db = filters.dateBefore!.trim();
       let dbParam = db;
-      if (dbParam.endsWith('-12-31')) dbParam = dbParam.substring(0, 4) + '-99-99';
+      if (dbParam.endsWith('-12-31') || dbParam.endsWith('-01-01')) {
+        dbParam = dbParam.substring(0, 4) + '-99-99';
+      }
       whereParams.push(dbParam);
     }
   }

@@ -64,9 +64,10 @@ export function PublicationsSearch({
       const countResult = await executeQuery({ sql: countQuery, args: countParams });
       setTotalCount(Number(countResult.rows[0]?.total || countResult.rows[0]?.COUNT || 0));
 
-      await executeQuery({ sql: query, args: params }, (newRow) => {
-        setResults((prev) => [...prev, newRow]);
-      });
+      const mainResult = await executeQuery({ sql: query, args: params });
+      if (mainResult && mainResult.rows) {
+        setResults(mainResult.rows);
+      }
     } catch (err) {
       handleDbError(err, t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
       setResults([]);

@@ -50,8 +50,8 @@ describe('localDb client wrapper', () => {
   it('correctly posts installDb message to worker with a URL', async () => {
     const installPromise = installDatabase('https://example.com/inducks.sqlite.gz');
 
-    // Verify mockPort.postMessage was called with installDb action
-    expect(mockPort.postMessage).toHaveBeenCalledWith(
+    // Verify mockWorkerInstance.postMessage was called with installDb action
+    expect(mockWorkerInstance.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'installDb',
         payload: { url: 'https://example.com/inducks.sqlite.gz' }
@@ -63,8 +63,8 @@ describe('localDb client wrapper', () => {
     const file = new File(['dummy-content'], 'inducks.sqlite.gz', { type: 'application/gzip' });
     const installPromise = installDatabase(file);
 
-    // Verify mockPort.postMessage was called with installDb action
-    expect(mockPort.postMessage).toHaveBeenCalledWith(
+    // Verify mockWorkerInstance.postMessage was called with installDb action
+    expect(mockWorkerInstance.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'installDb',
         payload: { file }

@@ -87,8 +87,17 @@ export function Home() {
 
     // Listen to local database loads to automatically refresh stats/releases
     window.addEventListener("db-local-loaded", fetchData)
+    
+    const handleDbUnloaded = () => {
+      setStats(null)
+      setLatestReleases([])
+      setDbAvailable(false)
+    }
+    window.addEventListener("db-local-unloaded", handleDbUnloaded)
+    
     return () => {
       window.removeEventListener("db-local-loaded", fetchData)
+      window.removeEventListener("db-local-unloaded", handleDbUnloaded)
     }
   }, [fetchData])
 

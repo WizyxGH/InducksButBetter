@@ -393,7 +393,13 @@
     "cache_cleared": "Le cache a été vidé.",
     "clear_cache": "Vider le cache",
     "caching_step": "Chargement en cache...",
-    "global_progress": "Progression"
+    "global_progress": "Progression",
+    "error_download": "Impossible de télécharger la base de données : {{msg}}",
+    "error_validation": "Échec de la validation : {{msg}}",
+    "error_no_url": "Aucune URL ni fichier fourni.",
+    "error_empty": "Le flux de la base de données est vide.",
+    "error_deserialize": "Échec de la désérialisation de la base de données (code {{code}}).",
+    "error_not_loaded": "Base de données non chargée."
   },
   "authors": {
     "biography": "Biographie",

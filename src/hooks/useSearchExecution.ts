@@ -72,11 +72,9 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
       
       const countResult = await executeQuery({ sql: countQuery, args: countParams });
       
-      const mainResult = await executeQuery({ sql: query, args: params }, (newRow) => {
-        setResults((prev) => [...prev, newRow]);
-      });
+      const mainResult = await executeQuery({ sql: query, args: params });
 
-      if (!hasLocalDb() && mainResult && mainResult.rows) {
+      if (mainResult && mainResult.rows) {
         setResults(mainResult.rows);
       }
 

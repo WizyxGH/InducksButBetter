@@ -6,7 +6,6 @@ let db: any = null;
 let sqlite3: any = null;
 let poolUtil: any = null;
 
-const isSharedWorker = typeof (self as any).onconnect !== 'undefined';
 
 async function initSqlite() {
   if (!sqlite3) {
@@ -120,7 +119,7 @@ const handleMessage = async (e: MessageEvent, port: any) => {
           }
 
           if (!response) {
-            throw new Error(`Impossible de télécharger la base de données: ${fetchError?.message || 'Erreur réseau'}`);
+            throw new Error(`error_download|${fetchError?.message || 'Network error'}`);
           }
 
           const contentLength = Number(response.headers.get('content-length')) || 0;
@@ -147,14 +146,14 @@ const handleMessage = async (e: MessageEvent, port: any) => {
         } else if (file) {
           responseStream = file.stream();
         } else {
-          throw new Error("No database URL or file provided.");
+          throw new Error("error_no_url");
         }
 
         // Determine if Gzip compressed by reading the first chunk
         const reader = responseStream.getReader();
         const firstRead = await reader.read();
         if (firstRead.done) {
-          throw new Error("Empty database stream.");
+          throw new Error("error_empty");
         }
         const firstChunk = firstRead.value;
         const isGzipped = firstChunk.length >= 2 && firstChunk[0] === 0x1f && firstChunk[1] === 0x8b;
@@ -213,7 +212,7 @@ const handleMessage = async (e: MessageEvent, port: any) => {
 
           if (!isValid) {
             try { await root.removeEntry("inducks_temp.sqlite3"); } catch (e) {}
-            throw new Error(`Validation échouée: ${validationError || "Base de données vide ou invalide"}`);
+            throw new Error(`error_validation|${validationError || "Empty or invalid database"}`);
           }
 
           port.postMessage({ type: 'progress', step: 'install' });
@@ -267,7 +266,7 @@ const handleMessage = async (e: MessageEvent, port: any) => {
             if (!isValid) {
               closeActiveDb();
               try { poolUtil.removeOpfsSAHPoolFile(DB_FILENAME); } catch (e) {}
-              throw new Error(`Validation échouée: ${validationError || "Base de données vide ou invalide"}`);
+              throw new Error(`error_validation|${validationError || "Empty or invalid database"}`);
             }
 
           } else {
@@ -290,7 +289,7 @@ const handleMessage = async (e: MessageEvent, port: any) => {
                 0
               );
               if (rc !== 0) {
-                throw new Error(`Failed to deserialize database (code ${rc})`);
+                throw new Error(`error_deserialize|${rc}`);
               }
             }
           }
@@ -416,7 +415,7 @@ const handleMessage = async (e: MessageEvent, port: any) => {
       }
       
       case "execute": {
-        if (!db) throw new Error("Database not loaded");
+        if (!db) throw new Error("error_not_loaded");
         const { sql, args, stream } = payload;
         
         const stmt = db.prepare(sql);
@@ -444,11 +443,9 @@ const handleMessage = async (e: MessageEvent, port: any) => {
       }
       
       case "unload": {
-        if (!isSharedWorker) {
-           if (db) {
-             db.close();
-             db = null;
-           }
+        if (db) {
+          db.close();
+          db = null;
         }
         port.postMessage({ id, type: "success" });
         break;
@@ -459,12 +456,4 @@ const handleMessage = async (e: MessageEvent, port: any) => {
   }
 };
 
-if (isSharedWorker) {
-  (self as any).onconnect = (e: MessageEvent) => {
-    const port = e.ports[0];
-    port.onmessage = (msg: MessageEvent) => handleMessage(msg, port);
-    port.start();
-  };
-} else {
-  self.onmessage = (msg: MessageEvent) => handleMessage(msg, self);
-}
+self.onmessage = (msg: MessageEvent) => handleMessage(msg, self);

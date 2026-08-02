@@ -37,6 +37,5 @@ jobs:
           tag_name: datas
           name: "Inducks database"
           files: inducks.sqlite.gz
-          fail_on_unsupported_arch: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

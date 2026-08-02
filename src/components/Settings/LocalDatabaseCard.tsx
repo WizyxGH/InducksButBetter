@@ -82,6 +82,28 @@ export function LocalDatabaseCard() {
     }
   };
 
+  const handleError = (e: any, toastId: string) => {
+    console.error(e)
+    const msg = e.message || ""
+    let translated = msg
+    
+    if (msg.startsWith("error_download|")) {
+      translated = t("localDb.error_download", { msg: msg.split('|')[1] }) || `Failed to download: ${msg.split('|')[1]}`
+    } else if (msg.startsWith("error_validation|")) {
+      translated = t("localDb.error_validation", { msg: msg.split('|')[1] }) || `Validation failed: ${msg.split('|')[1]}`
+    } else if (msg === "error_no_url") {
+      translated = t("localDb.error_no_url") || "No database URL or file provided."
+    } else if (msg === "error_empty") {
+      translated = t("localDb.error_empty") || "Empty database stream."
+    } else if (msg.startsWith("error_deserialize|")) {
+      translated = t("localDb.error_deserialize", { code: msg.split('|')[1] }) || `Failed to deserialize database (code ${msg.split('|')[1]}).`
+    } else if (msg === "error_not_loaded") {
+      translated = t("localDb.error_not_loaded") || "Database not loaded."
+    }
+    
+    toast.error(translated, { id: toastId })
+  }
+
   // ─── Local file import ─────────────────────────────────────────────────────
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,8 +126,7 @@ export function LocalDatabaseCard() {
         id: toastId,
       })
     } catch (e: any) {
-      console.error(e)
-      toast.error(e.message || "Failed to load database", { id: toastId })
+      handleError(e, toastId)
     } finally {
       setIsLoadingDb(false)
       if (fileInputRef.current) fileInputRef.current.value = ""
@@ -132,6 +153,7 @@ export function LocalDatabaseCard() {
               urls.push(sqliteAsset.url)
             }
             if (sqliteAsset.browser_download_url) {
+              urls.push(`https://corsproxy.io/?${encodeURIComponent(sqliteAsset.browser_download_url)}`)
               urls.push(sqliteAsset.browser_download_url)
             }
           }
@@ -155,8 +177,7 @@ export function LocalDatabaseCard() {
         id: toastId,
       })
     } catch (e: any) {
-      console.error(e)
-      toast.error(e.message || "Failed to load cloud database", { id: toastId })
+      handleError(e, toastId)
     } finally {
       setIsLoadingDb(false)
     }
@@ -167,6 +188,7 @@ export function LocalDatabaseCard() {
       await clearLocalDbCache();
       unloadLocalDb();
       setIsActiveDb(false);
+      window.dispatchEvent(new Event("db-local-unloaded"));
       toast.success(t("localDb.cache_cleared") || "Le cache a été vidé.");
     }
   }
