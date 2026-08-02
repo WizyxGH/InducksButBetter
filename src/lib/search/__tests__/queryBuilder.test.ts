@@ -16,7 +16,7 @@ describe('queryBuilder', () => {
 
     it('should generate packed lowercase codes for searching', () => {
       const candidates = getStorycodeCandidates('I TL 243-A');
-      expect(candidates.some(c => c.packed === 'itl243a')).toBe(true);
+      expect(candidates.some(c => c.packed === 'itl243-a')).toBe(true);
     });
   });
 

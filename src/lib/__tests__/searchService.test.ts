@@ -16,7 +16,7 @@ describe('searchService', () => {
       const filters = { charactercode: 'DD' };
       const result = buildAdvancedSearchQuery(filters);
       
-      expect(result.query).toContain('app_c.charactercode = ?');
+      expect(result.query).toContain('app_c.charactercode COLLATE NOCASE = ?');
       expect(result.countParams).toEqual(['DD']);
     });
 

@@ -9,3 +9,10 @@ dist-ssr
 brain
 scratch
 .system_generated
+
+# SQLite databases
+*.sqlite
+*.sqlite3
+*.sqlite.gz
+/public/datas/
+

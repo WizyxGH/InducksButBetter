@@ -1,5 +1,4 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
-import { DEFAULT_DB_SCHEMA } from "./defaultSchema";
 
 const DB_FILENAME = "/inducks.sqlite3";
 
@@ -16,6 +15,72 @@ async function initSqlite() {
   return sqlite3;
 }
 
+let storageType: "sah" | "opfs" | "memory" = "memory";
+
+async function getStorageType(s3: any) {
+  if (s3.capi && s3.capi.sqlite3_vfs_find("opfs")) {
+    return "opfs";
+  }
+
+  try {
+    if (s3.installOpfsSAHPoolVfs) {
+      if (!poolUtil) {
+        poolUtil = await s3.installOpfsSAHPoolVfs({
+          clearOnInit: false
+        });
+      }
+      return "sah";
+    }
+  } catch (e) {
+    console.warn("OPFS SAH Pool not supported:", e);
+  }
+
+  return "memory";
+}
+
+function closeActiveDb() {
+  if (db) {
+    try {
+      db.close();
+    } catch (e) {
+      console.warn("Error closing db:", e);
+    }
+    db = null;
+  }
+}
+
+async function readStreamToUint8Array(stream: ReadableStream): Promise<Uint8Array> {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalLength = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    totalLength += value.byteLength;
+  }
+  
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
+}
+
+async function decompressGzip(data: Uint8Array): Promise<Uint8Array> {
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(data);
+      controller.close();
+    }
+  });
+  const ds = new DecompressionStream('gzip');
+  const decompressedStream = stream.pipeThrough(ds);
+  return readStreamToUint8Array(decompressedStream);
+}
+
 const handleMessage = async (e: MessageEvent, port: any) => {
   const { id, action, payload } = e.data;
 
@@ -23,244 +88,285 @@ const handleMessage = async (e: MessageEvent, port: any) => {
     const s3 = await initSqlite();
 
     switch (action) {
-      case "loadIsv": {
-        const { files, baseUrl } = payload;
+      case "installDb": {
+        const { url, file } = payload;
         
-        let opfsSupported = false;
-        try {
-          if (s3.installOpfsSAHPoolVfs) {
-            if (!poolUtil) {
-              poolUtil = await s3.installOpfsSAHPoolVfs({
-                clearOnInit: false
-              });
+        const type = await getStorageType(s3);
+        storageType = type;
+
+        let responseStream: ReadableStream;
+
+        if (url) {
+          const urls = Array.isArray(url) ? url : [url].filter(Boolean);
+          let response: Response | null = null;
+          let fetchError: Error | null = null;
+
+          for (const targetUrl of urls) {
+            try {
+              port.postMessage({ type: 'progress', step: 'download', percent: 0 });
+              const headers: HeadersInit = {};
+              if (targetUrl.includes('api.github.com')) {
+                headers['Accept'] = 'application/octet-stream';
+              }
+              
+              const res = await fetch(targetUrl, { headers });
+              if (res.ok) {
+                response = res;
+                break;
+              }
+            } catch (err: any) {
+              fetchError = err;
             }
-            opfsSupported = true;
           }
-        } catch (e) {
-          console.warn("OPFS SAH Pool not supported:", e);
-        }
 
-        if (opfsSupported) {
-          if (poolUtil.getFileCount() > 0) {
-             poolUtil.removeOpfsSAHPoolFile(DB_FILENAME);
+          if (!response) {
+            throw new Error(`Impossible de télécharger la base de données: ${fetchError?.message || 'Erreur réseau'}`);
           }
-          db = new poolUtil.OpfsSAHPoolDb(DB_FILENAME);
+
+          const contentLength = Number(response.headers.get('content-length')) || 0;
+          let loaded = 0;
+          const targetResponse = response;
+
+          responseStream = new ReadableStream({
+            async start(controller) {
+              const reader = targetResponse.body!.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                  controller.close();
+                  break;
+                }
+                loaded += value.byteLength;
+                const percent = contentLength ? Math.min(Math.round((loaded / contentLength) * 100), 100) : 0;
+                port.postMessage({ type: 'progress', step: 'download', loaded, total: contentLength, percent });
+                controller.enqueue(value);
+              }
+            }
+          });
+
+        } else if (file) {
+          responseStream = file.stream();
         } else {
-          db = new s3.oo1.DB(DB_FILENAME, 'c');
+          throw new Error("No database URL or file provided.");
         }
 
+        // Determine if Gzip compressed by reading the first chunk
+        const reader = responseStream.getReader();
+        const firstRead = await reader.read();
+        if (firstRead.done) {
+          throw new Error("Empty database stream.");
+        }
+        const firstChunk = firstRead.value;
+        const isGzipped = firstChunk.length >= 2 && firstChunk[0] === 0x1f && firstChunk[1] === 0x8b;
+
+        // Reconstruct the stream
+        const rawStream = new ReadableStream({
+          async start(controller) {
+            controller.enqueue(firstChunk);
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                break;
+              }
+              controller.enqueue(value);
+            }
+          }
+        });
+
+        let decompressedStream = rawStream;
+        if (isGzipped) {
+          port.postMessage({ type: 'progress', step: 'decompress' });
+          const ds = new DecompressionStream('gzip');
+          decompressedStream = rawStream.pipeThrough(ds);
+        }
+
+        port.postMessage({ type: 'progress', step: 'validate' });
+        let isValid = false;
+        let tempDb: any = null;
+
+        if (type === "opfs") {
+          const root = await navigator.storage.getDirectory();
+          
+          // Stream directly to temporary OPFS file on disk
+          const tempHandle = await root.getFileHandle("inducks_temp.sqlite3", { create: true });
+          const writable = await tempHandle.createWritable();
+          await decompressedStream.pipeTo(writable);
+
+          // Validate temp database on disk
+          let validationError = "";
+          try {
+            tempDb = new s3.oo1.DB("/inducks_temp.sqlite3", "c", "opfs");
+            const stmt = tempDb.prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='inducks_story'");
+            if (stmt.step()) {
+              if (stmt.get({}).count > 0) isValid = true;
+            }
+            stmt.finalize();
+          } catch (err: any) {
+            validationError = err.message || String(err);
+            console.error("Validation error:", err);
+          } finally {
+            if (tempDb) {
+              try { tempDb.close(); } catch (e) {}
+            }
+          }
+
+          if (!isValid) {
+            try { await root.removeEntry("inducks_temp.sqlite3"); } catch (e) {}
+            throw new Error(`Validation échouée: ${validationError || "Base de données vide ou invalide"}`);
+          }
+
+          port.postMessage({ type: 'progress', step: 'install' });
+          closeActiveDb();
+
+          if (typeof (tempHandle as any).move === "function") {
+             await (tempHandle as any).move("inducks.sqlite3");
+           } else {
+             const mainHandle = await root.getFileHandle("inducks.sqlite3", { create: true });
+             const mainWritable = await mainHandle.createWritable();
+             const tempFile = await tempHandle.getFile();
+             await tempFile.stream().pipeTo(mainWritable);
+             await root.removeEntry("inducks_temp.sqlite3");
+           }
+           
+           db = new s3.oo1.DB("/inducks.sqlite3", "c", "opfs");
+
+        } else {
+          if (type === "sah") {
+            port.postMessage({ type: 'progress', step: 'install' });
+            closeActiveDb();
+
+            try {
+              if (poolUtil.getFileCount() > 0 && poolUtil.getFileNames().includes(DB_FILENAME)) {
+                poolUtil.removeOpfsSAHPoolFile(DB_FILENAME);
+              }
+            } catch (e) {}
+
+            const decompressedReader = decompressedStream.getReader();
+            const chunkReader = async () => {
+              const { done, value } = await decompressedReader.read();
+              if (done) return undefined;
+              return value;
+            };
+
+            await poolUtil.importDb(DB_FILENAME, chunkReader);
+
+            let validationError = "";
+            try {
+              db = new poolUtil.OpfsSAHPoolDb(DB_FILENAME);
+              const stmt = db.prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='inducks_story'");
+              if (stmt.step()) {
+                if (stmt.get({}).count > 0) isValid = true;
+              }
+              stmt.finalize();
+            } catch (err: any) {
+              validationError = err.message || String(err);
+              console.error("Validation error:", err);
+            }
+
+            if (!isValid) {
+              closeActiveDb();
+              try { poolUtil.removeOpfsSAHPoolFile(DB_FILENAME); } catch (e) {}
+              throw new Error(`Validation échouée: ${validationError || "Base de données vide ou invalide"}`);
+            }
+
+          } else {
+            // Memory VFS
+            // Note: memory fallback reads the entire DB into a Uint8Array, which may crash if the DB is too large!
+            const decompressedData = await readStreamToUint8Array(decompressedStream);
+            isValid = true;
+            port.postMessage({ type: 'progress', step: 'install' });
+            closeActiveDb();
+
+            db = new s3.oo1.DB("/inducks.sqlite3", "c");
+            if (s3.capi && s3.capi.sqlite3_deserialize) {
+              const pData = s3.wasm.allocFromTypedArray(decompressedData);
+              const rc = s3.capi.sqlite3_deserialize(
+                db.pointer,
+                "main",
+                pData,
+                decompressedData.byteLength,
+                decompressedData.byteLength,
+                0
+              );
+              if (rc !== 0) {
+                throw new Error(`Failed to deserialize database (code ${rc})`);
+              }
+            }
+          }
+        }
+
+        // Optimizations for read-only usage
         db.exec("PRAGMA journal_mode = OFF;");
         db.exec("PRAGMA synchronous = OFF;");
         db.exec("PRAGMA temp_store = MEMORY;");
 
-        let processed = 0;
-        let totalGlobalBytes = files.reduce((acc: number, f: any) => acc + (f.size || 0), 0);
-        let globalBytesRead = 0;
-        let lastReportedGlobalPercent = -1;
-        
-        for (const file of files as any[]) {
-          const fileName = file.name || file.name;
-          const isUrl = !!file.url;
-          const tableName = fileName.replace(/\.isv$/i, '').toLowerCase();
-          
-          const columns = DEFAULT_DB_SCHEMA[tableName];
-          if (!columns) {
-            console.warn(`Skipping ${fileName}: no schema found`);
-            continue;
-          }
-          
-          const startPercent = totalGlobalBytes > 0 
-            ? Math.min(99, Math.round((globalBytesRead / totalGlobalBytes) * 100)) 
-            : Math.round((processed / files.length) * 100);
-          
-          port.postMessage({ 
-            type: 'progress', 
-            table: tableName, 
-            percent: startPercent,
-            current: processed + 1, 
-            total: files.length 
-          });
-          
-          let stream;
-          if (isUrl) {
-            const res = await fetch(file.url);
-            if (!res.ok || !res.body) {
-              throw new Error(`Failed to download ${fileName} (status ${res.status})`);
-            }
-            stream = res.body.pipeThrough(new TextDecoderStream());
-          } else {
-            stream = file.stream().pipeThrough(new TextDecoderStream());
-          }
-          
-          db.exec(`CREATE TABLE ${tableName} (${columns.map(c => `"${c}" TEXT`).join(", ")});`);
-          db.exec("BEGIN TRANSACTION;");
-          
-          let stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
-          const colCount = columns.length;
-          
-          const reader = stream.getReader();
-          let partialLine = "";
-          let isFirstLine = true;
-          let bytesRead = 0;
-          let lastReportedPercent = -1;
-          const fileSize = file.size || 0;
-          let rowCount = 0;
-          
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            
-            bytesRead += value.length;
-            
-            const lines = (partialLine + value).split('\n');
-            partialLine = lines.pop() || "";
-            
-            for (let j = 0; j < lines.length; j++) {
-              const line = lines[j];
-              if (!line || line === "\r") continue;
-              const cleanLine = line.endsWith('\r') ? line.slice(0, -1) : line;
-              
-              if (isFirstLine) {
-                isFirstLine = false;
-                continue;
-              }
-              
-              const values = cleanLine.split('^');
-              const boundValues = new Array(colCount);
-              for (let i = 0; i < colCount; i++) {
-                boundValues[i] = values[i] !== undefined ? values[i] : null;
-              }
-              stmt.bind(boundValues).stepReset();
-              rowCount++;
-              
-              if (rowCount % 150000 === 0) {
-                stmt.finalize();
-                db.exec("COMMIT;");
-                db.exec("BEGIN TRANSACTION;");
-                stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${columns.map(() => "?").join(",")});`);
-              }
-            }
-
-            if (fileSize > 0) {
-              let globalPercent = 0;
-              if (totalGlobalBytes > 0) {
-                globalPercent = Math.min(99, Math.round(((globalBytesRead + bytesRead) / totalGlobalBytes) * 100));
-              } else {
-                globalPercent = Math.round(((processed + (bytesRead / fileSize)) / files.length) * 100);
-              }
-
-              if (globalPercent > lastReportedGlobalPercent) {
-                lastReportedGlobalPercent = globalPercent;
-                port.postMessage({
-                  type: 'progress',
-                  table: tableName,
-                  percent: globalPercent,
-                  current: processed + 1,
-                  total: files.length
-                });
-              }
-            }
-          }
-          
-          if (partialLine && partialLine !== "\r") {
-            const cleanLine = partialLine.endsWith('\r') ? partialLine.slice(0, -1) : partialLine;
-            if (!isFirstLine) {
-              const values = cleanLine.split('^');
-              const boundValues = new Array(colCount);
-              for (let i = 0; i < colCount; i++) {
-                boundValues[i] = values[i] !== undefined ? values[i] : null;
-              }
-              stmt.bind(boundValues).stepReset();
-            }
-          }
-          
-          stmt.finalize();
-          db.exec("COMMIT;");
-          globalBytesRead += fileSize;
-          processed++;
-        }
-        
-        port.postMessage({ type: 'progress', table: "Creating indexes...", percent: 100, current: files.length, total: files.length });
-        
-        const INDEXES_TO_CREATE: Record<string, string[]> = {
-          inducks_story: ["storycode", "storyheadercode", "firstpublicationdate"],
-          inducks_storyversion: ["storycode", "storyversioncode", "entirepages"],
-          inducks_storyjob: ["storyversioncode", "personcode"],
-          inducks_entry: ["storyversioncode", "issuecode"],
-          inducks_issue: ["issuecode", "publicationcode", "oldestdate", "pages"],
-          inducks_publication: ["publicationcode", "countrycode", "languagecode"],
-          inducks_herocharacter: ["storycode", "charactercode"],
-          inducks_character: ["charactercode"],
-          inducks_person: ["personcode"],
-          inducks_country: ["countrycode"],
-          inducks_language: ["languagecode"],
-          inducks_storyheader: ["title", "storyheadercode"],
-          inducks_appearance: ["storyversioncode", "charactercode"],
-          inducks_storysubseries: ["storycode", "subseriescode"],
-          inducks_subseriesname: ["subseriescode"],
-          inducks_entryurl: ["entrycode"],
-          inducks_storydescription: ["storyversioncode"],
-          inducks_charactername: ["charactercode"],
-          inducks_characterurl: ["charactercode"],
-          inducks_publishingjob: ["issuecode", "publisherid"],
-          inducks_storycodes: ["storycode", "alternativecode"],
-          inducks_issueurl: ["issuecode"],
-          inducks_indexer: ["indexer"]
-        };
-
-        db.exec("BEGIN TRANSACTION;");
-        for (const [table, columns] of Object.entries(INDEXES_TO_CREATE)) {
-          for (const col of columns) {
-            try {
-              db.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_${col} ON ${table}(${col});`);
-            } catch (err) {}
-          }
-        }
+        // Success! Get stats
+        let tableCount = 0;
+        let dbSize = 0;
         try {
-          db.exec(`CREATE INDEX IF NOT EXISTS idx_inducks_person_numissues ON inducks_person(CAST(numberofindexedissues AS INTEGER));`);
-        } catch (err) {}
-        db.exec("COMMIT;");
-        
-        if (processed < files.length) {
-          throw new Error(`Seulement ${processed}/${files.length} fichiers ont pu être importés. L'importation a échoué.`);
-        }
-        
-        port.postMessage({ id, type: "success" });
+          const stmt = db.prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table'");
+          if (stmt.step()) tableCount = stmt.get({}).count;
+          stmt.finalize();
+          
+          let pageSize = 4096;
+          let pageCount = 0;
+          const stmtPageSize = db.prepare("PRAGMA page_size");
+          if (stmtPageSize.step()) pageSize = stmtPageSize.get({}).page_size;
+          stmtPageSize.finalize();
+          
+          const stmtPageCount = db.prepare("PRAGMA page_count");
+          if (stmtPageCount.step()) pageCount = stmtPageCount.get({}).page_count;
+          stmtPageCount.finalize();
+          
+          dbSize = pageSize * pageCount;
+        } catch (e) {}
+
+        port.postMessage({ id, type: "success", stats: { size: dbSize || 1100000000, count: tableCount } });
         break;
       }
       
       case "loadCachedDb": {
         if (db) {
           let count = 0;
+          let dbSize = 0;
           try {
              const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
              while(tablesQuery.step()) { count++; }
              tablesQuery.finalize();
+
+             let pageSize = 4096;
+             let pageCount = 0;
+             const stmtPageSize = db.prepare("PRAGMA page_size");
+             if (stmtPageSize.step()) pageSize = stmtPageSize.get({}).page_size;
+             stmtPageSize.finalize();
+             
+             const stmtPageCount = db.prepare("PRAGMA page_count");
+             if (stmtPageCount.step()) pageCount = stmtPageCount.get({}).page_count;
+             stmtPageCount.finalize();
+             
+             dbSize = pageSize * pageCount;
           } catch(e) {}
-          port.postMessage({ id, type: "success", stats: { size: 100000000, count } });
+          port.postMessage({ id, type: "success", stats: { size: dbSize || 1100000000, count } });
           break;
         }
         
+        const type = await getStorageType(s3);
+        storageType = type;
         let found = false;
-        let opfsSupported = false;
-        try {
-          if (s3.installOpfsSAHPoolVfs) {
-            if (!poolUtil) {
-              poolUtil = await s3.installOpfsSAHPoolVfs({
-                clearOnInit: false
-              });
-            }
-            opfsSupported = true;
-          }
-        } catch (e) {
-          console.warn("OPFS SAH Pool not supported:", e);
-        }
 
-        if (opfsSupported) {
-          if (poolUtil.getFileCount() > 0) {
+        if (type === "sah") {
+          if (poolUtil.getFileCount() > 0 && poolUtil.getFileNames().includes(DB_FILENAME)) {
              found = true;
              db = new poolUtil.OpfsSAHPoolDb(DB_FILENAME);
           }
+        } else if (type === "opfs") {
+          const root = await navigator.storage.getDirectory();
+          try {
+            await root.getFileHandle("inducks.sqlite3", { create: false });
+            found = true;
+            db = new s3.oo1.DB("/inducks.sqlite3", "c", "opfs");
+          } catch (e) {}
         }
         
         if (!found) {
@@ -269,23 +375,41 @@ const handleMessage = async (e: MessageEvent, port: any) => {
         }
         
         let count = 0;
+        let dbSize = 0;
         try {
            const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
            while(tablesQuery.step()) { count++; }
            tablesQuery.finalize();
+
+           let pageSize = 4096;
+           let pageCount = 0;
+           const stmtPageSize = db.prepare("PRAGMA page_size");
+           if (stmtPageSize.step()) pageSize = stmtPageSize.get({}).page_size;
+           stmtPageSize.finalize();
+           
+           const stmtPageCount = db.prepare("PRAGMA page_count");
+           if (stmtPageCount.step()) pageCount = stmtPageCount.get({}).page_count;
+           stmtPageCount.finalize();
+           
+           dbSize = pageSize * pageCount;
         } catch(e) {}
         
-        port.postMessage({ id, type: "success", stats: { size: 100000000, count } });
+        port.postMessage({ id, type: "success", stats: { size: dbSize || 1100000000, count } });
         break;
       }
       
       case "clearCache": {
-        if (db) {
-           db.close();
-           db = null;
-        }
-        if (poolUtil) {
-           poolUtil.removeOpfsSAHPoolFile(DB_FILENAME);
+        closeActiveDb();
+        const type = await getStorageType(s3);
+        if (type === "sah") {
+           if (poolUtil) {
+              try { poolUtil.removeOpfsSAHPoolFile(DB_FILENAME); } catch (e) {}
+           }
+        } else if (type === "opfs") {
+           try {
+             const root = await navigator.storage.getDirectory();
+             await root.removeEntry("inducks.sqlite3");
+           } catch (e) {}
         }
         port.postMessage({ id, type: "success" });
         break;

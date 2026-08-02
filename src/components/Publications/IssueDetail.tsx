@@ -249,8 +249,16 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                       // appear multiple times in a single issue (e.g. multi-part stories).
                       key={`${story.storycode ?? ""}-${idx}`}
                       id={story.position ? `pos-${story.position.trim().toLowerCase()}` : undefined}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => story.storycode && onSelectStory && onSelectStory(story.storycode)}
-                      className="group rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs cursor-pointer border hover:border-primary/20"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          story.storycode && onSelectStory && onSelectStory(story.storycode);
+                        }
+                      }}
+                      className="group rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs cursor-pointer border text-left hover:border-primary/20"
                     >
                       <CardContent className="p-4 flex items-start gap-4">
                         {/* Position / Index badge */}
@@ -261,7 +269,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                         <div className="space-y-1.5 flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-4">
                             <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                              {story.entry_title || story.original_title || "Sans titre"}
+                              {story.entry_title || story.original_title || (t("story.untitled") || "Sans titre")}
                             </p>
                             {story.entirepages && (
                               <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono shrink-0">

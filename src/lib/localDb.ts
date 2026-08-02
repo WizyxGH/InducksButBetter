@@ -4,7 +4,7 @@ let workerInst: any = null;
 let workerPort: MessagePort | Worker | null = null;
 let queryIdCounter = 0;
 const pendingQueries = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void, onRow?: (row: any) => void }>();
-let onProgressCallback: ((progress: { table: string; current: number; total: number; percent: number }) => void) | null = null;
+let onProgressCallback: ((progress: { step: string; current: number; total: number; percent: number }) => void) | null = null;
 
 function getWorker(): any {
   if (!workerPort) {
@@ -23,10 +23,10 @@ function getWorker(): any {
 }
 
 function handleMessage(e: MessageEvent) {
-  const { id, type, error, row, rows, count, table, current, total, percent } = e.data;
+  const { id, type, error, row, rows, count, step, current, total, percent } = e.data;
   
   if (type === 'progress' && onProgressCallback) {
-    onProgressCallback({ table, current, total, percent: percent || 0 });
+    onProgressCallback({ step, current: current || 0, total: total || 0, percent: percent || 0 } as any);
     return;
   }
   
@@ -48,10 +48,6 @@ function handleMessage(e: MessageEvent) {
   }
 }
 
-export async function loadLocalDb(file: File): Promise<void> {
-  throw new Error("loadLocalDb for direct sqlite file is not implemented in worker yet.");
-}
-
 let localDbStats: { count: number, size: number } | null = null;
 
 export function hasLocalDb(): boolean {
@@ -62,51 +58,42 @@ export function getLocalDbStats() {
   return localDbStats;
 }
 
-export async function loadFromIsvFiles(files: File[], onProgress?: (progress: {table: string, current: number, total: number, percent: number}) => void): Promise<void> {
-  const w = getWorker();
-  onProgressCallback = onProgress || null;
-  
-  localDbStats = {
-    count: files.length,
-    size: files.reduce((acc, f) => acc + f.size, 0)
-  };
-  
-  return new Promise((resolve, reject) => {
-    const id = ++queryIdCounter;
-    pendingQueries.set(id, { resolve, reject });
-    w.postMessage({
-      id,
-      action: "loadIsv",
-      payload: { files, baseUrl: import.meta.env.BASE_URL }
-    });
-  });
-}
-
-/**
- * Loads the Inducks database by downloading ISV files from cloud URLs (e.g. GitHub Releases).
- * Each asset is an object `{ name, url }` which the worker will fetch() and stream on-the-fly.
- * @param assets - Array of { name: string, url: string } objects pointing to .isv files
- * @param onProgress - Optional callback for progress updates
- */
-export async function loadFromCloud(
-  assets: { name: string; url: string; size?: number }[],
-  onProgress?: (progress: {table: string, current: number, total: number, percent: number}) => void
+export async function installDatabase(
+  source: string | string[] | File,
+  onProgress?: (progress: { step: string; current: number; total: number; percent: number }) => void
 ): Promise<void> {
   const w = getWorker();
   onProgressCallback = onProgress || null;
 
+  const payload: any = {};
+  if (source instanceof File) {
+    payload.file = source;
+  } else {
+    payload.url = source;
+  }
+
   localDbStats = {
-    count: assets.length,
-    size: assets.reduce((acc, a) => acc + (a.size || 0), 0)
+    count: 0,
+    size: source instanceof File ? source.size : 0
   };
 
   return new Promise((resolve, reject) => {
     const id = ++queryIdCounter;
-    pendingQueries.set(id, { resolve, reject });
+    pendingQueries.set(id, {
+      resolve: (data) => {
+        if (data && data.stats) {
+          localDbStats = { count: data.stats.count, size: data.stats.size };
+          resolve();
+        } else {
+          reject(new Error("Database installation failed."));
+        }
+      },
+      reject
+    });
     w.postMessage({
       id,
-      action: "loadIsv",
-      payload: { files: assets, baseUrl: import.meta.env.BASE_URL }
+      action: "installDb",
+      payload
     });
   });
 }
@@ -115,7 +102,7 @@ export async function loadFromCloud(
 export function unloadLocalDb() {
   if (workerPort) {
     workerPort.postMessage({ id: ++queryIdCounter, action: "unload", payload: {} });
-    if (workerInst instanceof Worker) {
+    if (typeof Worker !== 'undefined' && workerInst instanceof Worker) {
       workerInst.terminate();
     }
     workerPort = null;

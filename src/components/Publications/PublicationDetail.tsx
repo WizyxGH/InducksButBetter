@@ -222,7 +222,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
             <CardHeader className="py-4">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
-                Informations
+                {t("common.informations") || "Informations"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-xs">
@@ -363,7 +363,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                         variant="outline"
                         className="rounded-xl border-border-subtle hover:bg-surface-2 font-medium px-6"
                       >
-                        Afficher plus d'années
+                        {t("publication.show_more_years") || "Afficher plus d'années"}
                       </Button>
                     </div>
                   )}

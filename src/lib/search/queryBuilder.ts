@@ -18,6 +18,10 @@ export function getStorycodeCandidates(code: string): StorycodeCandidate[] {
   
   heuristic = heuristic.replace(/\s+/g, ' ');
   
+  if (heuristic !== h && !candidates.includes(heuristic)) {
+    candidates.push(heuristic);
+  }
+  
   // 2. Map old Dell Giant (W US) codes to their corresponding W OS issue number
   heuristic = heuristic.replace(/^w us\s?1[ a-z-]*$/i, "W OS 386");
   heuristic = heuristic.replace(/^w us\s?2[ a-z-]*$/i, "W OS 456");
@@ -96,15 +100,23 @@ export function getStorycodeCandidates(code: string): StorycodeCandidate[] {
 
 
   // Pack the candidates: remove all whitespace, convert to lowercase, and strip special chars
-  const seen = new Set<string>();
+  const seen = new Map<string, string>();
   const out: StorycodeCandidate[] = [];
 
   for (const c of candidates) {
     const packed = c.replace(/\s+/g, '').toLowerCase().replace(/[^a-z0-9\-]/g, '');
     if (!seen.has(packed)) {
-      seen.add(packed);
-      out.push({ unpacked: c, packed });
+      seen.set(packed, c);
+    } else {
+      const existing = seen.get(packed)!;
+      if (existing === existing.toLowerCase() && c !== c.toLowerCase()) {
+        seen.set(packed, c);
+      }
     }
+  }
+
+  for (const [packed, unpacked] of seen.entries()) {
+    out.push({ unpacked, packed });
   }
 
   return out;
@@ -626,7 +638,9 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
       p.push(da);
     } else {
       let daParam = da;
-      if (daParam.endsWith('-01-01')) {
+      if (/^\d{4}-\d{2}$/.test(daParam)) {
+        daParam = daParam + '-00';
+      } else if (daParam.endsWith('-01-01')) {
         daParam = daParam.substring(0, 4);
       }
       where.push("i.oldestdate >= ?");
@@ -641,7 +655,9 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
       p.push(db);
     } else {
       let dbParam = db;
-      if (dbParam.endsWith('-12-31')) {
+      if (/^\d{4}-\d{2}$/.test(dbParam)) {
+        dbParam = dbParam + '-99';
+      } else if (dbParam.endsWith('-12-31')) {
         dbParam = dbParam.substring(0, 4) + '-99-99';
       }
       where.push("i.oldestdate <= ?");

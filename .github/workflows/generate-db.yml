@@ -1,0 +1,42 @@
+name: Generate SQLite Database
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Compile and Optimize Database
+        run: npx tsx scripts/generate-db.ts
+
+      - name: Upload or Update Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: datas
+          name: "Inducks database"
+          files: inducks.sqlite.gz
+          fail_on_unsupported_arch: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

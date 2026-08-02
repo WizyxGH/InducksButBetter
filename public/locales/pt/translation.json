@@ -160,7 +160,6 @@
     "original_title": "Título original"
   },
   "kinds": {
-    "s": "História",
     "c": "Capa",
     "i": "Ilustração",
     "a": "Artigo",
@@ -169,7 +168,7 @@
     "f": "Página dupla central",
     "q": "Quiz",
     "w": "Desconhecido",
-    "n": "História",
+    "n": "Story",
     "k": "Tira diária/semanal",
     "t": "Text",
     "P": "Pintura (retrato)",

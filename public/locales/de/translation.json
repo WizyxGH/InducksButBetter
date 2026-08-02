@@ -160,7 +160,6 @@
     "original_title": "Originaltitel"
   },
   "kinds": {
-    "s": "Geschichte",
     "c": "Cover",
     "i": "Illustration",
     "a": "Artikel",
@@ -169,7 +168,7 @@
     "f": "Doppelseite (Mitte)",
     "q": "Quiz",
     "w": "Unbekannt",
-    "n": "Geschichte",
+    "n": "Story",
     "k": "Täglicher/Wöchentlicher Strip",
     "t": "Text",
     "P": "Gemälde (Porträt)",
