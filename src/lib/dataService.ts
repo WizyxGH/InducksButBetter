@@ -130,6 +130,27 @@ export async function autocompletePublicationTitle(q: string) {
   }));
 }
 
+export async function getLocalizedCharacterNames(codes: string[], lang: string = "fr") {
+  if (!codes || codes.length === 0) return {};
+  
+  const placeholders = codes.map(() => '?').join(',');
+  const result = await executeQuery({
+    sql: `
+      SELECT c.charactercode, COALESCE(cn.charactername, c.charactername) as charactername
+      FROM inducks_character c
+      LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ? AND cn.preferred = 'Y'
+      WHERE c.charactercode IN (${placeholders})
+    `,
+    args: [lang, ...codes]
+  });
+  
+  const map: Record<string, string> = {};
+  result.rows.forEach((r: any) => {
+    map[r.charactercode] = r.charactername;
+  });
+  return map;
+}
+
 export async function getStoryDetail(storycode: string, lang: string = "fr") {
   // 1. Core story info
   const coreResult = await executeQuery({
@@ -234,13 +255,40 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
     args: [storycode]
   });
 
+  // 6. Cross-references (XREF)
+  const xrefsResult = await executeQuery({
+    sql: `
+      SELECT r.referencereasonid, r.tostorycode as targetcode, s.title, sv.kind, 'outbound' as direction,
+        (SELECT referencereasontext FROM inducks_referencereason WHERE referencereasonid = r.referencereasonid LIMIT 1) as reasontext,
+        (SELECT referencereasontranslation FROM inducks_referencereasonname WHERE referencereasonid = r.referencereasonid AND languagecode = ? LIMIT 1) as reasontranslation
+      FROM inducks_storyreference r
+      JOIN inducks_story s ON s.storycode = r.tostorycode
+      LEFT JOIN inducks_storyversion sv ON sv.storyversioncode = s.originalstoryversioncode
+      WHERE r.fromstorycode = ?
+      
+      UNION
+      
+      SELECT r.referencereasonid, r.fromstorycode as targetcode, s.title, sv.kind, 'inbound' as direction,
+        (SELECT referencereasontext FROM inducks_referencereason WHERE referencereasonid = r.referencereasonid LIMIT 1) as reasontext,
+        (SELECT referencereasontranslation FROM inducks_referencereasonname WHERE referencereasonid = r.referencereasonid AND languagecode = ? LIMIT 1) as reasontranslation
+      FROM inducks_storyreference r
+      JOIN inducks_story s ON s.storycode = r.fromstorycode
+      LEFT JOIN inducks_storyversion sv ON sv.storyversioncode = s.originalstoryversioncode
+      WHERE r.tostorycode = ?
+      
+      ORDER BY referencereasonid, targetcode
+    `,
+    args: [lang, storycode, lang, storycode]
+  });
+
   return {
     ...story,
     ...version,
     creators: creatorsResult.rows,
     characters: charactersResult.rows,
     descriptions: descriptionsResult.rows,
-    publications: publicationsResult.rows
+    publications: publicationsResult.rows,
+    xrefs: xrefsResult.rows
   };
 }
 

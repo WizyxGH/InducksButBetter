@@ -363,12 +363,11 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   if (hasDateAfter || hasDateBefore) {
     const mainDateConds = [];
     const issueDateConds = [];
-    const issueDateSubquery = `(SELECT MIN(i_d.oldestdate) FROM inducks_storyversion sv_d JOIN inducks_entry e_d ON sv_d.storyversioncode = e_d.storyversioncode JOIN inducks_issue i_d ON e_d.issuecode = i_d.issuecode WHERE sv_d.storycode = s.storycode)`;
+    const issueDateSubquery = `(SELECT MIN(i_d.oldestdate) FROM inducks_storyversion sv_d JOIN inducks_entry e_d ON sv_d.storyversioncode = e_d.storyversioncode JOIN inducks_issue i_d ON e_d.issuecode = i_d.issuecode WHERE sv_d.storycode = s.storycode AND i_d.oldestdate IS NOT NULL AND i_d.oldestdate != '')`;
     
     if (hasDateAfter) {
       const da = filters.dateAfter!.trim();
       let daParam = da;
-      if (daParam.endsWith('-01-01')) daParam = daParam.substring(0, 4);
       mainDateConds.push("s.firstpublicationdate >= ?");
       issueDateConds.push(`${issueDateSubquery} >= ?`);
       whereParams.push(daParam);
@@ -377,9 +376,6 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     if (hasDateBefore) {
       const db = filters.dateBefore!.trim();
       let dbParam = db;
-      if (dbParam.endsWith('-12-31') || dbParam.endsWith('-01-01')) {
-        dbParam = dbParam.substring(0, 4) + '-99-99';
-      }
       mainDateConds.push("s.firstpublicationdate <= ?");
       issueDateConds.push(`${issueDateSubquery} <= ?`);
       whereParams.push(dbParam);
@@ -390,15 +386,11 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     if (hasDateAfter) {
       const da = filters.dateAfter!.trim();
       let daParam = da;
-      if (daParam.endsWith('-01-01')) daParam = daParam.substring(0, 4);
       whereParams.push(daParam);
     }
     if (hasDateBefore) {
       const db = filters.dateBefore!.trim();
       let dbParam = db;
-      if (dbParam.endsWith('-12-31') || dbParam.endsWith('-01-01')) {
-        dbParam = dbParam.substring(0, 4) + '-99-99';
-      }
       whereParams.push(dbParam);
     }
   }
@@ -464,9 +456,9 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     sortJoins = "LEFT JOIN inducks_storyheader sh_sort ON s.storyheadercode = sh_sort.storyheadercode";
     orderBy = "sh_sort.title DESC, s.storycode ASC";
   } else if (sort === "pages_desc") {
-    orderBy = "(SELECT MAX(entirepages) FROM inducks_storyversion WHERE storycode = s.storycode) DESC, s.storycode ASC";
+    orderBy = "(SELECT MAX(CAST(NULLIF(entirepages, '') AS REAL)) FROM inducks_storyversion WHERE storycode = s.storycode) DESC, s.storycode ASC";
   } else if (sort === "pages_asc") {
-    orderBy = "(SELECT MIN(entirepages) FROM inducks_storyversion WHERE storycode = s.storycode) ASC, s.storycode ASC";
+    orderBy = "(SELECT MIN(CAST(NULLIF(entirepages, '') AS REAL)) FROM inducks_storyversion WHERE storycode = s.storycode) ASC, s.storycode ASC";
   } else if (sort === "published_most") {
     orderBy = "(SELECT COUNT(e_sort.entrycode) FROM inducks_entry e_sort JOIN inducks_storyversion sv_sort ON e_sort.storyversioncode = sv_sort.storyversioncode WHERE sv_sort.storycode = s.storycode) DESC, s.storycode ASC";
   } else if (sort === "published_least") {
@@ -502,11 +494,11 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
       ) as series_title,
       COALESCE(
         NULLIF(s.firstpublicationdate, ''),
-        (SELECT MIN(i_fb.oldestdate) FROM inducks_storyversion sv_fb JOIN inducks_entry e_fb ON sv_fb.storyversioncode = e_fb.storyversioncode JOIN inducks_issue i_fb ON e_fb.issuecode = i_fb.issuecode WHERE sv_fb.storycode = s.storycode)
+        (SELECT MIN(i_fb.oldestdate) FROM inducks_storyversion sv_fb JOIN inducks_entry e_fb ON sv_fb.storyversioncode = e_fb.storyversioncode JOIN inducks_issue i_fb ON e_fb.issuecode = i_fb.issuecode WHERE sv_fb.storycode = s.storycode AND i_fb.oldestdate IS NOT NULL AND i_fb.oldestdate != '')
       ) as firstpublicationdate, sv.kind, sv.entirepages, sv.brokenpagenumerator, sv.brokenpagedenominator, sv.plotsummary, s.storycomment,
       COALESCE(
         NULLIF(NULLIF(s.title, 'Untitled'), ''),
-        (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
+        (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY COALESCE(NULLIF(i.oldestdate, ''), '9999-99-99') ASC, e.entrycode ASC LIMIT 1)
       ) as original_title,
       (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title,
       COALESCE(
@@ -524,7 +516,7 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
            AND eu.sitecode IN ('webusers', 'thumbnails', 'thumbnails2', 'thumbnails3')
          ORDER BY
            CASE WHEN eu.sitecode = 'webusers' THEN 0 ELSE 1 END,
-           COALESCE(i_img.oldestdate, '9999-99-99') ASC,
+           COALESCE(NULLIF(i_img.oldestdate, ''), '9999-99-99') ASC,
            CASE WHEN p_img.languagecode = ? THEN 0 ELSE 1 END
          LIMIT 1),
         (SELECT eu.sitecode || '|' || eu.url
@@ -536,7 +528,7 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
            AND eu.sitecode IN ('webusers', 'thumbnails', 'thumbnails2', 'thumbnails3')
          ORDER BY
            CASE WHEN eu.sitecode = 'webusers' THEN 0 ELSE 1 END,
-           COALESCE(i_img.oldestdate, '9999-99-99') ASC
+           COALESCE(NULLIF(i_img.oldestdate, ''), '9999-99-99') ASC
          LIMIT 1)
       ) as story_thumb,
       COALESCE(
@@ -644,8 +636,6 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
       let daParam = da;
       if (/^\d{4}-\d{2}$/.test(daParam)) {
         daParam = daParam + '-00';
-      } else if (daParam.endsWith('-01-01')) {
-        daParam = daParam.substring(0, 4);
       }
       where.push("i.oldestdate >= ?");
       p.push(daParam);
@@ -661,8 +651,6 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
       let dbParam = db;
       if (/^\d{4}-\d{2}$/.test(dbParam)) {
         dbParam = dbParam + '-99';
-      } else if (dbParam.endsWith('-12-31')) {
-        dbParam = dbParam.substring(0, 4) + '-99-99';
       }
       where.push("i.oldestdate <= ?");
       p.push(dbParam);
@@ -724,13 +712,13 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
   let orderBy = "p.countrycode ASC, i.issuecode ASC";
   const sort = filters.sort || "country_code";
   if (sort === "date_asc") {
-    orderBy = "i.oldestdate ASC, i.issuecode ASC";
+    orderBy = "COALESCE(NULLIF(i.oldestdate, ''), '9999-99-99') ASC, i.issuecode ASC";
   } else if (sort === "date_desc") {
-    orderBy = "i.oldestdate DESC, i.issuecode ASC";
+    orderBy = "COALESCE(NULLIF(i.oldestdate, ''), '0000-00-00') DESC, i.issuecode ASC";
   } else if (sort === "pages_asc") {
-    orderBy = "i.pages ASC, i.issuecode ASC";
+    orderBy = "CAST(NULLIF(i.pages, '') AS REAL) ASC, i.issuecode ASC";
   } else if (sort === "pages_desc") {
-    orderBy = "i.pages DESC, i.issuecode ASC";
+    orderBy = "CAST(NULLIF(i.pages, '') AS REAL) DESC, i.issuecode ASC";
   }
 
   const countQuery = `

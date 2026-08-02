@@ -18,9 +18,9 @@ const tagVariants = cva(
         primary: "bg-primary text-primary-foreground border-transparent",
       },
       size: {
-        sm: "px-1.5 py-0.5 text-[9px] rounded",
-        md: "px-2 py-0.5 text-[10px] rounded-md",
-        lg: "px-2.5 py-1 text-xs rounded-lg",
+        sm: "px-1.5 py-0.5 text-[9px] rounded-full",
+        md: "px-2 py-0.5 text-[10px] rounded-full",
+        lg: "px-2.5 py-1 text-xs rounded-full",
       }
     },
     defaultVariants: {

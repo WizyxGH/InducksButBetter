@@ -149,12 +149,17 @@ export function LocalDatabaseCard() {
           const assets: GitHubAsset[] = release.assets || []
           const sqliteAsset = assets.find((a) => a.name === "inducks.sqlite.gz")
           if (sqliteAsset) {
+            const bdu = sqliteAsset.browser_download_url
+            if (bdu) {
+              urls.push(`https://ghp.ci/${bdu}`)
+              urls.push(`https://github.moeyy.xyz/${bdu}`)
+              urls.push(`https://ghproxy.net/${bdu}`)
+              urls.push(`https://mirror.ghproxy.com/${bdu}`)
+              urls.push(`https://corsproxy.io/?${encodeURIComponent(bdu)}`)
+              urls.push(bdu)
+            }
             if (sqliteAsset.url) {
               urls.push(sqliteAsset.url)
-            }
-            if (sqliteAsset.browser_download_url) {
-              urls.push(`https://corsproxy.io/?${encodeURIComponent(sqliteAsset.browser_download_url)}`)
-              urls.push(sqliteAsset.browser_download_url)
             }
           }
         }

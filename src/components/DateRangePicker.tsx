@@ -123,7 +123,7 @@ export function DateRangePicker({
             </div>
             <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x border-border-subtle bg-surface">
               <div className="p-4 w-full sm:min-w-[280px]">
-                <div className="text-sm font-semibold mb-3 text-foreground">{t('search.from_date') || "Start"}</div>
+                <div className="text-sm font-semibold text-foreground">{t('search.from_date') || "Start"}</div>
                 <Calendar
                   mode="single"
                   month={fromMonth}
@@ -143,7 +143,7 @@ export function DateRangePicker({
                 />
               </div>
               <div className="p-4 w-full sm:min-w-[280px]">
-                <div className="text-sm font-semibold mb-3 text-foreground">{t('search.to_date') || "End"}</div>
+                <div className="text-sm font-semibold text-foreground">{t('search.to_date') || "End"}</div>
                 <Calendar
                   mode="single"
                   month={toMonth || fromMonth}

@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { SearchFilters } from "@/lib/searchService";
+import { getLocalizedCharacterNames } from "@/lib/dataService";
 
 export const initialFilters: SearchFilters = {
   title: "",
@@ -42,6 +44,21 @@ export function useSearchFilters() {
   const [cookieValue, setCookieValue] = useState("");
   const [isSavingCookie, setIsSavingCookie] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const allCodes = [
+      ...(filters.charactercode as string[] || []),
+      ...(filters.excludeCharactercode as string[] || []),
+      ...(filters.herocode as string[] || [])
+    ];
+    
+    if (allCodes.length > 0) {
+      getLocalizedCharacterNames(allCodes, i18n.language).then(map => {
+        setSelectedLabels(prev => ({ ...prev, ...map }));
+      }).catch(console.error);
+    }
+  }, [i18n.language, filters.charactercode, filters.excludeCharactercode, filters.herocode]);
 
   const addSelection = (key: "charactercode" | "herocode" | "excludeCharactercode", value: string, label: string) => {
     if (!(filters[key] as string[]).includes(value)) {

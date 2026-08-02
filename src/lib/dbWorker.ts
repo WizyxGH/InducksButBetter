@@ -80,7 +80,9 @@ async function decompressGzip(data: Uint8Array): Promise<Uint8Array> {
   return readStreamToUint8Array(decompressedStream);
 }
 
-const handleMessage = async (e: MessageEvent, port: any) => {
+const connections: MessagePort[] = [];
+
+const handleMessage = async (e: MessageEvent, port: MessagePort) => {
   const { id, action, payload } = e.data;
 
   try {
@@ -456,4 +458,9 @@ const handleMessage = async (e: MessageEvent, port: any) => {
   }
 };
 
-self.onmessage = (msg: MessageEvent) => handleMessage(msg, self);
+self.onconnect = (e: MessageEvent) => {
+  const port = e.ports[0];
+  connections.push(port);
+  port.onmessage = (msg: MessageEvent) => handleMessage(msg, port);
+  port.start();
+};

@@ -1,16 +1,17 @@
-import DbWorker from './dbWorker?worker';
+import SharedDbWorker from './dbWorker?sharedworker';
 
 let workerInst: any = null;
-let workerPort: Worker | null = null;
+let workerPort: SharedWorker | null = null;
 let queryIdCounter = 0;
 const pendingQueries = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void, onRow?: (row: any) => void }>();
 let onProgressCallback: ((progress: { step: string; current: number; total: number; percent: number }) => void) | null = null;
 
-function getWorker(): Worker {
+function getWorker(): SharedWorker {
   if (!workerPort) {
-    workerInst = new DbWorker();
-    workerPort = workerInst as Worker;
-    workerPort.onmessage = handleMessage;
+    workerInst = new SharedDbWorker();
+    workerPort = workerInst as SharedWorker;
+    workerPort.port.onmessage = handleMessage;
+    workerPort.port.start();
   }
   return workerPort;
 }
@@ -83,7 +84,7 @@ export async function installDatabase(
       },
       reject
     });
-    w.postMessage({
+    w.port.postMessage({
       id,
       action: "installDb",
       payload
@@ -94,10 +95,7 @@ export async function installDatabase(
 
 export function unloadLocalDb() {
   if (workerPort) {
-    workerPort.postMessage({ id: ++queryIdCounter, action: "unload", payload: {} });
-    if (workerInst) {
-      workerInst.terminate();
-    }
+    workerPort.port.postMessage({ id: ++queryIdCounter, action: "unload", payload: {} });
     workerPort = null;
     workerInst = null;
     localDbStats = null;
@@ -125,7 +123,7 @@ export async function loadCachedDb(): Promise<boolean> {
       reject: () => resolve(false)
     });
     
-    w.postMessage({
+    w.port.postMessage({
       id,
       action: "loadCachedDb",
       payload: { baseUrl: import.meta.env.BASE_URL }
@@ -140,7 +138,7 @@ export async function clearLocalDbCache(): Promise<void> {
   return new Promise((resolve, reject) => {
     const id = ++queryIdCounter;
     pendingQueries.set(id, { resolve, reject });
-    w.postMessage({ id, action: "clearCache", payload: {} });
+    w.port.postMessage({ id, action: "clearCache", payload: {} });
   });
 }
 
@@ -148,7 +146,9 @@ export async function executeLocal(query: { sql: string, args?: any[] } | string
   if (dbLoadPromise) {
     await dbLoadPromise;
   }
+  
   if (!workerPort) throw new Error("Local database is not loaded.");
+  if (!hasLocalDb()) throw new Error("error_not_loaded");
   
   const sqlString = typeof query === "string" ? query : query.sql;
   const args = typeof query === "string" ? [] : (query.args || []);
@@ -157,7 +157,7 @@ export async function executeLocal(query: { sql: string, args?: any[] } | string
     const id = ++queryIdCounter;
     pendingQueries.set(id, { resolve, reject, onRow });
     
-    workerPort!.postMessage({
+    workerPort!.port.postMessage({
       id,
       action: "execute",
       payload: { sql: sqlString, args, stream: !!onRow }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, Copy, Check, Calendar, FileText, ChevronDown, ChevronUp, AlignJustify, Users } from "lucide-react"
+import { ArrowLeft, Copy, Check, Calendar, FileText, ChevronDown, ChevronUp, AlignJustify, Users, Link } from "lucide-react"
 import { getStoryDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
@@ -276,7 +276,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                   <div className="flex flex-col gap-3">
                     {unifiedCreators.map((creator) => (
                       <div key={creator.code} className="flex flex-col gap-1 items-start">
-                        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+                        <span className="text-[10px] font-bold text-text-secondary tracking-wider">
                           {creator.roles.join(", ")}
                         </span>
                         <EntityBadge
@@ -319,17 +319,19 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
               <CardContent className="p-4">
                 {story.characters && story.characters.length > 0 ? (
-                  <div className="flex flex-wrap gap-3 p-1">
-                    {story.characters.map((c: any) => (
-                      <EntityBadge
-                        key={c.charactercode}
-                        type="character"
-                        code={c.charactercode}
-                        name={c.charactername || c.charactercode}
-                        charComment={c.charactercomment}
-                        appComment={c.appearancecomment}
-                        onSelect={onSelectCharacter}
-                      />
+                  <div className="flex flex-wrap gap-x-2.5 gap-y-2 p-1 items-center">
+                    {story.characters.map((c: any, i: number) => (
+                      <React.Fragment key={`${c.charactercode}-${i}`}>
+                        <EntityBadge
+                          type="character"
+                          code={c.charactercode}
+                          name={c.charactername || c.charactercode}
+                          charComment={c.charactercomment}
+                          appComment={c.appearancecomment}
+                          onSelect={onSelectCharacter}
+                        />
+                        {i < story.characters.length - 1 && <span className="text-sm text-text-secondary -ml-1">,</span>}
+                      </React.Fragment>
                     ))}
                   </div>
                 ) : (
@@ -338,6 +340,57 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               </CardContent>
             </Card>
           </div>
+
+          {/* Cross References Section */}
+          {story.xrefs && story.xrefs.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Link className="w-4 h-4 text-primary" />
+                {t("story.xrefs", { defaultValue: "Références" })}
+              </h3>
+              <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex flex-col gap-3">
+                    {Object.entries(
+                      story.xrefs.reduce((acc: any, xref: any) => {
+                        const reason = xref.reasontranslation || xref.reasontext || xref.referencereasonid;
+                        if (!acc[reason]) acc[reason] = [];
+                        acc[reason].push(xref);
+                        return acc;
+                      }, {})
+                    ).map(([reason, refs]: [string, any], idx: number) => (
+                      <div key={idx} className="flex flex-col gap-1 items-start">
+                        <span className="text-[10px] font-bold text-text-secondary tracking-wider">
+                          {reason}
+                        </span>
+                        <div className="flex flex-wrap gap-x-3 gap-y-2">
+                          {refs.map((xref: any, refIdx: number) => (
+                            <div key={refIdx} className="flex items-center">
+                              <span
+                                onClick={() => {
+                                  navigate(`${routes.story(xref.targetcode)}`);
+                                }}
+                                className="flex items-center gap-1.5 hover:bg-surface-2 p-1 -m-1 rounded-md transition-colors cursor-pointer text-xs font-medium text-primary"
+                              >
+                                {xref.title ? (
+                                  <>
+                                    {xref.title} <span className="text-xs text-text-secondary font-normal ml-1">({xref.targetcode})</span>
+                                  </>
+                                ) : (
+                                  xref.targetcode
+                                )}
+                              </span>
+                              {refIdx < refs.length - 1 && <span className="text-sm text-text-secondary ml-1.5">,</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 
@@ -363,10 +416,11 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.keys(publicationsByCountry).map((country) => {
-            let pubs = [...publicationsByCountry[country]]
-            if (pubSortOrder === "desc") {
-              pubs.reverse()
-            }
+            let pubs = [...publicationsByCountry[country]].sort((a, b) => {
+              const dateA = a.oldestdate || "9999-99-99";
+              const dateB = b.oldestdate || "9999-99-99";
+              return pubSortOrder === "asc" ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+            });
             const flagCode = pubs[0]?.countrycode || "un"
             const isExpanded = !!expandedCountries[country]
             return (
@@ -412,6 +466,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                           </p>
                           <p className="text-[10px] text-muted-foreground font-medium">
                             {pub.position ? `Pos. ${pub.position}` : ""}
+                            {pub.entry_title && <span className="italic ml-1">{pub.position ? `- ${pub.entry_title}` : pub.entry_title}</span>}
                           </p>
                         </div>
                         <div className="text-right shrink-0 ml-2">

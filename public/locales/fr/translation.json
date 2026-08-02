@@ -174,7 +174,12 @@
     "creators": "Auteurs / Créateurs",
     "characters": "Personnages",
     "uncredited": "Non crédité.",
-    "original_title": "Titre original"
+    "original_title": "Titre original",
+    "no_characters": "Aucun personnage répertorié.",
+    "xrefs": "Références croisées",
+    "hide_languages": "Masquer les autres langues",
+    "show_languages": "Afficher les descriptions dans d'autres langues",
+    "pages_short": "p."
   },
   "kinds": {
     "k": "Bandes quotidienne, hebdomadaire",
