@@ -1,51 +1,151 @@
+import DedicatedDbWorker from './dbWorker?worker';
 import SharedDbWorker from './dbWorker?sharedworker';
 
-let workerInst: any = null;
-let workerPort: SharedWorker | null = null;
-let queryIdCounter = 0;
-const pendingQueries = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void, onRow?: (row: any) => void }>();
-let onProgressCallback: ((progress: { step: string; current: number; total: number; percent: number }) => void) | null = null;
+/**
+ * Client side of the SQLite worker.
+ *
+ * A **SharedWorker** is used whenever the browser supports it: the OPFS
+ * SAH-pool VFS takes exclusive access handles on its files, so two tabs each
+ * running their own dedicated worker cannot open the same database — the
+ * second tab silently ends up with no data. Routing every tab through one
+ * shared worker keeps a single owner of those handles.
+ *
+ * Browsers without SharedWorker (notably Chrome on Android) fall back to a
+ * dedicated worker, which works fine as long as only one tab is open.
+ */
 
-function getWorker(): SharedWorker {
-  if (!workerPort) {
-    workerInst = new SharedDbWorker();
-    workerPort = workerInst as SharedWorker;
-    workerPort.port.onmessage = handleMessage;
-    workerPort.port.start();
-  }
-  return workerPort;
+interface WorkerChannel {
+  post: (message: any) => void;
+  dispose: () => void;
+  /** True for the SharedWorker channel, which may still fall back. */
+  shared: boolean;
+}
+
+let channel: WorkerChannel | null = null;
+let queryIdCounter = 0;
+
+type Pending = {
+  resolve: (val: any) => void;
+  reject: (err: any) => void;
+  onRow?: (row: any) => void;
+  /** Kept so the request can be replayed if the channel dies. */
+  message: any;
+};
+const pendingQueries = new Map<number, Pending>();
+
+let onProgressCallback: ((progress: InstallProgressEvent) => void) | null = null;
+
+interface InstallProgressEvent {
+  step: string;
+  current: number;
+  total: number;
+  percent: number;
 }
 
 function handleMessage(e: MessageEvent) {
-  const { id, type, error, row, rows, count, step, current, total, percent } = e.data;
-  
-  if (type === 'progress' && onProgressCallback) {
-    onProgressCallback({ step, current: current || 0, total: total || 0, percent: percent || 0 } as any);
+  const { id, type, error, row, rows, count, step, current, total, percent } = e.data ?? {};
+
+  if (type === 'progress') {
+    onProgressCallback?.({ step, current: current ?? 0, total: total ?? 0, percent: percent ?? 0 });
     return;
   }
-  
+
   const pending = pendingQueries.get(id);
-  if (pending) {
-    if (type === 'row' && pending.onRow) {
-      pending.onRow(row);
-      return;
-    }
-    
-    if (type === 'error') {
-      pending.reject(new Error(error));
-    } else if (type === 'success') {
-      pending.resolve(rows ? { rows, columns: e.data.columns } : { rows: [], columns: e.data.columns, count, stats: e.data.stats });
-    } else if (type === 'not_found') {
-      pending.resolve(null);
-    }
-    pendingQueries.delete(id);
+  if (!pending) return;
+
+  if (type === 'row') {
+    // Streaming result: more rows follow, keep the entry alive.
+    pending.onRow?.(row);
+    return;
+  }
+
+  if (type === 'error') {
+    pending.reject(new Error(error));
+  } else if (type === 'success') {
+    pending.resolve(
+      rows
+        ? { rows, columns: e.data.columns }
+        : { rows: [], columns: e.data.columns, count, stats: e.data.stats }
+    );
+  } else if (type === 'not_found') {
+    pending.resolve(null);
+  }
+  pendingQueries.delete(id);
+}
+
+function createDedicatedChannel(): WorkerChannel {
+  const dedicated = new DedicatedDbWorker();
+  dedicated.onmessage = handleMessage;
+  return {
+    post: (message) => dedicated.postMessage(message),
+    dispose: () => dedicated.terminate(),
+    shared: false,
+  };
+}
+
+/**
+ * A SharedWorker can also fail *after* construction — an unsupported module
+ * type, a blocked script, a crash. That surfaces as an async `error` event
+ * rather than a throw, and would otherwise leave every pending query hanging
+ * forever. Switch to a dedicated worker and replay what was in flight.
+ */
+function demoteToDedicatedWorker(reason: unknown) {
+  if (!channel?.shared) return;
+  console.warn('SharedWorker failed, falling back to a dedicated worker:', reason);
+
+  try {
+    channel.dispose();
+  } catch {
+    /* the channel is already broken */
+  }
+  channel = createDedicatedChannel();
+
+  for (const [id, pending] of pendingQueries) {
+    channel.post({ id, ...pending.message });
   }
 }
 
-let localDbStats: { count: number, size: number } | null = null;
+function createChannel(): WorkerChannel {
+  if (typeof SharedWorker !== 'undefined') {
+    try {
+      const shared = new SharedDbWorker();
+      shared.port.onmessage = handleMessage;
+      shared.port.onmessageerror = (e: unknown) => demoteToDedicatedWorker(e);
+      // Fires when the worker script itself cannot run.
+      (shared as unknown as AbstractWorker).onerror = (e: unknown) => demoteToDedicatedWorker(e);
+      shared.port.start();
+      return {
+        post: (message) => shared.port.postMessage(message),
+        dispose: () => shared.port.close(),
+        shared: true,
+      };
+    } catch (err) {
+      console.warn('SharedWorker unavailable, falling back to a dedicated worker:', err);
+    }
+  }
+
+  return createDedicatedChannel();
+}
+
+function getChannel(): WorkerChannel {
+  if (!channel) channel = createChannel();
+  return channel;
+}
+
+/** Sends a request to the worker and resolves with its reply. */
+function request(payload: Record<string, any>, onRow?: (row: any) => void): Promise<any> {
+  const target = getChannel();
+  return new Promise((resolve, reject) => {
+    const id = ++queryIdCounter;
+    pendingQueries.set(id, { resolve, reject, onRow, message: payload });
+    target.post({ id, ...payload });
+  });
+}
+
+let localDbStats: { count: number; size: number } | null = null;
 
 export function hasLocalDb(): boolean {
-  return workerPort !== null && localDbStats !== null;
+  return channel !== null && localDbStats !== null;
 }
 
 export function getLocalDbStats() {
@@ -54,113 +154,68 @@ export function getLocalDbStats() {
 
 export async function installDatabase(
   source: string | string[] | File,
-  onProgress?: (progress: { step: string; current: number; total: number; percent: number }) => void
+  onProgress?: (progress: InstallProgressEvent) => void
 ): Promise<void> {
-  const w = getWorker();
-  onProgressCallback = onProgress || null;
+  onProgressCallback = onProgress ?? null;
 
-  const payload: any = {};
-  if (source instanceof File) {
-    payload.file = source;
-  } else {
-    payload.url = source;
+  const payload = source instanceof File ? { file: source } : { url: source };
+
+  try {
+    const data = await request({ action: 'installDb', payload });
+    if (!data?.stats) throw new Error('error_validation|Database installation failed.');
+    localDbStats = { count: data.stats.count, size: data.stats.size };
+  } finally {
+    onProgressCallback = null;
   }
-
-  localDbStats = {
-    count: 0,
-    size: source instanceof File ? source.size : 0
-  };
-
-  return new Promise((resolve, reject) => {
-    const id = ++queryIdCounter;
-    pendingQueries.set(id, {
-      resolve: (data) => {
-        if (data && data.stats) {
-          localDbStats = { count: data.stats.count, size: data.stats.size };
-          resolve();
-        } else {
-          reject(new Error("Database installation failed."));
-        }
-      },
-      reject
-    });
-    w.port.postMessage({
-      id,
-      action: "installDb",
-      payload
-    });
-  });
 }
 
-
 export function unloadLocalDb() {
-  if (workerPort) {
-    workerPort.port.postMessage({ id: ++queryIdCounter, action: "unload", payload: {} });
-    workerPort = null;
-    workerInst = null;
-    localDbStats = null;
-  }
+  if (!channel) return;
+  channel.post({ id: ++queryIdCounter, action: 'unload', payload: {} });
+  channel.dispose();
+  channel = null;
+  localDbStats = null;
+  dbLoadPromise = null;
 }
 
 let dbLoadPromise: Promise<boolean> | null = null;
 
-export async function loadCachedDb(): Promise<boolean> {
+// Not `async`: callers (and `executeLocal`) rely on getting the very same
+// promise back, so a concurrent page load only ever asks the worker once.
+export function loadCachedDb(): Promise<boolean> {
   if (dbLoadPromise) return dbLoadPromise;
 
-  const w = getWorker();
-  
-  dbLoadPromise = new Promise((resolve) => {
-    const id = ++queryIdCounter;
-    pendingQueries.set(id, {
-      resolve: (data) => {
-        if (data && data.stats) {
-          localDbStats = { count: data.stats.count, size: data.stats.size };
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      },
-      reject: () => resolve(false)
-    });
-    
-    w.port.postMessage({
-      id,
-      action: "loadCachedDb",
-      payload: { baseUrl: import.meta.env.BASE_URL }
-    });
-  });
-  
+  dbLoadPromise = request({
+    action: 'loadCachedDb',
+    payload: { baseUrl: import.meta.env.BASE_URL },
+  })
+    .then((data) => {
+      if (!data?.stats) return false;
+      localDbStats = { count: data.stats.count, size: data.stats.size };
+      return true;
+    })
+    .catch(() => false);
+
   return dbLoadPromise;
 }
 
 export async function clearLocalDbCache(): Promise<void> {
-  const w = getWorker();
-  return new Promise((resolve, reject) => {
-    const id = ++queryIdCounter;
-    pendingQueries.set(id, { resolve, reject });
-    w.port.postMessage({ id, action: "clearCache", payload: {} });
-  });
+  await request({ action: 'clearCache', payload: {} });
+  localDbStats = null;
 }
 
-export async function executeLocal(query: { sql: string, args?: any[] } | string, onRow?: (row: any) => void) {
-  if (dbLoadPromise) {
-    await dbLoadPromise;
-  }
-  
-  if (!workerPort) throw new Error("Local database is not loaded.");
-  if (!hasLocalDb()) throw new Error("error_not_loaded");
-  
-  const sqlString = typeof query === "string" ? query : query.sql;
-  const args = typeof query === "string" ? [] : (query.args || []);
-  
-  return new Promise<any>((resolve, reject) => {
-    const id = ++queryIdCounter;
-    pendingQueries.set(id, { resolve, reject, onRow });
-    
-    workerPort!.port.postMessage({
-      id,
-      action: "execute",
-      payload: { sql: sqlString, args, stream: !!onRow }
-    });
-  });
+export async function executeLocal(
+  query: { sql: string; args?: any[] } | string,
+  onRow?: (row: any) => void
+) {
+  // A page load kicks off `loadCachedDb()`; queries fired by components that
+  // mount at the same time must wait for it instead of failing outright.
+  if (dbLoadPromise) await dbLoadPromise;
+
+  if (!hasLocalDb()) throw new Error('error_not_loaded');
+
+  const sql = typeof query === 'string' ? query : query.sql;
+  const args = typeof query === 'string' ? [] : query.args ?? [];
+
+  return request({ action: 'execute', payload: { sql, args, stream: !!onRow } }, onRow);
 }

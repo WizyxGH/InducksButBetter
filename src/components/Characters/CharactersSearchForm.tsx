@@ -37,15 +37,15 @@ export function CharactersSearchForm({
       <ScrollArea className="flex-1 mobile-no-scroll">
         <form onSubmit={onSearch} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-8 gap-y-4 md:gap-y-7">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("characters.name_or_code") || "Personnages"}</Label>
+            <Label className="text-xs font-semibold">{t("characters.name_or_code")}</Label>
             <Autocomplete
-              placeholder={t("characters.name_placeholder") || "Ex: Mickey, Donald..."}
+              placeholder={t("characters.name_placeholder")}
               value={filters.characterName}
               onInputChange={(val) => setFilters({ ...filters, characterName: val })}
               onSelect={(id, name) => setFilters({ ...filters, characterName: name })}
               onClear={() => setFilters({ ...filters, characterName: "" })}
               fetchOptions={(q) => autocompleteCharacter(q, i18n.language)}
-              emptyMessage={t("common.no_data") || "Aucun résultat"}
+              emptyMessage={t("common.no_data")}
               type="characters"
               hideSearchIcon
               hideIcon
@@ -53,10 +53,10 @@ export function CharactersSearchForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("characters.min_appearances") || "Apparitions minimum"}</Label>
+            <Label className="text-xs font-semibold">{t("characters.min_appearances")}</Label>
             <Input
               type="number"
-              placeholder="Ex: 5"
+              placeholder={t("common.example", { value: "5" })}
               value={filters.minAppearances}
               onChange={(e) => setFilters({ ...filters, minAppearances: e.target.value })}
               className="h-10 rounded-xl bg-surface"
@@ -64,7 +64,7 @@ export function CharactersSearchForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("search.universe") || "Univers"}</Label>
+            <Label className="text-xs font-semibold">{t("search.universe")}</Label>
             <SearchableMultiSelect
               options={meta.universes?.map((u: any) => ({
                 value: u.universecode,
@@ -72,9 +72,9 @@ export function CharactersSearchForm({
               })) || []}
               selected={filters.universes}
               onChange={(vals) => setFilters({ ...filters, universes: vals })}
-              placeholder={t("search.all_universes") || "Tous les univers"}
+              placeholder={t("search.all_universes")}
               searchPlaceholder={t("search.search_universe")}
-              emptyMessage={t("common.no_data") || "Aucun résultat"}
+              emptyMessage={t("common.no_data")}
             />
           </div>
 
@@ -86,7 +86,7 @@ export function CharactersSearchForm({
                 onCheckedChange={(checked) => setFilters({ ...filters, heroOnly: checked === true })}
               />
               <Label htmlFor="heroOnly" className="text-xs font-medium cursor-pointer">
-                {t("characters.hero_only") || "Héros uniquement"}
+                {t("characters.hero_only")}
               </Label>
             </div>
 
@@ -97,7 +97,7 @@ export function CharactersSearchForm({
                 onCheckedChange={(checked) => setFilters({ ...filters, official: checked === true })}
               />
               <Label htmlFor="official" className="text-xs font-medium cursor-pointer">
-                {t("characters.official") || "Personnage officiel"}
+                {t("characters.official")}
               </Label>
             </div>
 
@@ -108,7 +108,7 @@ export function CharactersSearchForm({
                 onCheckedChange={(checked) => setFilters({ ...filters, oneTime: checked === true })}
               />
               <Label htmlFor="oneTime" className="text-xs font-medium cursor-pointer">
-                {t("characters.onetime") || "Apparition unique"}
+                {t("characters.onetime")}
               </Label>
             </div>
           </div>
@@ -122,7 +122,7 @@ export function CharactersSearchForm({
           onClick={onReset}
           className="flex-1 rounded-xl h-11"
         >
-          {t("characters.reset") || "Réinitialiser"}
+          {t("characters.reset")}
         </Button>
         <Button
           onClick={() => onSearch()}
@@ -130,7 +130,7 @@ export function CharactersSearchForm({
           className="flex-[1.5] rounded-xl h-11"
         >
           {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-          {t("characters.submit") || "Rechercher"}
+          {t("characters.submit")}
         </Button>
       </div>
     </div>

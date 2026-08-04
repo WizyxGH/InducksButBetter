@@ -31,8 +31,8 @@ export function DateRangePicker({
 
   const currentYear = new Date().getFullYear();
   const presets = [
-    { label: t('dates.any_time') || "Toute période", value: undefined },
-    { label: t('dates.last_year') || "Dernière année", value: { from: subDays(new Date(), 365), to: new Date() } },
+    { label: t('dates.any_time'), value: undefined },
+    { label: t('dates.last_year'), value: { from: subDays(new Date(), 365), to: new Date() } },
     { label: `${currentYear}`, value: { from: startOfYear(new Date(currentYear, 0, 1)), to: endOfYear(new Date(currentYear, 11, 31)) } },
     { label: "2020s", value: { from: startOfYear(new Date(2020, 0, 1)), to: endOfYear(new Date(2029, 11, 31)) } },
     { label: "2010s", value: { from: startOfYear(new Date(2010, 0, 1)), to: endOfYear(new Date(2019, 11, 31)) } },
@@ -123,7 +123,7 @@ export function DateRangePicker({
             </div>
             <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x border-border-subtle bg-surface">
               <div className="p-4 w-full sm:min-w-[280px]">
-                <div className="text-sm font-semibold text-foreground">{t('search.from_date') || "Start"}</div>
+                <div className="text-sm font-semibold text-foreground">{t('search.from_date')}</div>
                 <Calendar
                   mode="single"
                   month={fromMonth}
@@ -143,7 +143,7 @@ export function DateRangePicker({
                 />
               </div>
               <div className="p-4 w-full sm:min-w-[280px]">
-                <div className="text-sm font-semibold text-foreground">{t('search.to_date') || "End"}</div>
+                <div className="text-sm font-semibold text-foreground">{t('search.to_date')}</div>
                 <Calendar
                   mode="single"
                   month={toMonth || fromMonth}

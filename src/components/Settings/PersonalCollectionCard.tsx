@@ -42,7 +42,7 @@ export function PersonalCollectionCard() {
 
     localStorage.setItem("inducks_collection_issues", JSON.stringify(issues))
     setCollectionCount(issues.length)
-    toast.success(t("collection.saved_success") || "Collection sauvegardée !")
+    toast.success(t("collection.saved_success"))
   };
 
   return (
@@ -50,30 +50,28 @@ export function PersonalCollectionCard() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Database className="w-4 h-4 text-primary" />
-          {t("collection.title") || "Ma collection Inducks"}
+          {t("collection.title")}
         </CardTitle>
         <CardDescription>
-          {t("collection.description") ||
-            "Collez ici la liste de vos numéros possédés (un code par ligne, ex: FR/MP 300)."}
+          {t("collection.description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col">
         <textarea
           className="flex min-h-[120px] w-full rounded-xl border border-border-subtle bg-surface/50 px-3 py-2 text-sm placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary font-mono"
-          placeholder={t("collection.placeholder") || "FR/MP 300^1\nFR/PM 2000^1\nUS/WDC 100^1"}
+          placeholder={t("collection.placeholder")}
           value={collectionText}
           onChange={(e) => setCollectionText(e.target.value)}
         />
         {collectionCount > 0 && (
           <div className="text-xs text-text-secondary bg-surface-2/60 p-2 rounded-lg border border-border-subtle">
-            {t("collection.saved_count", { count: collectionCount }) ||
-              `Vous avez actuellement ${collectionCount} numéros enregistrés.`}
+            {t("collection.saved_count", { count: collectionCount })}
           </div>
         )}
         <div className="mt-auto pt-4">
           <Button onClick={handleSaveCollection} className="w-full gap-2 rounded-xl">
             <Save className="w-4 h-4" />
-            {t("collection.save") || "Sauvegarder la collection"}
+            {t("collection.save")}
           </Button>
         </div>
       </CardContent>

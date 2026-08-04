@@ -182,7 +182,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
       const mainResult = await executeQuery({ sql: query, args: params });
       setResults(mainResult.rows as Author[]);
     } catch (err) {
-      handleDbError(err, t("authors.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
+      handleDbError(err, t("authors.error_fetch"));
       setResults([]);
       setTotalCount(0);
     } finally {
@@ -245,8 +245,8 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
                 <Label className="text-xs font-semibold">{t("authors.full_name")}</Label>
                 <Autocomplete
                   value={filters.fullName}
-                  placeholder={t("authors.full_name_placeholder") || "Ex: Don Rosa..."}
-                  emptyMessage={t("common.no_data") || "Aucun résultat"}
+                  placeholder={t("authors.full_name_placeholder")}
+                  emptyMessage={t("common.no_data")}
                   fetchOptions={autocompletePerson}
                   onInputChange={(val) => setFilters({ ...filters, fullName: val })}
                   onSelect={(id, name) => setFilters({ ...filters, fullName: name })}
@@ -272,14 +272,14 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
                   }))}
                   selected={filters.nationality}
                   onChange={(vals) => setFilters({ ...filters, nationality: vals })}
-                  placeholder={t("nationalities.any") || "Toutes nationalités"}
+                  placeholder={t("nationalities.any")}
                   searchPlaceholder={t("search.search_country")}
-                  emptyMessage={t("common.no_data") || "Aucun résultat"}
+                  emptyMessage={t("common.no_data")}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">{t("authors.main_role") || "Rôle principal"}</Label>
+                <Label className="text-xs font-semibold">{t("authors.main_role")}</Label>
                 <Select
                   value={filters.mainRole}
                   onValueChange={(val) => setFilters({ ...filters, mainRole: val })}
@@ -288,19 +288,19 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border-subtle bg-surface">
-                    <SelectItem value="any" className="rounded-lg">{t("authors.role_any") || "Tous les rôles"}</SelectItem>
-                    <SelectItem value="w" className="rounded-lg">{t("authors.role_writer") || "Scénariste"}</SelectItem>
-                    <SelectItem value="a" className="rounded-lg">{t("authors.role_artist") || "Dessinateur"}</SelectItem>
-                    <SelectItem value="i" className="rounded-lg">{t("roles.i") || "Encreur"}</SelectItem>
-                    <SelectItem value="p" className="rounded-lg">{t("roles.p") || "Scénario (plot)"}</SelectItem>
+                    <SelectItem value="any" className="rounded-lg">{t("authors.role_any")}</SelectItem>
+                    <SelectItem value="w" className="rounded-lg">{t("authors.role_writer")}</SelectItem>
+                    <SelectItem value="a" className="rounded-lg">{t("authors.role_artist")}</SelectItem>
+                    <SelectItem value="i" className="rounded-lg">{t("roles.i")}</SelectItem>
+                    <SelectItem value="p" className="rounded-lg">{t("roles.p")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">{t("authors.born_range") || "Année naiss. min"}</Label>
+                <Label className="text-xs font-medium">{t("authors.born_range")}</Label>
                 <Input
-                  placeholder="Ex: 1900"
+                  placeholder={t("common.example", { value: "1900" })}
                   value={filters.bornAfter}
                   onChange={(e) => setFilters({ ...filters, bornAfter: e.target.value })}
                   className="h-10 rounded-xl bg-surface"
@@ -309,7 +309,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">{"Max"}</Label>
                 <Input
-                  placeholder="Ex: 1950"
+                  placeholder={t("common.example", { value: "1950" })}
                   value={filters.bornBefore}
                   onChange={(e) => setFilters({ ...filters, bornBefore: e.target.value })}
                   className="h-10 rounded-xl bg-surface"
@@ -317,9 +317,9 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">{t("authors.deceased_range") || "Année décès min"}</Label>
+                <Label className="text-xs font-medium">{t("authors.deceased_range")}</Label>
                 <Input
-                  placeholder="Ex: 1980"
+                  placeholder={t("common.example", { value: "1980" })}
                   value={filters.deceasedAfter}
                   onChange={(e) => setFilters({ ...filters, deceasedAfter: e.target.value })}
                   className="h-10 rounded-xl bg-surface"
@@ -328,7 +328,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">{"Max"}</Label>
                 <Input
-                  placeholder="Ex: 2020"
+                  placeholder={t("common.example", { value: "2020" })}
                   value={filters.deceasedBefore}
                   onChange={(e) => setFilters({ ...filters, deceasedBefore: e.target.value })}
                   className="h-10 rounded-xl bg-surface"
@@ -336,9 +336,9 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">{t("authors.born_place") || "Lieu de naissance"}</Label>
+                <Label className="text-xs font-medium">{t("authors.born_place")}</Label>
                 <Input
-                  placeholder="Ex: Oregon"
+                  placeholder={t("common.example", { value: "Oregon" })}
                   value={filters.birthPlace}
                   onChange={(e) => setFilters({ ...filters, birthPlace: e.target.value })}
                   className="h-10 rounded-xl bg-surface"
@@ -346,9 +346,9 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">{t("authors.deceased_place") || "Lieu de décès"}</Label>
+                <Label className="text-xs font-medium">{t("authors.deceased_place")}</Label>
                 <Input
-                  placeholder="Ex: California"
+                  placeholder={t("common.example", { value: "California" })}
                   value={filters.deceasedPlace}
                   onChange={(e) => setFilters({ ...filters, deceasedPlace: e.target.value })}
                   className="h-10 rounded-xl bg-surface"
@@ -356,10 +356,10 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">{t("authors.min_stories") || "Histoires minimum"}</Label>
+                <Label className="text-xs font-medium">{t("authors.min_stories")}</Label>
                 <Input
                   type="number"
-                  placeholder="Ex: 10"
+                  placeholder={t("common.example", { value: "10" })}
                   value={filters.minStories}
                   onChange={(e) => setFilters({ ...filters, minStories: e.target.value })}
                   className="h-10 rounded-xl bg-surface"
@@ -428,7 +428,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
                     <span className="truncate">
                       {author.borndate ? author.borndate.substring(0, 4) : "?"}
                       {" — "}
-                      {author.deceaseddate ? author.deceaseddate.substring(0, 4) : author.borndate ? t("common.present", { defaultValue: "Présent" }) : "?"}
+                      {author.deceaseddate ? author.deceaseddate.substring(0, 4) : author.borndate ? t("common.present") : "?"}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 font-semibold text-foreground">
@@ -442,7 +442,7 @@ export function AuthorsSearch({ selectedAuthorcode, setSelectedAuthorcode }: Aut
           renderSkeleton={(i) => (
             <div key={i} className="h-[130px] rounded-2xl border border-border-subtle bg-surface-2/20 animate-shimmer" />
           )}
-          foundLabel={t("authors.authors_found", { count: totalCount, defaultValue: `${totalCount} auteurs trouvés` })}
+          foundLabel={t("authors.authors_found", { count: totalCount })}
           onSelect={(code) => setSelectedAuthorcode?.(code)}
         />
       </div>

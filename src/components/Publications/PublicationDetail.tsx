@@ -37,7 +37,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   const groupedIssues = useMemo(() => {
     return Object.entries(
       issues.reduce((acc: Record<string, any[]>, issue) => {
-        let year = t("story.unknown_date", { defaultValue: "Inconnue" });
+        let year = t("story.unknown_date");
         if (issue.oldestdate && issue.oldestdate !== "0000-00-00" && issue.oldestdate !== "9999-99-99" && issue.oldestdate.length >= 4) {
           year = issue.oldestdate.substring(0, 4);
         }
@@ -186,7 +186,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   if (!publication) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        <p>{t("publication.empty") || "Magazine introuvable."}</p>
+        <p>{t("publication.empty")}</p>
       </div>
     );
   }
@@ -222,16 +222,16 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
             <CardHeader className="py-4">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
-                {t("common.informations") || "Informations"}
+                {t("common.informations")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-xs">
               <div className="flex justify-between py-1 border-b border-border-subtle/30">
-                <span className="font-bold text-muted-foreground">{t("publication.code") || "Code"}</span>
+                <span className="font-bold text-muted-foreground">{t("publication.code")}</span>
                 <span className="font-semibold text-foreground font-mono">{publication.publicationcode}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-border-subtle/30 items-center">
-                <span className="font-bold text-muted-foreground">{t("publication.country") || "Pays"}</span>
+                <span className="font-bold text-muted-foreground">{t("publication.country")}</span>
                 <span className="font-semibold text-foreground flex items-center gap-1">
                   {flagUrl && (
                     <img
@@ -244,12 +244,12 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-border-subtle/30">
-                <span className="font-bold text-muted-foreground">{t("publication.language") || "Langue"}</span>
+                <span className="font-bold text-muted-foreground">{t("publication.language")}</span>
                 <span className="font-semibold text-foreground capitalize">{languageName}</span>
               </div>
               {publication.publishers && publication.publishers.length > 0 ? (
                 <div className="flex justify-between py-1 border-b border-border-subtle/30">
-                  <span className="font-bold text-muted-foreground">{t("publication.publisher") || "Éditeur(s)"}</span>
+                  <span className="font-bold text-muted-foreground">{t("publication.publisher")}</span>
                   <div className="flex flex-wrap justify-end gap-x-1 font-semibold text-foreground text-right max-w-[70%]">
                     {publication.publishers.map((pub, idx) => (
                       <React.Fragment key={pub.id || idx}>
@@ -270,7 +270,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                 </div>
               ) : publication.publishername ? (
                 <div className="flex justify-between py-1 border-b border-border-subtle/30">
-                  <span className="font-bold text-muted-foreground">{t("publication.publisher") || "Éditeur"}</span>
+                  <span className="font-bold text-muted-foreground">{t("publication.publisher")}</span>
                   <span 
                     className="font-semibold text-foreground text-right cursor-pointer hover:text-primary transition-colors hover:underline"
                     onClick={() => {
@@ -304,7 +304,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
               <CardTitle className="text-sm font-bold flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-primary" />
-                  {t("publication.issues") || "Liste des numéros"}
+                  {t("publication.issues")}
                 </span>
                 <Badge variant="secondary" className="font-bold text-xs">
                   {issues.length} {issues.length > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
@@ -314,7 +314,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
             <CardContent className="p-4 flex-1 overflow-y-auto min-h-0">
               {issues.length === 0 ? (
                 <div className="text-center py-20 text-xs text-muted-foreground">
-                  {t("publication.empty") || "Aucun numéro trouvé."}
+                  {t("publication.empty")}
                 </div>
               ) : (
                 <div className="space-y-8 pb-4 pr-2">
@@ -363,7 +363,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                         variant="outline"
                         className="rounded-xl border-border-subtle hover:bg-surface-2 font-medium px-6"
                       >
-                        {t("publication.show_more_years") || "Afficher plus d'années"}
+                        {t("publication.show_more_years")}
                       </Button>
                     </div>
                   )}

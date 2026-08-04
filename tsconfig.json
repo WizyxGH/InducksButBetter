@@ -17,7 +17,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    // `node` is needed by the test that reads the locale bundles from disk.
+    "types": ["vite/client", "node"],
     "paths": {
       "@/*": ["./src/*"]
     }

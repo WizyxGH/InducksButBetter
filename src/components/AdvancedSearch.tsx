@@ -12,6 +12,7 @@ import { StoryDetail } from "./Search/StoryDetail";
 import { navigateBack } from "@/lib/utils";
 import { IssueDetail } from "./Publications/IssueDetail";
 import { navigate } from "@/lib/navigation";
+import { routes } from "@/lib/routes";
 import StoryResultSkeleton from "./StoryResultSkeleton";
 
 interface AdvancedSearchProps {
@@ -77,10 +78,10 @@ export function AdvancedSearch({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success("Export réussi");
+      toast.success(t("search.export_success"));
     } catch (e) {
       console.error(e);
-      toast.error("Échec de l'exportation CSV");
+      toast.error(t("search.export_error"));
     } finally {
       setIsExporting(false);
     }
@@ -112,7 +113,7 @@ export function AdvancedSearch({
   };
 
   const handleSelectCharacter = (code: string, name: string) => {
-    navigate(`#/characters/${encodeURIComponent(code)}`);
+    navigate(routes.character(code));
   };
 
   if (selectedIssuecode) {

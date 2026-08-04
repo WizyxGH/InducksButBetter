@@ -69,14 +69,14 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary" />
-            {t("countries.title") || "Liste des pays"}
+            {t("countries.title")}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {t("countries.desc") || "Sélectionnez un pays pour explorer ses publications Disney."}
+            {t("countries.desc")}
           </p>
         </div>
         <Input
-          placeholder={t("countries.search_placeholder") || "Filtrer les pays..."}
+          placeholder={t("countries.search_placeholder")}
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
           className="w-full sm:w-64 rounded-xl h-10 border-border-subtle bg-surface"

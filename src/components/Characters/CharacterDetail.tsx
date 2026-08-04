@@ -5,6 +5,7 @@ import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { navigate } from "@/lib/navigation";
+import { routes } from "@/lib/routes";
 import { hasInducksCookie } from "@/lib/utils";
 
 interface CharacterDetailData {
@@ -207,7 +208,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
   if (!character) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        <p>{t("characters.no_description") || "Aucun détail disponible pour ce personnage."}</p>
+        <p>{t("characters.no_description")}</p>
       </div>
     );
   }
@@ -242,19 +243,19 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               <h2 className="text-2xl font-bold tracking-tight text-foreground">{displayName}</h2>
               <div className="flex gap-1">
                 {character.heroonly === "Y" && (
-                  <Badge className="bg-yellow-500 hover:bg-yellow-500 text-black text-[10px] rounded-lg">{t("characters.hero_only") || "Héros principal"}</Badge>
+                  <Badge className="bg-yellow-500 hover:bg-yellow-500 text-black text-[10px] rounded-lg">{t("characters.hero_only")}</Badge>
                 )}
                 {character.official === "Y" && (
-                  <Badge variant="secondary" className="text-[10px] rounded-lg">{t("characters.official") || "Officiel"}</Badge>
+                  <Badge variant="secondary" className="text-[10px] rounded-lg">{t("characters.official")}</Badge>
                 )}
                 {character.onetime === "Y" && (
-                  <Badge variant="outline" className="text-[10px] rounded-lg">{t("characters.onetime") || "Unique"}</Badge>
+                  <Badge variant="outline" className="text-[10px] rounded-lg">{t("characters.onetime")}</Badge>
                 )}
               </div>
             </div>
             {character.charactername && character.charactername !== displayName && (
               <p className="text-xs text-muted-foreground">
-                <span className="font-semibold">{t("characters.original_name", { defaultValue: "Original" })}:</span> {character.charactername}
+                <span className="font-semibold">{t("characters.original_name")}:</span> {character.charactername}
               </p>
             )}
             <p className="text-[10px] text-muted-foreground font-mono">{character.charactercode}</p>
@@ -269,7 +270,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
           {universes.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               <span className="text-xs font-semibold text-muted-foreground mr-1">
-                {t("characters.universe") || "Univers"}:
+                {t("characters.universe")}:
               </span>
               {universes.map((univ, idx) => (
                 <Badge key={idx} variant="outline" className="text-[10px] rounded-lg">
@@ -283,18 +284,18 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
             <div className="flex items-center gap-1.5 text-xs text-text-secondary pt-1">
               <Calendar className="w-4 h-4 text-primary shrink-0" />
               <span>
-                {t("characters.first_appearance") || "Première apparition"}:{" "}
+                {t("characters.first_appearance")}:{" "}
                 <span
                   onClick={() => {
                     if (onSelectStory) {
                       onSelectStory(firstAppearance.storycode);
                     } else {
-                      navigate(`#/entries/story/${encodeURIComponent(firstAppearance.storycode)}`);
+                      navigate(routes.story(firstAppearance.storycode));
                     }
                   }}
                   className="text-primary hover:underline font-semibold cursor-pointer"
                 >
-                  {firstAppearance.title || t("story.no_title", { defaultValue: "Sans titre" })} ({firstAppearance.firstpublicationdate})
+                  {firstAppearance.title || t("story.no_title")} ({firstAppearance.firstpublicationdate})
                 </span>
               </span>
             </div>
@@ -312,7 +313,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Star className="w-4 h-4 text-primary" />
-                  {t("characters.international_names", { defaultValue: "Noms internationaux" })}
+                  {t("characters.international_names")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-1.5 max-h-[300px] overflow-y-auto text-xs">
@@ -332,7 +333,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Globe className="w-4 h-4 text-primary" />
-                  {t("authors.links") || "Liens externes"}
+                  {t("authors.links")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -362,7 +363,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                 <CardHeader className="py-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2">
                     <User className="w-4 h-4 text-primary" />
-                    {t("characters.creators") || "Créateurs principaux"}
+                    {t("characters.creators")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -403,7 +404,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                 <CardHeader className="py-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2">
                     <Users className="w-4 h-4 text-primary" />
-                    {t("characters.co_characters") || "Compagnons fréquents"}
+                    {t("characters.co_characters")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -445,7 +446,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-primary" />
-                  {t("characters.stories_featuring", { name: displayName }) || `Histoires avec ${displayName}`}
+                  {t("characters.stories_featuring", { name: displayName })}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2.5">
@@ -456,7 +457,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                       if (onSelectStory) {
                         onSelectStory(story.storycode);
                       } else {
-                        navigate(`#/entries/story/${encodeURIComponent(story.storycode)}`);
+                        navigate(routes.story(story.storycode));
                       }
                     }}
                     className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
@@ -475,7 +476,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                               subTitle = original;
                             }
                           } else if (!original || original === 'Untitled') {
-                            mainTitle = t("story.no_title") || "Sans titre";
+                            mainTitle = t("story.no_title");
                           }
 
                           return (

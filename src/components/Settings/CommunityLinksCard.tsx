@@ -14,10 +14,10 @@ export function CommunityLinksCard() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <HelpCircle className="w-4 h-4 text-primary" />
-          {t("settings.links") || "Liens utiles & Communauté"}
+          {t("settings.links")}
         </CardTitle>
         <CardDescription>
-          {t("settings.links_desc") || "Rejoignez la communauté Inducks ou contribuez au projet."}
+          {t("settings.links_desc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -31,7 +31,7 @@ export function CommunityLinksCard() {
             <DiscordIcon className="w-5 h-5 text-[#5865F2] shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5">
               <p className="text-xs font-bold text-foreground">Discord</p>
-              <p className="text-[10px] text-muted-foreground">{t("settings.discord") || "Discord de Inducks"}</p>
+              <p className="text-[10px] text-muted-foreground">{t("settings.discord")}</p>
             </div>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-text-secondary group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
@@ -47,7 +47,7 @@ export function CommunityLinksCard() {
             <GithubIcon className="w-5 h-5 text-foreground shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5">
               <p className="text-xs font-bold text-foreground">GitHub</p>
-              <p className="text-[10px] text-muted-foreground">{t("settings.contribute") || "Contribuer au projet"}</p>
+              <p className="text-[10px] text-muted-foreground">{t("settings.contribute")}</p>
             </div>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-text-secondary group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
@@ -63,7 +63,7 @@ export function CommunityLinksCard() {
             <Languages className="w-5 h-5 text-green-500 shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5">
               <p className="text-xs font-bold text-foreground">{t("settings.translations", "Traductions")}</p>
-              <p className="text-[10px] text-muted-foreground">{t("settings.translate") || "Traduire le projet"}</p>
+              <p className="text-[10px] text-muted-foreground">{t("settings.translate")}</p>
             </div>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-text-secondary group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
@@ -73,7 +73,7 @@ export function CommunityLinksCard() {
           <div className="flex items-center gap-3 w-full">
             <Scale className="w-5 h-5 text-primary shrink-0 group-hover:scale-105 transition-transform" />
             <div className="space-y-0.5 w-full">
-              <p className="text-xs font-bold text-foreground">{t("legal.title") || "Mentions légales"}</p>
+              <p className="text-xs font-bold text-foreground">{t("legal.title")}</p>
               <div className="text-[10px] text-muted-foreground">
                 <LegalModal />
               </div>

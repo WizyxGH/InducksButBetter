@@ -26,15 +26,15 @@ export function GeneralSettingsCard() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Globe className="w-4 h-4 text-primary" />
-          {t("settings.general") || "Général"}
+          {t("settings.general")}
         </CardTitle>
         <CardDescription>
-          {t("settings.general_desc") || "Langue de l'interface et thème d'affichage."}
+          {t("settings.general_desc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col">
         <div className="space-y-2">
-          <Label className="text-xs font-semibold">{t("settings.language") || "Langue"}</Label>
+          <Label className="text-xs font-semibold">{t("settings.language")}</Label>
           <Select value={currentLang.code} onValueChange={(lang) => i18n.changeLanguage(lang)}>
             <SelectTrigger className="w-full h-10 border-border-subtle bg-surface/50 rounded-xl hover:bg-surface-2">
               <div className="flex items-center gap-2">
@@ -60,7 +60,7 @@ export function GeneralSettingsCard() {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-xs font-semibold">{t("settings.theme") || "Thème"}</Label>
+          <Label className="text-xs font-semibold">{t("settings.theme")}</Label>
           <div className="grid grid-cols-3 gap-2">
             {themeOptions.map(({ value, icon: Icon, labelKey, defaultLabel }) => (
               <Button

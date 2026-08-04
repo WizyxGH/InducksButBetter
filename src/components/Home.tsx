@@ -2,13 +2,13 @@ import * as React from "react"
 import { useTranslation } from "react-i18next"
 import { BookOpen, LibraryBig, User, Cat, Database, ArrowRight } from "lucide-react"
 import { routes } from "@/lib/routes"
-import { executeQuery } from "@/lib/db"
+import { executeQuery, hasLocalDb } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { UnifiedSearchBar } from "./Search/UnifiedSearchBar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { navigate } from "@/lib/navigation";
 import { Link } from "@/components/ui/link";
-import { getFlagUrl } from "@/lib/utils";
+import { getFlagUrl, formatInducksDate } from "@/lib/utils";
 
 interface DBStats {
   storiesCount: number
@@ -18,6 +18,9 @@ interface DBStats {
   publicationsCount: number
 }
 
+/** Width of the "latest releases" window, in days. */
+const LATEST_RELEASES_DAYS = 7
+
 export function Home() {
   const { t, i18n } = useTranslation()
   const [loading, setLoading] = React.useState(true)
@@ -26,6 +29,11 @@ export function Home() {
   const [latestReleases, setLatestReleases] = React.useState<any[]>([])
 
   const fetchData = React.useCallback(async () => {
+    if (!hasLocalDb()) {
+      setLoading(false)
+      setDbAvailable(false)
+      return
+    }
     setLoading(true)
     try {
       // 1. Get database statistics
@@ -48,30 +56,41 @@ export function Home() {
       }
       setStats(fetchedStats)
 
-      // 3. Get latest magazine releases from the past 7 calendar days (all countries)
-      const releasesRes = await executeQuery(`
-        SELECT 
-          i.issuecode, 
-          i.issuenumber, 
-          i.title as issue_title, 
-          i.pages, 
-          i.oldestdate,
-          p.publicationcode, 
-          p.countrycode, 
-          p.languagecode, 
-          COALESCE(pn.publicationname, p.title) as series_title
-        FROM inducks_issue i
-        JOIN inducks_publication p ON i.publicationcode = p.publicationcode
-        LEFT JOIN inducks_publicationname pn ON i.publicationcode = pn.publicationcode
-        WHERE i.oldestdate IS NOT NULL 
-          AND i.oldestdate != '0000-00-00' 
-          AND i.oldestdate != '9999-99-99'
-          AND i.oldestdate >= date('now', '-7 days')
-          AND i.oldestdate <= date('now', '+1 day')
-        ORDER BY i.oldestdate DESC,
-          CASE WHEN p.languagecode = '${i18n.language === 'en' ? 'en' : (i18n.language || 'fr')}' THEN 0 ELSE 1 END ASC
-        LIMIT 48
-      `)
+      // 2. Releases of the last 7 calendar days, across all countries.
+      //
+      // Only fully qualified dates qualify: Inducks also stores month- or
+      // year-only dates ("2024-11", "2024-00-00") which cannot be placed
+      // inside a 7-day window. There is deliberately no "show the newest
+      // issues instead" fallback — it used to make a stale database look
+      // like it had fresh releases.
+      const releasesRes = await executeQuery({
+        sql: `
+          SELECT
+            i.issuecode,
+            i.issuenumber,
+            i.title as issue_title,
+            i.pages,
+            i.oldestdate,
+            p.publicationcode,
+            p.countrycode,
+            p.languagecode,
+            COALESCE(
+              NULLIF(p.title, ''),
+              (SELECT pn.publicationname FROM inducks_publicationname pn
+               WHERE pn.publicationcode = p.publicationcode LIMIT 1)
+            ) as series_title
+          FROM inducks_issue i
+          JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+          WHERE i.oldestdate GLOB '[12][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]'
+            AND i.oldestdate >= date('now', ?)
+            AND i.oldestdate <= date('now')
+          ORDER BY i.oldestdate DESC,
+            CASE WHEN p.languagecode = ? THEN 0 ELSE 1 END ASC
+          LIMIT 48
+        `,
+        args: [`-${LATEST_RELEASES_DAYS} days`, i18n.language || "en"],
+      })
+
       setLatestReleases(releasesRes.rows || [])
       setDbAvailable(true)
     } catch (err) {
@@ -102,7 +121,7 @@ export function Home() {
   }, [fetchData])
 
   const goToSettings = () => {
-    navigate("#/settings")
+    navigate(routes.settings())
   }
 
   // Fallback view when no database (local or remote) is loaded/accessible
@@ -114,14 +133,14 @@ export function Home() {
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight">
-            {t("localDb.title", "Base de données non disponible")}
+            {t("localDb.title")}
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            {t("home.db_missing", "Veuillez charger une base de données locale dans les Paramètres pour afficher les statistiques et les publications.")}
+            {t("home.db_missing")}
           </p>
         </div>
         <Button onClick={goToSettings} className="rounded-xl flex gap-2 items-center font-medium">
-          {t("settings.title", "Paramètres")}
+          {t("settings.title")}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
@@ -134,10 +153,10 @@ export function Home() {
       <section className="relative px-4 lg:px-12 py-12 flex flex-col items-center justify-center text-center gap-6 border-b border-border-subtle bg-gradient-to-b from-surface/30 to-background/10">
         <div className="space-y-2">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-            {t("home.title", "InducksButBetter")}
+            {t("home.title")}
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            {t("home.subtitle", "Explorez la base de données Inducks")}
+            {t("home.subtitle")}
           </p>
 
           {loading ? (
@@ -197,16 +216,19 @@ export function Home() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold tracking-tight flex items-center gap-2">
                 <LibraryBig className="w-4.5 h-4.5 text-primary" />
-                {t("home.latest_releases_title", "Dernières sorties")}
+                {t("home.latest_releases_title")}
+                <span className="text-xs font-normal text-muted-foreground">
+                  ({t("home.latest_releases_range")})
+                </span>
               </h3>
               {latestReleases.length === 0 ? (
                 <p className="text-sm text-muted-foreground italic py-4">
-                  {t("home.no_releases", "Aucune sortie enregistrée dans les 7 derniers jours.")}
+                  {t("home.no_releases")}
                 </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {latestReleases.map((row) => {
-                    const targetHref = routes.issue(row.issuecode);
+                    const targetHref = routes.issue(row.issuecode, row.publicationcode);
                     const cleanTitle = row.series_title
                       ? row.series_title.replace(/^\[|\]$/g, '').replace(/\[.*?\]/g, '').trim()
                       : '';
@@ -229,7 +251,9 @@ export function Home() {
                             {cleanTitle} <span className="text-muted-foreground font-normal">#{row.issuenumber}</span>
                           </p>
                           {row.oldestdate && (
-                            <p className="text-[10px] text-muted-foreground">{row.oldestdate}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {formatInducksDate(row.oldestdate, i18n.language)}
+                            </p>
                           )}
                         </div>
                       </Link>

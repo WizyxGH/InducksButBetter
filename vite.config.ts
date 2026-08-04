@@ -141,21 +141,32 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('scheduler') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('@radix-ui') || id.includes('lucide-react') || id.includes('cmdk') || id.includes('class-variance-authority')) {
-              return 'ui-vendor';
-            }
-            if (id.includes('@libsql') || id.includes('hrana')) {
-              return 'db-vendor';
-            }
-            if (id.includes('@mlc-ai') || id.includes('web-llm')) {
-              return 'ai-vendor';
-            }
-            return 'vendor';
+          if (!id.includes('node_modules')) return
+
+          // Match on package boundaries, never on a bare substring: `react`
+          // appears in `@radix-ui/react-*`, `lucide-react`, `react-day-picker`
+          // and `@uiw/react-codemirror`, so a substring test dragged the whole
+          // UI toolkit into the eagerly loaded react chunk.
+          const pkg = id.split('node_modules/').pop()?.replace(/^\.pnpm\/[^/]+\/node_modules\//, '') ?? ''
+          const name = pkg.startsWith('@') ? pkg.split('/').slice(0, 2).join('/') : pkg.split('/')[0]
+
+          // The AI assistant is several megabytes and only reachable from the
+          // SQL tab, so it must stay in its own lazily fetched chunk.
+          if (name.startsWith('@mlc-ai') || name === 'web-llm') return 'ai-vendor'
+
+          // The SQL editor is lazy-loaded too; keep its editor engine with it.
+          if (name.startsWith('@codemirror') || name.startsWith('@lezer') || name === '@uiw/react-codemirror' || name === 'codemirror') {
+            return 'editor-vendor'
           }
+
+          if (name === 'react' || name === 'react-dom' || name === 'scheduler') return 'react-vendor'
+
+          if (name.startsWith('@radix-ui') || name === 'lucide-react' || name === 'cmdk' ||
+              name === 'class-variance-authority' || name === 'clsx' || name === 'tailwind-merge') {
+            return 'ui-vendor'
+          }
+
+          return 'vendor'
         }
       }
     }

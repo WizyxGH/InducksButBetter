@@ -210,7 +210,7 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
       
       toast.success(
         t("sql.results_count", { count: displayTotal, defaultValue: `${displayTotal} result(s) found` }), 
-        { description: t("sql.query_success", { defaultValue: "Query executed successfully." }) }
+        { description: t("sql.query_success") }
       )
     } catch (err: any) {
       setError(err?.message || "Unable to execute SQL query")
@@ -279,7 +279,7 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
                   target="_blank"
                   rel="noreferrer"
                   className="text-text-hint hover:text-text-secondary transition-colors"
-                  title="Inducks Database Documentation"
+                  title={t("sql.docs_title")}
                 >
                   <Info className="w-4 h-4" />
                 </a>
@@ -307,7 +307,7 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
             {/* Schema hint */}
             {Object.keys(dbSchema).length > 0 && (
               <div className="flex overflow-x-auto gap-2 text-[10px] items-center pb-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-                <span className="text-text-hint font-medium whitespace-nowrap shrink-0">{t("sql.tables") || "Tables :"}</span>
+                <span className="text-text-hint font-medium whitespace-nowrap shrink-0">{t("sql.tables")}</span>
                 {Object.keys(dbSchema).map((tbl) => (
                   <span
                     key={tbl}
@@ -426,8 +426,8 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
       {results.length === 0 && !loading && !error && (
         <EmptyState
           icon={DbIcon}
-          title={t("sql.no_results", { defaultValue: "No results" })}
-          description={t("sql.no_results_desc", { defaultValue: "Run a query to see data." })}
+          title={t("sql.no_results")}
+          description={t("sql.no_results_desc")}
         />
       )}
     </div>

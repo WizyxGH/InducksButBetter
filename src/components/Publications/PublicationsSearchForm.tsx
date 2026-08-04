@@ -74,7 +74,7 @@ export function PublicationsSearchForm({
 
             {/* Title */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">{t("search.title_pub_label") || "Titre (série ou numéro)"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.title_pub_label")}</Label>
               <Autocomplete
                 value={filters.title}
                 placeholder={t("search.title_pub_placeholder")}
@@ -91,10 +91,10 @@ export function PublicationsSearchForm({
 
             {/* Category */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">{t("search.category") || "Catégorie"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.category")}</Label>
               <Input
                 variant="search"
-                placeholder={t("search.category_placeholder") || "Ex: comic book, magazine..."}
+                placeholder={t("search.category_placeholder")}
                 value={filters.category || ""}
                 onChange={(e) => setFilters({ ...filters, category: e.target.value })}
               />
@@ -102,10 +102,10 @@ export function PublicationsSearchForm({
 
             {/* Issue Number */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">{t("search.issue_number") || "Numéro de parution"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.issue_number")}</Label>
               <Input
                 variant="search"
-                placeholder={t("search.issue_number_placeholder") || "Ex: 123, 1A..."}
+                placeholder={t("search.issue_number_placeholder")}
                 value={filters.issuenumber || ""}
                 onChange={(e) => setFilters({ ...filters, issuenumber: e.target.value })}
               />
@@ -148,10 +148,10 @@ export function PublicationsSearchForm({
 
             {/* Indexer */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">{t("search.indexer") || "Indexeur"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.indexer")}</Label>
               <Autocomplete
                 value={filters.indexer}
-                placeholder={t("search.indexer_placeholder") || "Nom de l'indexeur..."}
+                placeholder={t("search.indexer_placeholder")}
                 emptyMessage={t("common.no_data")}
                 fetchOptions={autocompleteIndexer}
                 onSelect={(val) => setFilters({ ...filters, indexer: val })}
@@ -172,17 +172,17 @@ export function PublicationsSearchForm({
                   onCheckedChange={(checked) => setFilters({ ...filters, collects: checked === true })}
                 />
                 <label htmlFor="collects" className="text-xs text-text-secondary cursor-pointer leading-snug">
-                  {t("search.issue_collects") || "Ce numéro en recueille un ou plusieurs autres"}
+                  {t("search.issue_collects")}
                 </label>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">
-                  {t("search.specific_title") || "Titre spécifique du numéro"}
+                  {t("search.specific_title")}
                 </Label>
                 <Input
                   variant="search"
-                  placeholder={t("search.specific_title_placeholder") || "Ex: La Dynastie des Donalds..."}
+                  placeholder={t("search.specific_title_placeholder")}
                   value={filters.specificTitle || ""}
                   onChange={(e) => setFilters({ ...filters, specificTitle: e.target.value })}
                 />
@@ -191,11 +191,11 @@ export function PublicationsSearchForm({
 
             {/* Pages */}
             <div className="space-y-2 col-span-1 md:col-span-2 pt-2 border-t border-border-subtle">
-              <Label className="text-sm font-medium text-foreground">{t("search.pages") || "Pages"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.pages")}</Label>
               <Input
                 variant="search"
                 type="number"
-                placeholder={t("search.pages_placeholder") || "Ex: 48..."}
+                placeholder={t("search.pages_placeholder")}
                 value={filters.pages !== undefined ? filters.pages : ""}
                 onChange={(e) => setFilters({ ...filters, pages: e.target.value ? parseInt(e.target.value) : undefined })}
               />
@@ -203,10 +203,10 @@ export function PublicationsSearchForm({
 
             {/* Price */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">{t("search.price") || "Prix"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.price")}</Label>
               <Input
                 variant="search"
-                placeholder={t("search.price_placeholder") || "Ex: 5.50 FRF, 2.50 EUR..."}
+                placeholder={t("search.price_placeholder")}
                 value={filters.price || ""}
                 onChange={(e) => setFilters({ ...filters, price: e.target.value })}
               />
@@ -214,10 +214,10 @@ export function PublicationsSearchForm({
 
             {/* Attached */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">{t("search.attached") || "Supplément / Objet attaché"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.attached")}</Label>
               <Input
                 variant="search"
-                placeholder={t("search.attached_placeholder") || "Ex: autocollants, gadget..."}
+                placeholder={t("search.attached_placeholder")}
                 value={filters.attached || ""}
                 onChange={(e) => setFilters({ ...filters, attached: e.target.value })}
               />
@@ -225,10 +225,10 @@ export function PublicationsSearchForm({
 
             {/* Size */}
             <div className="space-y-2 col-span-1 md:col-span-2">
-              <Label className="text-sm font-medium text-foreground">{t("search.dimensions") || "Format / Dimensions"}</Label>
+              <Label className="text-sm font-medium text-foreground">{t("search.dimensions")}</Label>
               <Input
                 variant="search"
-                placeholder={t("search.dimensions_placeholder") || "Ex: 17x25, A4..."}
+                placeholder={t("search.dimensions_placeholder")}
                 value={filters.size || ""}
                 onChange={(e) => setFilters({ ...filters, size: e.target.value })}
               />

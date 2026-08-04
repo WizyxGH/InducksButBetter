@@ -76,20 +76,24 @@ describe('routes', () => {
 
   // ── publication ───────────────────────────────────────────────────────
 
-  it('publication() returns /countries/{publicationcode}', () => {
-    // publicationcode is "de/LTB" — encode replaces spaces with +, '/' stays encoded
-    expect(routes.publication('de/LTB')).toBe('/countries/de%2FLTB')
+  it('publication() keeps the country/publication hierarchy browsable', () => {
+    // The slash is a real path separator, not an encoded character, so the URL
+    // can be shortened by hand down to the country.
+    expect(routes.publication('de/LTB')).toBe('/countries/de/LTB')
   })
 
   // ── issue ─────────────────────────────────────────────────────────────
 
-  it('issue() converts first space to slash to build /countries/{cc}/{pub}/{num}', () => {
-    // "de/LTB 613" → first space becomes "/" → "de/LTB/613"
-    expect(routes.issue('de/LTB 613')).toBe('/countries/de%2FLTB%2F613')
+  it('issue() builds /countries/{country}/{publication}/{number}', () => {
+    expect(routes.issue('de/LTB 613')).toBe('/countries/de/LTB/613')
   })
 
-  it('issue() handles issue numbers with additional spaces', () => {
-    // "fr/PM 123 456" → first space → slash, remaining → +
-    expect(routes.issue('fr/PM 123 456')).toBe('/countries/fr%2FPM%2F123+456')
+  it('issue() drops the column-alignment padding of the issue code', () => {
+    expect(routes.issue('de/LTB  10')).toBe('/countries/de/LTB/10')
+    expect(routes.issue('fr/PM  272')).toBe('/countries/fr/PM/272')
+  })
+
+  it('issue() keeps a real space inside an issue number as +', () => {
+    expect(routes.issue('fr/PM 123 456')).toBe('/countries/fr/PM/123+456')
   })
 })

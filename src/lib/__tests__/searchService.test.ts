@@ -8,8 +8,8 @@ describe('searchService', () => {
       const result = buildAdvancedSearchQuery(filters);
       
       expect(result.query).toContain('s.storyheadercode IN (SELECT sh.storyheadercode FROM inducks_storyheader sh WHERE sh.title LIKE ?)');
-      expect(result.countParams).toEqual(['%Duck%', '%Duck%']);
-      expect(result.params).toEqual(['%Duck%', '%Duck%', 24, 0, 'fr', 'fr', 'fr', 'fr', 'fr', 'fr', 'fr']);
+      expect(result.countParams).toEqual(['%Duck%', '%Duck%', '%Duck%', '%Duck%', '%Duck%']);
+      expect(result.params).toEqual(['%Duck%', '%Duck%', '%Duck%', '%Duck%', '%Duck%', 24, 0, 'fr', 'fr', 'fr', 'fr', 'fr', 'fr', 'fr']);
     });
 
     it('generates a query for charactercode correctly', () => {
@@ -28,12 +28,13 @@ describe('searchService', () => {
       expect(result.countParams).toEqual(['s']);
     });
 
-    it('generates a query for kind "n" correctly by including empty strings', () => {
-      const filters = { kind: 'n' };
-      const result = buildAdvancedSearchQuery(filters);
-      
-      expect(result.query).toContain("(sv.kind = '' OR sv.kind IS NULL)");
-      expect(result.query).toContain("sv.kind IN (?)");
+    it('matches kind "n" without widening to empty kinds', () => {
+      const result = buildAdvancedSearchQuery({ kind: 'n' });
+
+      // Every storyversion in the Inducks dataset carries a non-empty kind, so
+      // widening to `kind = '' OR kind IS NULL` matched nothing at all.
+      expect(result.query).not.toContain("sv.kind = ''");
+      expect(result.query).toContain('sv.kind IN (?)');
       expect(result.countParams).toEqual(['n']);
     });
 

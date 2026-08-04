@@ -53,7 +53,7 @@
     "searching": "Searching...",
     "results": "Results",
     "sort_by": "Sort by",
-    "stories_found": "{{count}} stories found",
+    "stories_found": "{{count, number}} stories found",
     "no_results_title": "No results found",
     "no_results_desc": "We couldn't find any stories matching your criteria. Try loosening your filters.",
     "initial_title": "Ready to search?",
@@ -83,7 +83,7 @@
     "rows_per_page": "Results per page",
     "title_pub_label": "Series or issue title",
     "title_pub_placeholder": "Ex: Four Color, US/FC...",
-    "publications_found": "{{count}} publications found",
+    "publications_found": "{{count, number}} publications found",
     "category": "Category",
     "category_placeholder": "Ex: comic book, magazine...",
     "display": "Display",
@@ -92,8 +92,12 @@
     "without_image": "Without image only",
     "from_date": "Start",
     "to_date": "Einde",
-    "result_singular": "resultaat",
-    "results_plural": "resultaten"
+    "pages_placeholder": "e.g. 48...",
+    "export_success": "Export complete",
+    "export_error": "CSV export failed",
+    "copy_sql": "Copy the SQL query",
+    "export_csv": "Export CSV",
+    "page_indicator": "Pagina {{current}} van {{total}}"
   },
   "roles": {
     "any": "Any",
@@ -135,7 +139,18 @@
     "back": "Back",
     "save": "Save",
     "or": "or",
-    "all_countries": "All countries"
+    "all_countries": "All countries",
+    "code": "Code",
+    "present": "Present",
+    "show_more": "Show more",
+    "autocomplete_error": "Autocomplete failed.",
+    "copy_to_clipboard": "Copy to clipboard",
+    "finish": "Finish",
+    "informations": "Information",
+    "next": "Next",
+    "skip": "Skip",
+    "example": "bijv. {{value}}",
+    "hide_column": "Kolom verbergen"
   },
   "story": {
     "no_title": "Untitled",
@@ -156,7 +171,20 @@
     "creators": "Creators / Authors",
     "characters": "Characters",
     "uncredited": "Uncredited.",
-    "original_title": "Original title"
+    "original_title": "Original title",
+    "not_found": "Story not found.",
+    "strip": "strip",
+    "strips": "strips",
+    "per_page": "/ page",
+    "issue_label": "Issue",
+    "issue_symbol": "#",
+    "no_characters": "No characters listed.",
+    "xrefs": "Cross-references",
+    "hide_languages": "Hide other languages",
+    "show_languages": "Show descriptions in other languages",
+    "pages_short": "p.",
+    "code_copied": "Code copied!",
+    "page": "page"
   },
   "kinds": {
     "c": "Cover",
@@ -184,11 +212,14 @@
       "authors": "Authors explorer coming soon...",
       "characters": "Characters explorer coming soon..."
     },
-    "countries": "Countries"
+    "countries": "Countries",
+    "home": "Home",
+    "settings": "Settings"
   },
   "header": {
     "title": "InducksButBetter - Advanced search",
-    "subtitle": "Find exactly what you are looking for in the Inducks database"
+    "subtitle": "Find exactly what you are looking for in the Inducks database",
+    "search": "Search"
   },
   "ai": {
     "welcome": "Hello! I am your Inducks expert. I can help you write complex SQL queries. What are you looking for?",
@@ -218,7 +249,8 @@
     "tables": "Tables:",
     "results_count_one": "1 result found",
     "results_count_other": "{{count}} results found",
-    "query_success": "Query executed successfully."
+    "query_success": "Query executed successfully.",
+    "docs_title": "Inducks-databasedocumentatie"
   },
   "continents": {
     "europe": "Europe",
@@ -230,7 +262,13 @@
   },
   "dates": {
     "any_time": "Any time",
-    "last_year": "Last year"
+    "last_year": "Last year",
+    "clear_period": "Clear period",
+    "decades": "{{decade}}s",
+    "quarter_1": "1st quarter, {{year}}",
+    "quarter_2": "2nd quarter, {{year}}",
+    "quarter_3": "3rd quarter, {{year}}",
+    "quarter_4": "4th quarter, {{year}}"
   },
   "theme": {
     "label": "Theme",
@@ -321,7 +359,9 @@
     "cookie_desc": "This cookie allows you to load high-resolution cover images from Inducks.",
     "cookie_saved": "Cookie saved!",
     "cookie_help": "This cookie allows access to high-resolution images. Retrieve it from the browser inspector on inducks.org.",
-    "download_isv": "Download ISV files"
+    "download_isv": "Download ISV files",
+    "translations": "Translations",
+    "cookie_save_error": "Could not save the cookie."
   },
   "localDb": {
     "title": "Import Inducks database",
@@ -331,21 +371,33 @@
     "btn_import": "Import",
     "btn_local": "Local DB",
     "btn_select": "Click here to import the files",
-    "btn_select_sub": "Select all the extracted .isv files",
     "tooltip_active": "Using local database",
     "tooltip_upload": "Upload local database",
     "progress_start": "Starting import...",
-    "progress_importing": "Importing {{table}}... ({{current}}/{{total}})",
     "success": "Local ISV database loaded successfully!",
     "error": "Failed to load ISV database.",
     "already_imported": "Warning: You have already imported a local database. Importing new files will replace the current one.",
-    "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})",
     "btn_cloud": "Import automatically (Recommended)",
     "confirm_clear": "Weet u zeker dat u de lokale databasecache wilt wissen?",
     "cache_cleared": "Cache is gewist.",
     "clear_cache": "Cache wissen",
     "caching_step": "Cachen (dit kan enkele seconden duren)...",
-    "global_progress": "Global progress"
+    "global_progress": "Global progress",
+    "btn_select_new": "Drop a local file",
+    "btn_select_sub_new": "Select inducks.sqlite or inducks.sqlite.gz",
+    "step_download": "Downloading database: {{percent}}%",
+    "step_decompress": "Decompressing database...",
+    "step_validate": "Verifying database integrity...",
+    "step_install": "Installing database in local storage...",
+    "error_not_found": "Database file inducks.sqlite.gz was not found on the GitHub release or in the local /public/datas/ folder.",
+    "imported_stats_new": "{{count}} tables loaded (Total decompressed size: {{size}})",
+    "clear_storage": "Clear all local data",
+    "error_download": "Failed to download database: {{msg}}",
+    "error_validation": "Validation failed: {{msg}}",
+    "error_no_url": "No database URL or file provided.",
+    "error_empty": "Empty database stream.",
+    "error_deserialize": "Failed to deserialize database (code {{code}}).",
+    "error_not_loaded": "Database not loaded."
   },
   "authors": {
     "biography": "Biography",
@@ -383,7 +435,7 @@
     "searching": "Searching...",
     "results": "Results",
     "sort_by": "Sort by",
-    "authors_found": "{{count}} authors found",
+    "authors_found": "{{count, number}} authors found",
     "no_results_title": "No authors found",
     "no_results_desc": "We couldn't find any authors matching your criteria. Try loosening your filters.",
     "initial_title": "Ready to search?",
@@ -397,7 +449,8 @@
     "country": "Country",
     "web_link": "Web link",
     "stories": "Stories",
-    "no_description": "No description available for this author."
+    "no_description": "No description available for this author.",
+    "load_more": "Show more stories"
   },
   "characters": {
     "character_code": "Character code",
@@ -424,7 +477,7 @@
     "searching": "Searching...",
     "results": "Results",
     "sort_by": "Sort by",
-    "characters_found": "{{count}} characters found",
+    "characters_found": "{{count, number}} characters found",
     "no_results_title": "No characters found",
     "no_results_desc": "We couldn't find any characters matching your criteria. Try loosening your filters.",
     "initial_title": "Ready to search?",
@@ -439,7 +492,8 @@
     "onetime": "One-time character",
     "original_name": "Original name",
     "international_names": "International names",
-    "no_description": "No description available for this character."
+    "no_description": "No description available for this character.",
+    "name_or_code": "Name or code"
   },
   "legal": {
     "link": "Legal mentions",
@@ -453,7 +507,9 @@
     "country_name": "Country",
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
-    "desc": "Select a country to explore its Disney publications."
+    "desc": "Select a country to explore its Disney publications.",
+    "publications_singular": "publication",
+    "publications_plural": "publications"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -461,7 +517,8 @@
     "pub_code": "Code",
     "issues_count": "Issues count",
     "search_placeholder": "Filter publications...",
-    "desc": "Explore Disney magazines and series published in this country."
+    "desc": "Explore Disney magazines and series published in this country.",
+    "title_prefix": "Publications from"
   },
   "publication": {
     "title": "Magazine: {{title}}",
@@ -477,10 +534,16 @@
     "empty": "No issues found.",
     "content": "Content",
     "entry_one": "{{count}} entry",
-    "entry_other": "{{count}} entries"
+    "entry_other": "{{count}} entries",
+    "issue_singular": "issue",
+    "issues_plural": "issues",
+    "error_load": "Failed to load issue details.",
+    "show_more_years": "Show more years",
+    "untitled": "Untitled"
   },
   "publisher": {
-    "title": "Publisher: {{publisher}}"
+    "title": "Publisher: {{publisher}}",
+    "desc": "Explore the magazines and series published by this publishing house."
   },
   "onboarding": {
     "step1": {
@@ -499,5 +562,73 @@
       "title": "Join the project",
       "desc": "You can contribute to the project on GitHub or join our Discord server!"
     }
+  },
+  "home": {
+    "title": "InducksButBetter",
+    "subtitle": "Explore the Inducks database",
+    "search_placeholder": "Search for a code, author, character, magazine...",
+    "db_stats_title": "Database Statistics",
+    "latest_releases_title": "Latest releases",
+    "db_missing": "Please load a local database in Settings to view statistics and publications.",
+    "db_statistics": "Statistics",
+    "no_results": "No results found",
+    "type_author_one": "Author",
+    "type_author_other": "Authors",
+    "type_character_one": "Character",
+    "type_character_other": "Characters",
+    "type_publication_one": "Magazine",
+    "type_publication_other": "Magazines",
+    "type_issue_one": "Issue",
+    "type_issue_other": "Issues",
+    "type_story_one": "Story",
+    "type_story_other": "Stories",
+    "or_advanced": "Or go to",
+    "advanced_search_link": "advanced search",
+    "latest_releases_range": "last 7 days",
+    "no_releases": "No releases recorded in the last 7 days.",
+    "voice_search": "Voice search"
+  },
+  "pwa": {
+    "installed_title": "App installed",
+    "installed_desc": "You are already using InducksButBetter as an installed app.",
+    "install_title": "Install the app",
+    "install_desc": "Install InducksButBetter on your device for quick access, full-screen mode, and a better experience.",
+    "install_button": "Install",
+    "install_manual": "On iOS, tap Safari's share button then \"Add to Home Screen\". On Android, use the browser menu."
+  },
+  "csv": {
+    "storyCode": "Story code",
+    "originalTitle": "Title (original)",
+    "translatedTitle": "Title (translated)",
+    "releaseDate": "Release date",
+    "pages": "Pages",
+    "type": "Type",
+    "hero": "Hero",
+    "creators": "Creators",
+    "publications": "Publications"
+  },
+  "suggestions": {
+    "title": "Send us your suggestions",
+    "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
+    "label_name": "Name or nickname (optional)",
+    "placeholder_name": "What's your name?",
+    "label_type": "Suggestion type",
+    "type_idea": "Idea",
+    "type_bug": "Bug",
+    "type_db": "Data",
+    "type_other": "Other",
+    "label_message": "Your message",
+    "placeholder_message": "Describe your idea or the problem you ran into...",
+    "sending": "Sending...",
+    "sent": "Sent successfully!",
+    "submit": "Send the suggestion",
+    "error_short": "Your message is too short (10 characters minimum).",
+    "success": "Thank you! Your suggestion has been sent."
+  },
+  "speech": {
+    "error_denied": "Microphone access denied. Check your browser permissions.",
+    "error_no_speech": "No speech detected. Speak louder or check your microphone.",
+    "error_start": "Could not start voice recording.",
+    "error_generic": "Microphone error: {{error}}"
   }
 }

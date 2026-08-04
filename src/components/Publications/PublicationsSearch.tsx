@@ -69,7 +69,7 @@ export function PublicationsSearch({
         setResults(mainResult.rows);
       }
     } catch (err) {
-      handleDbError(err, t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
+      handleDbError(err, t("search.error_fetch"));
       setResults([]);
       setTotalCount(0);
     } finally {
@@ -166,7 +166,7 @@ export function PublicationsSearch({
               sortOptions={sortOptions}
               renderResultCard={(row) => <IssueResultCard row={row} onSelect={(code) => setSelectedIssuecode(code)} />}
               renderSkeleton={(i) => <IssueResultSkeleton key={i} />}
-              foundLabel={t("search.publications_found", { count: totalCount, defaultValue: `${totalCount} publications trouvées` })}
+              foundLabel={t("search.publications_found", { count: totalCount })}
               onSelect={(code) => setSelectedIssuecode(code)}
             />
       </div>

@@ -38,6 +38,24 @@ describe('queryBuilder', () => {
       expect(result.params).toContain('%Donald%');
     });
 
+    it('should add title filter and search across s.title, s.storycode, s.storycomment, and header', () => {
+      const filters: SearchFilters = { title: 'treasure' };
+      const result = buildAdvancedSearchQuery(filters);
+      
+      expect(result.query).toContain('s.title LIKE ?');
+      expect(result.query).toContain('s.storycode LIKE ?');
+      expect(result.query).toContain('s.storycomment LIKE ?');
+      expect(result.params).toContain('%treasure%');
+    });
+
+    it('should add storycode range search with COLLATE NOCASE', () => {
+      const filters: SearchFilters = { storycode: 'nl/DD 1985-01' };
+      const result = buildAdvancedSearchQuery(filters);
+      
+      expect(result.query).toContain('s.storycode COLLATE NOCASE >= ?');
+      expect(result.query).toContain('REPLACE(s.storycode, \' \', \'\') COLLATE NOCASE LIKE ?');
+    });
+
     it('should add charactercode filter', () => {
       const filters: SearchFilters = { charactercode: 'DD' };
       const result = buildAdvancedSearchQuery(filters);

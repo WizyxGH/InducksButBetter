@@ -281,6 +281,7 @@ function App() {
                         onBack={() => navigateBack(() => setSelectedIssuecode(null))}
                         onSelectStory={(code) => {
                           setSelectedStorycode(code)
+                          setSelectedIssuecode(null)
                           setActiveTab("stories")
                         }}
                       />
@@ -382,11 +383,6 @@ function App() {
           )}
         </div>
         
-        {/* Global Footer for legal mentions (temporairement caché)
-        <footer className="px-4 py-4 shrink-0 border-t border-border-subtle bg-surface flex justify-center items-center text-xs text-text-hint">
-          <LegalModal />
-        </footer>
-        */}
       </div>
       <Toaster position="top-center" richColors />
       <OnboardingModal />

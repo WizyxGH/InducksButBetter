@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 export function useSpeechToText() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState("")
   const recognitionRef = useRef<any>(null)
@@ -33,11 +33,11 @@ export function useSpeechToText() {
       setIsRecording(false)
       
       if (e.error === 'not-allowed') {
-        toast.error("Accès au microphone refusé. Vérifiez les autorisations de votre navigateur.")
+        toast.error(t("speech.error_denied"))
       } else if (e.error === 'no-speech') {
-        toast.error("Aucune voix détectée. Parlez plus fort ou vérifiez votre micro.")
+        toast.error(t("speech.error_no_speech"))
       } else {
-        toast.error(`Erreur du microphone: ${e.error}`)
+        toast.error(t("speech.error_generic", { error: e.error }))
       }
     }
 
@@ -66,7 +66,7 @@ export function useSpeechToText() {
       recognitionRef.current.start()
     } catch (err: any) {
       if (err.name !== 'InvalidStateError') {
-        toast.error("Impossible de démarrer l’enregistrement vocal.")
+        toast.error(t("speech.error_start"))
       }
     }
   }

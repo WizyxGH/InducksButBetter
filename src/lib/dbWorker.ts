@@ -14,7 +14,6 @@ async function initSqlite() {
   return sqlite3;
 }
 
-let storageType: "sah" | "opfs" | "memory" = "memory";
 
 async function getStorageType(s3: any) {
   if (s3.capi && s3.capi.sqlite3_vfs_find("opfs")) {
@@ -68,19 +67,15 @@ async function readStreamToUint8Array(stream: ReadableStream): Promise<Uint8Arra
   return result;
 }
 
-async function decompressGzip(data: Uint8Array): Promise<Uint8Array> {
-  const stream = new ReadableStream({
-    start(controller) {
-      controller.enqueue(data);
-      controller.close();
-    }
-  });
-  const ds = new DecompressionStream('gzip');
-  const decompressedStream = stream.pipeThrough(ds);
-  return readStreamToUint8Array(decompressedStream);
+/** Keeps download error messages readable by dropping query strings. */
+function shortenUrl(url: string): string {
+  try {
+    const { hostname, pathname } = new URL(url);
+    return `${hostname}${pathname}`;
+  } catch {
+    return url;
+  }
 }
-
-const connections: MessagePort[] = [];
 
 const handleMessage = async (e: MessageEvent, port: MessagePort) => {
   const { id, action, payload } = e.data;
@@ -93,35 +88,39 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         const { url, file } = payload;
         
         const type = await getStorageType(s3);
-        storageType = type;
 
         let responseStream: ReadableStream;
 
         if (url) {
-          const urls = Array.isArray(url) ? url : [url].filter(Boolean);
+          const urls = (Array.isArray(url) ? url : [url]).filter(Boolean);
           let response: Response | null = null;
-          let fetchError: Error | null = null;
+          const failures: string[] = [];
 
           for (const targetUrl of urls) {
             try {
               port.postMessage({ type: 'progress', step: 'download', percent: 0 });
               const headers: HeadersInit = {};
+              // GitHub only serves release assets as raw bytes (and with CORS
+              // headers) through its API endpoint when this header is set.
               if (targetUrl.includes('api.github.com')) {
                 headers['Accept'] = 'application/octet-stream';
               }
-              
-              const res = await fetch(targetUrl, { headers });
-              if (res.ok) {
+
+              const res = await fetch(targetUrl, { headers, redirect: 'follow' });
+              if (res.ok && res.body) {
                 response = res;
                 break;
               }
+              failures.push(`${shortenUrl(targetUrl)}: HTTP ${res.status}`);
             } catch (err: any) {
-              fetchError = err;
+              // A CORS rejection surfaces as an opaque TypeError, so name the
+              // URL that failed — otherwise the user only sees "NetworkError".
+              failures.push(`${shortenUrl(targetUrl)}: ${err?.message || 'network error'}`);
             }
           }
 
           if (!response) {
-            throw new Error(`error_download|${fetchError?.message || 'Network error'}`);
+            throw new Error(`error_download|${failures.join(' — ') || 'no source available'}`);
           }
 
           const contentLength = Number(response.headers.get('content-length')) || 0;
@@ -353,7 +352,6 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         }
         
         const type = await getStorageType(s3);
-        storageType = type;
         let found = false;
 
         if (type === "sah") {
@@ -458,9 +456,19 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
   }
 };
 
-(self as any).onconnect = (e: MessageEvent) => {
-  const port = e.ports[0];
-  connections.push(port);
-  port.onmessage = (msg: MessageEvent) => handleMessage(msg, port);
-  port.start();
-};
+// The same worker file backs both a SharedWorker (one owner of the OPFS
+// handles across every tab) and a dedicated worker (browsers without
+// SharedWorker support). Detect which scope we are running in.
+const isSharedWorkerScope =
+  typeof (globalThis as any).SharedWorkerGlobalScope !== "undefined" &&
+  self instanceof (globalThis as any).SharedWorkerGlobalScope;
+
+if (isSharedWorkerScope) {
+  (self as any).onconnect = (e: MessageEvent) => {
+    const port = e.ports[0];
+    port.onmessage = (msg: MessageEvent) => handleMessage(msg, port);
+    port.start();
+  };
+} else {
+  self.onmessage = (msg: MessageEvent) => handleMessage(msg, self as any);
+}

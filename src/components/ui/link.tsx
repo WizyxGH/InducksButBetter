@@ -1,5 +1,5 @@
 import React from 'react';
-import { navigate, getBasePath } from '@/lib/navigation';
+import { navigate, getBasePath, isModifiedClick } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
 interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -19,16 +19,9 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
         onClick(e);
       }
 
-      // Let browser handle native behavior if command/ctrl/shift click, or middle click, or if default was prevented
-      if (
-        e.defaultPrevented ||
-        e.button !== 0 || // Not left click
-        e.metaKey ||
-        e.altKey ||
-        e.ctrlKey ||
-        e.shiftKey ||
-        props.target === '_blank'
-      ) {
+      // Let the browser do its thing on ctrl/cmd/shift/alt or middle click,
+      // when the handler above already took over, or on an explicit new tab.
+      if (isModifiedClick(e) || props.target === '_blank') {
         return;
       }
 

@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ExternalLink, Calendar, MapPin, Award, BookOpen, Users, User, Cat, Globe, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, Calendar, MapPin, Award, BookOpen, Users, User, Cat, Globe, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
-import { getFlagUrl, hasInducksCookie } from "@/lib/utils";
-import { navigate } from "@/lib/navigation";
+import { getFlagUrl, hasInducksCookie, formatInducksDate } from "@/lib/utils";
+import { parseCredits } from "@/lib/credits";
+import { isModifiedClick } from "@/lib/navigation";
+import { Link } from "@/components/ui/link";
+import { routes } from "@/lib/routes";
 
 interface AuthorDetailData {
   personcode: string;
@@ -43,6 +46,65 @@ interface AuthorDetailProps {
   onSelectStory?: (code: string) => void;
 }
 
+/** How many credited stories are shown per "load more" step. */
+const STORIES_PER_PAGE = 20;
+
+/**
+ * One page of the stories an author is credited on.
+ * Bound arguments: language, personcode, limit, offset.
+ */
+const STORIES_PAGE_SQL = `
+  SELECT s.storycode,
+         s.firstpublicationdate,
+         COALESCE(NULLIF(s.title, ''), sh.title) as original_title,
+         (SELECT e.title
+          FROM inducks_entry e
+          JOIN inducks_issue i ON e.issuecode = i.issuecode
+          JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode
+          WHERE e.storyversioncode = sv.storyversioncode
+            AND pub.languagecode = ?
+            AND e.title IS NOT NULL AND e.title != ''
+          LIMIT 1) as translated_title,
+         -- Credits of the same version the row is built from. A ';' separator
+         -- only survives without DISTINCT: SQLite ignores the separator
+         -- argument of GROUP_CONCAT(DISTINCT ...) and always uses ','.
+         (SELECT GROUP_CONCAT(sj_c.plotwritartink || ':' || p_c.personcode || '|' || p_c.fullname, ';')
+          FROM inducks_storyjob sj_c
+          JOIN inducks_person p_c ON sj_c.personcode = p_c.personcode
+          WHERE sj_c.storyversioncode = sv.storyversioncode) as creators
+  FROM inducks_storyjob sj
+  JOIN inducks_storyversion sv ON sj.storyversioncode = sv.storyversioncode
+  JOIN inducks_story s ON sv.storycode = s.storycode
+  LEFT JOIN inducks_storyheader sh ON s.storyheadercode = sh.storyheadercode
+  WHERE sj.personcode = ?
+  GROUP BY s.storycode
+  ORDER BY s.firstpublicationdate DESC, s.storycode ASC
+  LIMIT ? OFFSET ?
+`;
+
+/** Script / art credits of one story in the author's bibliography. */
+function StoryCredits({ creators }: { creators?: string | null }) {
+  const { t } = useTranslation();
+  const { writers, artists } = React.useMemo(() => parseCredits(creators), [creators]);
+
+  if (writers.length === 0 && artists.length === 0) return null;
+
+  const line = (label: string, people: { code: string; name: string }[]) =>
+    people.length > 0 && (
+      <p className="truncate">
+        <span className="font-semibold text-text-secondary">{label} :</span>{" "}
+        <span className="text-muted-foreground">{people.map((p) => p.name).join(", ")}</span>
+      </p>
+    );
+
+  return (
+    <div className="text-[10px] leading-snug space-y-0.5 pt-0.5">
+      {line(t("story.script"), writers)}
+      {line(t("story.art"), artists)}
+    </div>
+  );
+}
+
 export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetailProps) {
   const { t, i18n } = useTranslation();
   const hasCookie = hasInducksCookie();
@@ -52,95 +114,119 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
   const [coAuthors, setCoAuthors] = useState<CoAuthor[]>([]);
   const [favCharacters, setFavCharacters] = useState<FavCharacter[]>([]);
   const [stories, setStories] = useState<any[]>([]);
+  const [totalStoriesCount, setTotalStoriesCount] = useState(0);
+  const [storiesPage, setStoriesPage] = useState(1);
+  const [loadingMoreStories, setLoadingMoreStories] = useState(false);
   const [isStoriesExpanded, setIsStoriesExpanded] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
       setLoading(true);
       const currentLang = i18n.language || "fr";
       try {
-        // 1. Fetch author details
         const authorResult = await executeQuery({
-          sql: `SELECT p.personcode, p.fullname, p.nationalitycountrycode, p.numberofindexedissues, 
-                       p.birthname, p.borndate, p.bornplace, p.deceaseddate, p.deceasedplace, 
+          sql: `SELECT p.personcode, p.fullname, p.nationalitycountrycode,
+                       p.birthname, p.borndate, p.bornplace, p.deceaseddate, p.deceasedplace,
                        p.education, p.comicstext, p.othertext
                 FROM inducks_person p
                 WHERE p.personcode = ?`,
           args: [personcode],
         });
 
-        if (authorResult.rows.length > 0) {
-          setAuthor(authorResult.rows[0] as AuthorDetailData);
-
-          // 2. Fetch aliases
-          const aliasesResult = await executeQuery({
-            sql: `SELECT surname, givenname, official FROM inducks_personalias WHERE personcode = ?`,
-            args: [personcode],
-          });
-          setAliases(aliasesResult.rows);
-
-          // 3. Fetch urls
-          const urlsResult = await executeQuery({
-            sql: `SELECT sitecode, url FROM inducks_personurl WHERE personcode = ?`,
-            args: [personcode],
-          });
-          setUrls(urlsResult.rows);
-
-          // 4. Fetch co-authors
-          const coAuthorsResult = await executeQuery({
-            sql: `SELECT sp.copersoncode, sp.total, sp.yearrange, p.fullname
-                  FROM inducks_statpersonperson sp
-                  JOIN inducks_person p ON sp.copersoncode = p.personcode
-                  WHERE sp.personcode = ?
-                  ORDER BY CAST(sp.total AS INTEGER) DESC
-                  LIMIT 5`,
-            args: [personcode],
-          });
-          setCoAuthors(coAuthorsResult.rows as CoAuthor[]);
-
-          // 5. Fetch favorite characters
-          const favCharResult = await executeQuery({
-            sql: `SELECT sc.charactercode, sc.total, sc.yearrange, COALESCE(cn.charactername, c.charactername) as charactername
-                  FROM inducks_statpersoncharacter sc
-                  JOIN inducks_character c ON sc.charactercode = c.charactercode
-                  LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
-                  WHERE sc.personcode = ?
-                  GROUP BY sc.charactercode
-                  ORDER BY CAST(sc.total AS INTEGER) DESC
-                  LIMIT 5`,
-            args: [currentLang, personcode],
-          });
-          setFavCharacters(favCharResult.rows as FavCharacter[]);
-
-          // 6. Fetch stories
-          const storiesResult = await executeQuery({
-            sql: `SELECT DISTINCT s.storycode, 
-                         COALESCE(
-                           NULLIF(NULLIF(s.title, 'Untitled'), ''),
-                           (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
-                         ) as original_title, COUNT(*) as appearances,
-                         (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title
-                  FROM inducks_storyjob sj
-                  JOIN inducks_storyversion sv ON sj.storyversioncode = sv.storyversioncode
-                  JOIN inducks_story s ON sv.storycode = s.storycode
-                  WHERE sj.personcode = ?
-                  GROUP BY s.storycode
-                  ORDER BY appearances DESC
-                  LIMIT 20`,
-            args: [currentLang, personcode],
-          });
-          setStories(storiesResult.rows as any[]);
+        if (cancelled) return;
+        if (authorResult.rows.length === 0) {
+          setAuthor(null);
+          return;
         }
+        setAuthor(authorResult.rows[0] as AuthorDetailData);
+
+        // The remaining sections are independent of each other: running them
+        // concurrently turns six sequential round-trips into one wait.
+        const [aliasesResult, urlsResult, coAuthorsResult, favCharResult, countResult, storiesResult] =
+          await Promise.all([
+            executeQuery({
+              sql: `SELECT surname, givenname, official FROM inducks_personalias WHERE personcode = ?`,
+              args: [personcode],
+            }),
+            executeQuery({
+              sql: `SELECT sitecode, url FROM inducks_personurl WHERE personcode = ?`,
+              args: [personcode],
+            }),
+            executeQuery({
+              sql: `SELECT sp.copersoncode, sp.total, sp.yearrange, p.fullname
+                    FROM inducks_statpersonperson sp
+                    JOIN inducks_person p ON sp.copersoncode = p.personcode
+                    WHERE sp.personcode = ?
+                    ORDER BY CAST(sp.total AS INTEGER) DESC
+                    LIMIT 5`,
+              args: [personcode],
+            }),
+            executeQuery({
+              sql: `SELECT sc.charactercode, sc.total, sc.yearrange, COALESCE(cn.charactername, c.charactername) as charactername
+                    FROM inducks_statpersoncharacter sc
+                    JOIN inducks_character c ON sc.charactercode = c.charactercode
+                    LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
+                    WHERE sc.personcode = ?
+                    GROUP BY sc.charactercode
+                    ORDER BY CAST(sc.total AS INTEGER) DESC
+                    LIMIT 5`,
+              args: [currentLang, personcode],
+            }),
+            // Counted from the actual credits rather than
+            // `inducks_person.numberofindexedissues`, which is unset for many
+            // creators and reported 0 for authors with hundreds of stories.
+            executeQuery({
+              sql: `SELECT COUNT(DISTINCT sv.storycode) as total
+                    FROM inducks_storyjob sj
+                    JOIN inducks_storyversion sv ON sj.storyversioncode = sv.storyversioncode
+                    WHERE sj.personcode = ?`,
+              args: [personcode],
+            }),
+            executeQuery({ sql: STORIES_PAGE_SQL, args: [currentLang, personcode, STORIES_PER_PAGE, 0] }),
+          ]);
+
+        if (cancelled) return;
+
+        setAliases(aliasesResult.rows);
+        setUrls(urlsResult.rows);
+        setCoAuthors(coAuthorsResult.rows as CoAuthor[]);
+        setFavCharacters(favCharResult.rows as FavCharacter[]);
+        setTotalStoriesCount(Number(countResult.rows[0]?.total || 0));
+        setStories(storiesResult.rows as any[]);
+        setStoriesPage(1);
       } catch (error) {
         console.error("Error fetching author details:", error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [personcode, i18n.language]);
+
+  const loadMoreStories = async () => {
+    if (loadingMoreStories) return;
+    setLoadingMoreStories(true);
+    const nextPage = storiesPage + 1;
+    try {
+      const result = await executeQuery({
+        sql: STORIES_PAGE_SQL,
+        args: [i18n.language || "fr", personcode, STORIES_PER_PAGE, (nextPage - 1) * STORIES_PER_PAGE],
+      });
+      setStories((prev) => [...prev, ...result.rows]);
+      setStoriesPage(nextPage);
+    } catch (e) {
+      console.error("Error loading more stories:", e);
+    } finally {
+      setLoadingMoreStories(false);
+    }
+  };
 
   if (loading) {
     return <PageLoadingSkeleton />;
@@ -179,7 +265,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               <h2 className="text-2xl font-bold tracking-tight text-foreground">{author.fullname}</h2>
               {author.birthname && author.birthname !== author.fullname && (
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-semibold">{t("authors.birth_name") || "Nom de naissance"}:</span> {author.birthname}
+                  <span className="font-semibold">{t("authors.birth_name")}:</span> {author.birthname}
                 </p>
               )}
               <div className="flex items-center gap-2">
@@ -199,8 +285,8 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-primary shrink-0" />
                 <span>
-                  {t("authors.born") || "Né(e)"} {author.borndate}
-                  {author.bornplace && ` ${t("authors.place_in") || "à"} ${author.bornplace}`}
+                  {t("authors.born")} {author.borndate}
+                  {author.bornplace && ` ${t("authors.place_in")} ${author.bornplace}`}
                 </span>
               </div>
             )}
@@ -208,8 +294,8 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>
-                  {t("authors.deceased") || "Décédé(e)"} {author.deceaseddate}
-                  {author.deceasedplace && ` ${t("authors.place_in") || "à"} ${author.deceasedplace}`}
+                  {t("authors.deceased")} {author.deceaseddate}
+                  {author.deceasedplace && ` ${t("authors.place_in")} ${author.deceasedplace}`}
                 </span>
               </div>
             )}
@@ -218,7 +304,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
           {aliases.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               <span className="text-xs font-semibold text-muted-foreground mr-1">
-                {t("authors.aliases") || "Alias"}:
+                {t("authors.aliases")}:
               </span>
               {aliases
                 .map((alias) => ({
@@ -238,7 +324,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
 
       <div className="flex flex-col items-start md:items-end shrink-0 text-left md:text-right space-y-1 bg-surface/85 p-4 rounded-2xl border border-border-subtle shadow-sm w-full md:w-auto">
           <p className="text-xs font-semibold text-muted-foreground">{t("authors.number_of_stories")}</p>
-          <p className="text-3xl font-extrabold text-primary">{author.numberofindexedissues || 0}</p>
+          <p className="text-[30px] font-extrabold text-primary">{totalStoriesCount}</p>
           {author.nationalitycountrycode && (
             <Badge variant="secondary" className="mt-2 text-xs font-medium rounded-lg">
               {author.nationalitycountrycode.toUpperCase()}
@@ -256,25 +342,25 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Award className="w-4 h-4 text-primary" />
-                  {t("authors.biography") || "Biographie"}
+                  {t("authors.biography")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-xs leading-relaxed text-text-secondary">
                 {author.education && (
                   <div>
-                    <span className="font-bold text-foreground block mb-0.5">{t("authors.education", { defaultValue: "Éducation" })}:</span>
+                    <span className="font-bold text-foreground block mb-0.5">{t("authors.education")}:</span>
                     <p>{author.education}</p>
                   </div>
                 )}
                 {author.comicstext && (
                   <div>
-                    <span className="font-bold text-foreground block mb-0.5">{t("authors.comics", { defaultValue: "Comics" })}:</span>
+                    <span className="font-bold text-foreground block mb-0.5">{t("authors.comics")}:</span>
                     <p>{author.comicstext}</p>
                   </div>
                 )}
                 {author.othertext && (
                   <div>
-                    <span className="font-bold text-foreground block mb-0.5">{t("authors.other", { defaultValue: "Autre" })}:</span>
+                    <span className="font-bold text-foreground block mb-0.5">{t("authors.other")}:</span>
                     <p>{author.othertext}</p>
                   </div>
                 )}
@@ -288,7 +374,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Globe className="w-4 h-4 text-primary" />
-                  {t("authors.links") || "Liens externs"}
+                  {t("authors.links")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -318,7 +404,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                 <CardHeader className="py-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2">
                     <Users className="w-4 h-4 text-primary" />
-                    {t("authors.coauthors") || "Co-auteurs fréquents"}
+                    {t("authors.coauthors")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -359,7 +445,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                 <CardHeader className="py-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2">
                     <Cat className="w-4 h-4 text-primary" />
-                    {t("authors.favorite_characters") || "Personnages fréquents"}
+                    {t("authors.favorite_characters")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -404,9 +490,9 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               >
                 <div className="text-sm font-bold flex items-center gap-2 text-foreground">
                   <BookOpen className="w-4 h-4 text-primary" />
-                  {t("authors.stories") || "Histoires"}
+                  {t("authors.stories")}
                   <Badge variant="secondary" className="ml-1 text-[10px] py-0 px-1 bg-primary/10 text-primary border-none">
-                    {stories.length}
+                    {totalStoriesCount}
                   </Badge>
                 </div>
                 {isStoriesExpanded ? (
@@ -419,13 +505,17 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               {isStoriesExpanded && (
                 <CardContent className="space-y-2.5 px-6 pb-6 pt-0 animate-fadeIn">
                   {stories.map((story) => (
-                    <div
+                    <Link
                       key={story.storycode}
-                      onClick={() => {
+                      to={routes.story(story.storycode)}
+                      onClick={(e) => {
+                        // Keep ctrl/cmd/middle-click native so the story opens
+                        // in a new tab; otherwise handle it in-app and stop
+                        // <Link> from pushing a second history entry.
+                        if (isModifiedClick(e)) return;
                         if (onSelectStory) {
+                          e.preventDefault();
                           onSelectStory(story.storycode);
-                        } else {
-                          navigate(`#/entries/story/${encodeURIComponent(story.storycode)}`);
                         }
                       }}
                       className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
@@ -444,7 +534,7 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                                 subTitle = original;
                               }
                             } else if (!original || original === 'Untitled') {
-                              mainTitle = t("story.no_title") || "Sans titre";
+                              mainTitle = t("story.no_title");
                             }
 
                             return (
@@ -459,13 +549,39 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                             );
                           })()}
                         </div>
-                        <p className="text-[10px] text-muted-foreground font-mono">{story.storycode}</p>
+                        <StoryCredits creators={story.creators} />
+
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          {story.storycode}
+                          {story.firstpublicationdate && (
+                            <span className="ml-2 font-sans not-italic">
+                              {formatInducksDate(story.firstpublicationdate, i18n.language)}
+                            </span>
+                          )}
+                        </p>
                       </div>
-                      <Badge variant="outline" className="text-[10px] shrink-0">
-                        {story.appearances} {story.appearances > 1 ? "versions" : "version"}
-                      </Badge>
-                    </div>
+                    </Link>
                   ))}
+                  {stories.length < totalStoriesCount && (
+                    <div className="pt-4 flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={loadMoreStories}
+                        disabled={loadingMoreStories}
+                        className="rounded-xl px-6"
+                      >
+                        {loadingMoreStories ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t("common.loading")}
+                          </>
+                        ) : (
+                          t("authors.load_more")
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               )}
             </Card>

@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, X } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 interface SortableThProps {
   col: string
@@ -22,6 +22,7 @@ export function SortableTh({
   onDragOver,
   onDrop
 }: SortableThProps) {
+  const { t } = useTranslation()
   const isActive = sortKey === col
 
   return (
@@ -53,7 +54,7 @@ export function SortableTh({
               onHide(col)
             }}
             className="opacity-0 group-hover:opacity-100 p-1 hover:bg-surface-3 rounded-md transition-all text-text-hint hover:text-destructive"
-            title="Masquer la colonne"
+            title={t("common.hide_column")}
           >
             <X className="w-3.5 h-3.5" />
           </button>

@@ -5,7 +5,6 @@ import { AvatarWithFallback } from "./AvatarWithFallback"
 import { cn, hasInducksCookie } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { getApiUrl } from "@/lib/api"
 import { handleDbError } from "@/lib/utils"
 import {
   Command,
@@ -64,7 +63,7 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
         const data = await fetchOptions(query)
         if (isActive) setItems(data)
       } catch (err) {
-        handleDbError(err, t("common.autocomplete_error") || "Erreur lors de l'autocomplétion.")
+        handleDbError(err, t("common.autocomplete_error"))
       } finally {
         if (isActive) setLoading(false)
       }

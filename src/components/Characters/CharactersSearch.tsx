@@ -51,7 +51,7 @@ export function CharactersSearch({ selectedCharactercode, setSelectedCharacterco
       const mainResult = await executeQuery({ sql: query, args: params });
       setResults(mainResult.rows as Character[]);
     } catch (err) {
-      handleDbError(err, t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
+      handleDbError(err, t("search.error_fetch"));
       setResults([]);
       setTotalCount(0);
     } finally {
@@ -93,7 +93,7 @@ export function CharactersSearch({ selectedCharactercode, setSelectedCharacterco
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <h2 className="text-sm font-semibold text-foreground">
-            {t("characters.detail_title") || "Détails du personnage"}
+            {t("characters.detail_title")}
           </h2>
         </div>
         <ScrollArea className="flex-1 h-full">
@@ -136,7 +136,7 @@ export function CharactersSearch({ selectedCharactercode, setSelectedCharacterco
           renderSkeleton={(i) => (
             <div key={i} className="h-[120px] rounded-2xl border border-border-subtle bg-surface-2/20 animate-shimmer" />
           )}
-          foundLabel={t("characters.characters_found", { count: totalCount, defaultValue: `${totalCount} personnages trouvés` })}
+          foundLabel={t("characters.characters_found", { count: totalCount })}
           onSelect={(code) => setSelectedCharactercode?.(code)}
         />
       </div>

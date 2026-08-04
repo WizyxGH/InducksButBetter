@@ -19,15 +19,15 @@ export async function exportSearchResultsToCsv(
 
   // Use the translation function provided by the caller
   const headers = [
-    t("csv.storyCode") || "Story Code",
-    t("csv.originalTitle") || "Title (Original)",
-    t("csv.translatedTitle") || "Title (Translated)",
-    t("csv.releaseDate") || "Release Date",
-    t("csv.pages") || "Pages",
-    t("csv.type") || "Type",
-    t("csv.hero") || "Hero",
-    t("csv.creators") || "Creators",
-    t("csv.publications") || "Publications"
+    t("csv.storyCode"),
+    t("csv.originalTitle"),
+    t("csv.translatedTitle"),
+    t("csv.releaseDate"),
+    t("csv.pages"),
+    t("csv.type"),
+    t("csv.hero"),
+    t("csv.creators"),
+    t("csv.publications")
   ];
 
   const rows = results.map(row => {

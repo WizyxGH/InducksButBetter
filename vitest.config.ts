@@ -8,6 +8,9 @@ export default mergeConfig(
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/setupTests.ts',
+      // `scratch/` holds throwaway probes that hit the local 1 GB SQLite
+      // snapshot; they must never be part of the suite.
+      exclude: ['**/node_modules/**', '**/dist/**', 'scratch/**'],
     },
   })
 )

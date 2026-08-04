@@ -53,7 +53,7 @@
     "searching": "Buscando...",
     "results": "Resultados",
     "sort_by": "Ordenar por",
-    "stories_found": "{{count}} stories found",
+    "stories_found": "{{count, number}} stories found",
     "no_results_title": "No se encontraron resultados",
     "no_results_desc": "No pudimos encontrar ninguna historia que coincida con sus criterios. Intente aflojar sus filtros.",
     "initial_title": "¿Listo para buscar?",
@@ -83,7 +83,7 @@
     "rows_per_page": "Resultados por página",
     "title_pub_label": "Título de la serie o edición",
     "title_pub_placeholder": "Ej: Four Color, US/FC...",
-    "publications_found": "{{count}} publications found",
+    "publications_found": "{{count, number}} publications found",
     "category": "Categoría",
     "category_placeholder": "Ej: cómic, revista...",
     "display": "Visualización",
@@ -92,8 +92,12 @@
     "without_image": "Solo sin imagen",
     "from_date": "Inicio",
     "to_date": "Fin",
-    "result_singular": "resultado",
-    "results_plural": "resultados"
+    "pages_placeholder": "e.g. 48...",
+    "export_success": "Export complete",
+    "export_error": "CSV export failed",
+    "copy_sql": "Copy the SQL query",
+    "export_csv": "Export CSV",
+    "page_indicator": "Página {{current}} de {{total}}"
   },
   "roles": {
     "any": "Any",
@@ -136,7 +140,17 @@
     "save": "Save",
     "or": "or",
     "all_countries": "Todos los países",
-    "code": "Código"
+    "code": "Código",
+    "present": "Present",
+    "show_more": "Show more",
+    "autocomplete_error": "Autocomplete failed.",
+    "copy_to_clipboard": "Copy to clipboard",
+    "finish": "Finish",
+    "informations": "Information",
+    "next": "Next",
+    "skip": "Skip",
+    "example": "Ej.: {{value}}",
+    "hide_column": "Ocultar la columna"
   },
   "story": {
     "no_title": "Sin título",
@@ -157,7 +171,20 @@
     "creators": "Creadores / Autores",
     "characters": "Personajes",
     "uncredited": "No acreditado.",
-    "original_title": "Título original"
+    "original_title": "Título original",
+    "not_found": "Story not found.",
+    "strip": "strip",
+    "strips": "strips",
+    "per_page": "/ page",
+    "issue_label": "Issue",
+    "issue_symbol": "#",
+    "no_characters": "No characters listed.",
+    "xrefs": "Cross-references",
+    "hide_languages": "Hide other languages",
+    "show_languages": "Show descriptions in other languages",
+    "pages_short": "p.",
+    "code_copied": "Code copied!",
+    "page": "page"
   },
   "kinds": {
     "c": "Portada",
@@ -185,11 +212,14 @@
       "authors": "Explorador de autores próximamente...",
       "characters": "Explorador de personajes próximamente..."
     },
-    "countries": "Países"
+    "countries": "Países",
+    "home": "Home",
+    "settings": "Settings"
   },
   "header": {
     "title": "InducksButBetter - Búsqueda avanzada",
-    "subtitle": "Encuentre exactamente lo que busca en la base de datos de Inducks"
+    "subtitle": "Encuentre exactamente lo que busca en la base de datos de Inducks",
+    "search": "Search"
   },
   "ai": {
     "welcome": "¡Hola! Soy tu experto en Inducks. Puedo ayudarte a escribir consultas SQL complejas. ¿Qué estás buscando?",
@@ -219,7 +249,8 @@
     "tables": "Tablas:",
     "results_count_one": "1 resultado encontrado",
     "results_count_other": "{{count}} results found",
-    "query_success": "Consulta ejecutada con éxito."
+    "query_success": "Consulta ejecutada con éxito.",
+    "docs_title": "Documentación de la base de datos Inducks"
   },
   "continents": {
     "europe": "Europa",
@@ -231,7 +262,13 @@
   },
   "dates": {
     "any_time": "Cualquier momento",
-    "last_year": "Último año"
+    "last_year": "Último año",
+    "clear_period": "Clear period",
+    "decades": "{{decade}}s",
+    "quarter_1": "1st quarter, {{year}}",
+    "quarter_2": "2nd quarter, {{year}}",
+    "quarter_3": "3rd quarter, {{year}}",
+    "quarter_4": "4th quarter, {{year}}"
   },
   "theme": {
     "label": "Tema",
@@ -322,7 +359,9 @@
     "cookie_desc": "Esta cookie le permite cargar imágenes de portada de alta resolución de Inducks.",
     "cookie_saved": "¡Cookie guardada!",
     "cookie_help": "Esta cookie permite acceder a imágenes de alta resolución. Recupérela del inspector del navegador en inducks.org.",
-    "download_isv": "Descargar archivos ISV"
+    "download_isv": "Descargar archivos ISV",
+    "translations": "Translations",
+    "cookie_save_error": "Could not save the cookie."
   },
   "localDb": {
     "title": "Importar base de datos Inducks",
@@ -332,21 +371,33 @@
     "btn_import": "Importar",
     "btn_local": "DB local",
     "btn_select": "Haga clic aquí para importar los archivos",
-    "btn_select_sub": "Seleccione todos los archivos .isv extraídos",
     "tooltip_active": "Uso de la base de datos local",
     "tooltip_upload": "Cargar base de datos local",
     "progress_start": "Iniciando importación...",
-    "progress_importing": "Importing {{table}}... ({{current}}/{{total}})",
     "success": "¡Base de datos ISV local cargada con éxito!",
     "error": "Error al cargar la base de datos ISV.",
     "already_imported": "Advertencia: Ya ha importado una base de datos local. La importación de nuevos archivos reemplazará la actual.",
-    "imported_stats": "Currently loaded files: {{count}} (Total size: {{size}})",
     "btn_cloud": "Importar automáticamente (Recomendado)",
     "confirm_clear": "¿Estás seguro de que quieres borrar la caché de la base de datos local?",
     "cache_cleared": "La caché ha sido borrada.",
     "clear_cache": "Borrar caché",
     "caching_step": "Almacenando en caché (esto puede tardar unos segundos)...",
-    "global_progress": "Global progress"
+    "global_progress": "Global progress",
+    "btn_select_new": "Drop a local file",
+    "btn_select_sub_new": "Select inducks.sqlite or inducks.sqlite.gz",
+    "step_download": "Downloading database: {{percent}}%",
+    "step_decompress": "Decompressing database...",
+    "step_validate": "Verifying database integrity...",
+    "step_install": "Installing database in local storage...",
+    "error_not_found": "Database file inducks.sqlite.gz was not found on the GitHub release or in the local /public/datas/ folder.",
+    "imported_stats_new": "{{count}} tables loaded (Total decompressed size: {{size}})",
+    "clear_storage": "Clear all local data",
+    "error_download": "Failed to download database: {{msg}}",
+    "error_validation": "Validation failed: {{msg}}",
+    "error_no_url": "No database URL or file provided.",
+    "error_empty": "Empty database stream.",
+    "error_deserialize": "Failed to deserialize database (code {{code}}).",
+    "error_not_loaded": "Database not loaded."
   },
   "authors": {
     "biography": "Biografía",
@@ -384,7 +435,7 @@
     "searching": "Buscando...",
     "results": "Resultados",
     "sort_by": "Ordenar por",
-    "authors_found": "{{count}} authors found",
+    "authors_found": "{{count, number}} authors found",
     "no_results_title": "No se encontraron autores",
     "no_results_desc": "No pudimos encontrar ningún autor que coincida con sus criterios. Intente aflojar sus filtros.",
     "initial_title": "¿Listo para buscar?",
@@ -398,7 +449,8 @@
     "country": "País",
     "web_link": "Enlace web",
     "stories": "Historias",
-    "no_description": "No hay descripción disponible para este autor."
+    "no_description": "No hay descripción disponible para este autor.",
+    "load_more": "Show more stories"
   },
   "characters": {
     "character_code": "Código de personaje",
@@ -425,7 +477,7 @@
     "searching": "Buscando...",
     "results": "Resultados",
     "sort_by": "Ordenar por",
-    "characters_found": "{{count}} characters found",
+    "characters_found": "{{count, number}} characters found",
     "no_results_title": "No se encontraron personajes",
     "no_results_desc": "No pudimos encontrar ningún personaje que coincida con sus criterios. Intente aflojar sus filtros.",
     "initial_title": "¿Listo para buscar?",
@@ -440,7 +492,8 @@
     "onetime": "Personaje único",
     "original_name": "Nombre original",
     "international_names": "Nombres internacionales",
-    "no_description": "No hay descripción disponible para este personaje."
+    "no_description": "No hay descripción disponible para este personaje.",
+    "name_or_code": "Name or code"
   },
   "legal": {
     "link": "Aviso legal",
@@ -484,7 +537,9 @@
     "entry_other": "{{count}} entries",
     "issue_singular": "edición",
     "issues_plural": "ediciones",
-    "error_load": "Imposible cargar los detalles de la edición."
+    "error_load": "Imposible cargar los detalles de la edición.",
+    "show_more_years": "Show more years",
+    "untitled": "Untitled"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -507,5 +562,73 @@
       "title": "Únase al proyecto",
       "desc": "¡Puede contribuir al proyecto en GitHub o unirse a nuestro servidor de Discord!"
     }
+  },
+  "home": {
+    "title": "InducksButBetter",
+    "subtitle": "Explore the Inducks database",
+    "search_placeholder": "Search for a code, author, character, magazine...",
+    "db_stats_title": "Database Statistics",
+    "latest_releases_title": "Latest releases",
+    "db_missing": "Please load a local database in Settings to view statistics and publications.",
+    "db_statistics": "Statistics",
+    "no_results": "No results found",
+    "type_author_one": "Author",
+    "type_author_other": "Authors",
+    "type_character_one": "Character",
+    "type_character_other": "Characters",
+    "type_publication_one": "Magazine",
+    "type_publication_other": "Magazines",
+    "type_issue_one": "Issue",
+    "type_issue_other": "Issues",
+    "type_story_one": "Story",
+    "type_story_other": "Stories",
+    "or_advanced": "Or go to",
+    "advanced_search_link": "advanced search",
+    "latest_releases_range": "last 7 days",
+    "no_releases": "No releases recorded in the last 7 days.",
+    "voice_search": "Voice search"
+  },
+  "pwa": {
+    "installed_title": "App installed",
+    "installed_desc": "You are already using InducksButBetter as an installed app.",
+    "install_title": "Install the app",
+    "install_desc": "Install InducksButBetter on your device for quick access, full-screen mode, and a better experience.",
+    "install_button": "Install",
+    "install_manual": "On iOS, tap Safari's share button then \"Add to Home Screen\". On Android, use the browser menu."
+  },
+  "csv": {
+    "storyCode": "Story code",
+    "originalTitle": "Title (original)",
+    "translatedTitle": "Title (translated)",
+    "releaseDate": "Release date",
+    "pages": "Pages",
+    "type": "Type",
+    "hero": "Hero",
+    "creators": "Creators",
+    "publications": "Publications"
+  },
+  "suggestions": {
+    "title": "Send us your suggestions",
+    "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
+    "label_name": "Name or nickname (optional)",
+    "placeholder_name": "What's your name?",
+    "label_type": "Suggestion type",
+    "type_idea": "Idea",
+    "type_bug": "Bug",
+    "type_db": "Data",
+    "type_other": "Other",
+    "label_message": "Your message",
+    "placeholder_message": "Describe your idea or the problem you ran into...",
+    "sending": "Sending...",
+    "sent": "Sent successfully!",
+    "submit": "Send the suggestion",
+    "error_short": "Your message is too short (10 characters minimum).",
+    "success": "Thank you! Your suggestion has been sent."
+  },
+  "speech": {
+    "error_denied": "Microphone access denied. Check your browser permissions.",
+    "error_no_speech": "No speech detected. Speak louder or check your microphone.",
+    "error_start": "Could not start voice recording.",
+    "error_generic": "Microphone error: {{error}}"
   }
 }

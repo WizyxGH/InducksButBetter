@@ -5,7 +5,7 @@ import { Maximize2, BookOpen } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FlagBadge } from "@/components/FlagBadge"
-import { navigate } from "@/lib/navigation";
+import { navigate, isModifiedClick } from "@/lib/navigation";
 import { Link } from "@/components/ui/link";
 import { routes } from "@/lib/routes";
 
@@ -59,13 +59,15 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
     };
   }, [row.issue_thumb]);
 
-  const targetHref = routes.issue(row.issuecode);
+  const targetHref = routes.issue(row.issuecode, row.publicationcode);
 
   const handleClick = (e: React.MouseEvent) => {
-    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
-      return;
-    }
+    // Modified clicks stay native so the anchor opens a new tab.
+    if (isModifiedClick(e)) return;
     if (onSelect) {
+      // Without this, <Link> would *also* push a history entry, so a single
+      // click would create two — which is what made the back button skip.
+      e.preventDefault();
       onSelect(row.issuecode);
     }
   };
@@ -170,17 +172,17 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
             )}
             {row.price && (
               <div>
-                <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('search.price') || 'Prix'} :</span> {row.price}
+                <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('search.price')} :</span> {row.price}
               </div>
             )}
             {row.size && (
               <div>
-                <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('search.dimensions') || 'Format'} :</span> {row.size}
+                <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('search.dimensions')} :</span> {row.size}
               </div>
             )}
             {row.attached && (
               <div className="col-span-1 sm:col-span-2">
-                <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('search.attached') || 'Supplément'} :</span> {row.attached}
+                <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('search.attached')} :</span> {row.attached}
               </div>
             )}
           </div>

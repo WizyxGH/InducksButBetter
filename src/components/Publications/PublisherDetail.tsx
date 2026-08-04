@@ -157,16 +157,16 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
                   className="w-6 h-4.5 rounded object-cover shadow-xs border border-border-subtle/10 shrink-0"
                 />
               )}
-              {t("publisher.title", { publisher: cleanPublisherName(publisherName) }) || `Éditeur : ${cleanPublisherName(publisherName)}`}
+              {t("publisher.title", { publisher: cleanPublisherName(publisherName) })}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t("publisher.desc") || "Explorez les magazines et séries édités par cette maison d'édition."}
+              {t("publisher.desc")}
             </p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
           <Input
-            placeholder={t("countryPubs.search_placeholder") || "Filtrer les publications..."}
+            placeholder={t("countryPubs.search_placeholder")}
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             className="w-full sm:w-60 rounded-xl h-10 border-border-subtle bg-surface"
@@ -174,10 +174,10 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
           {availableCountries.length > 1 && (
             <Select value={selectedCountry} onValueChange={setSelectedCountry}>
               <SelectTrigger className="w-full sm:w-40 h-10 border-border-subtle bg-surface rounded-xl text-sm">
-                <SelectValue placeholder={t("common.all_countries") || "Tous les pays"} />
+                <SelectValue placeholder={t("common.all_countries")} />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border-subtle bg-surface">
-                <SelectItem value="all" className="rounded-lg">{t("common.all_countries") || "Tous les pays"}</SelectItem>
+                <SelectItem value="all" className="rounded-lg">{t("common.all_countries")}</SelectItem>
                 {availableCountries.map(code => (
                   <SelectItem key={code} value={code} className="rounded-lg">
                     <span className="flex items-center gap-2">
@@ -193,16 +193,16 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
           )}
           <Select value={sortOrder} onValueChange={setSortOrder}>
             <SelectTrigger className="w-full sm:w-48 h-10 border-border-subtle bg-surface rounded-xl text-sm">
-              <SelectValue placeholder={t("search.sort_by") || "Trier par..."} />
+              <SelectValue placeholder={t("search.sort_by")} />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-border-subtle bg-surface">
-              <SelectItem value="title_asc" className="rounded-lg">{t("sort.title_az") || "Titre A-Z"}</SelectItem>
-              <SelectItem value="title_desc" className="rounded-lg">{t("sort.title_za") || "Titre Z-A"}</SelectItem>
-              <SelectItem value="issues_desc" className="rounded-lg">{t("sort.issues_desc") || "Plus de numéros"}</SelectItem>
-              <SelectItem value="issues_asc" className="rounded-lg">{t("sort.issues_asc") || "Moins de numéros"}</SelectItem>
-              <SelectItem value="date_asc" className="rounded-lg">{t("sort.oldest_first") || "Plus anciennes d'abord"}</SelectItem>
-              <SelectItem value="date_desc" className="rounded-lg">{t("sort.newest_first") || "Plus récentes d'abord"}</SelectItem>
-              <SelectItem value="country_asc" className="rounded-lg">{t("sort.country_code") || "Pays & Code"}</SelectItem>
+              <SelectItem value="title_asc" className="rounded-lg">{t("sort.title_az")}</SelectItem>
+              <SelectItem value="title_desc" className="rounded-lg">{t("sort.title_za")}</SelectItem>
+              <SelectItem value="issues_desc" className="rounded-lg">{t("sort.issues_desc")}</SelectItem>
+              <SelectItem value="issues_asc" className="rounded-lg">{t("sort.issues_asc")}</SelectItem>
+              <SelectItem value="date_asc" className="rounded-lg">{t("sort.oldest_first")}</SelectItem>
+              <SelectItem value="date_desc" className="rounded-lg">{t("sort.newest_first")}</SelectItem>
+              <SelectItem value="country_asc" className="rounded-lg">{t("sort.country_code")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -218,7 +218,7 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
             >
               <div className="min-w-0 space-y-0.5 flex-1">
                 <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors leading-tight">
-                  {p.title || "Sans titre"}
+                  {p.title || t("publication.untitled")}
                 </h3>
                 <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1.5">
                   {getFlagUrl(p.countrycode) && (

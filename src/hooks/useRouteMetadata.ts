@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { executeQuery } from "@/lib/db";
+import { issueCodeKey } from "@/lib/issueCode";
 
 interface RouteMetadataProps {
   activeTab: string;
@@ -41,14 +42,17 @@ export function useRouteMetadata({
             description = `Explore details, publications, appearances, and creators of the Disney comic story: ${storyTitle} (${selectedStorycode}).`;
           }
         } else if (selectedIssuecode) {
+          // The code coming from the URL has no alignment padding, so match on
+          // a whitespace-insensitive key rather than on the raw column.
           const res = await executeQuery({
             sql: `
-              SELECT i.title as issue_title, p.title as pub_title, i.issuenumber 
-              FROM inducks_issue i 
-              JOIN inducks_publication p ON i.publicationcode = p.publicationcode 
-              WHERE i.issuecode = ?
+              SELECT i.title as issue_title, p.title as pub_title, i.issuenumber
+              FROM inducks_issue i
+              JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+              WHERE REPLACE(i.issuecode, ' ', '') = ?
+              LIMIT 1
             `,
-            args: [selectedIssuecode]
+            args: [issueCodeKey(selectedIssuecode)]
           });
           if (!isCancelled && res.rows.length > 0) {
             const row = res.rows[0];

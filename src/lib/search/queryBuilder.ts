@@ -1,6 +1,20 @@
 
 import { SearchFilters, PublicationsSearchFilters, SearchQueryResponse, StorycodeCandidate } from './types';
 
+/**
+ * Normalises a multi-value filter into a clean list of codes.
+ *
+ * Filters reach the builder either as an array (UI state) or as a
+ * comma-separated string (URL / legacy callers). Both forms must collapse to
+ * `[]` when nothing is selected — an empty string must never be interpreted as
+ * "match the empty value", which used to silently void every search.
+ */
+export function normalizeList(value: string[] | string | undefined | null): string[] {
+  if (value === undefined || value === null) return [];
+  const raw = Array.isArray(value) ? value : String(value).split(",");
+  return raw.map((v) => String(v).trim()).filter(Boolean);
+}
+
 export function getStorycodeCandidates(code: string): StorycodeCandidate[] {
   let h = code.trim();
   h = h.replace(/\s+/g, ' ');
@@ -145,46 +159,53 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     if (inducksCodesOnly) {
       const prefix = code.toUpperCase();
       const prefixEnd = prefix.slice(0, -1) + String.fromCharCode(prefix.charCodeAt(prefix.length - 1) + 1);
-      where.push("s.storycode >= ? AND s.storycode < ?");
+      
+      const clauses: string[] = [];
+      clauses.push("(s.storycode COLLATE NOCASE >= ? AND s.storycode COLLATE NOCASE < ?)");
       whereParams.push(prefix, prefixEnd);
 
       const stripped = prefix.replace(/\s+/g, '');
-      where.push("REPLACE(s.storycode, ' ', '') LIKE ?");
+      clauses.push("REPLACE(s.storycode, ' ', '') COLLATE NOCASE LIKE ?");
       whereParams.push(stripped + '%');
+
+      where.push("(" + clauses.join(" OR ") + ")");
     } else {
       const candidates = getStorycodeCandidates(code);
       if (candidates.length > 0) {
-        const rangeClauses: string[] = [];
-        const likeClauses: string[] = [];
-        
+        const clauses: string[] = [];
+
         for (const cand of candidates) {
           const parts = cand.unpacked.split(/\s+/).filter(Boolean);
-          if (parts.length > 0) {
-            const prefixParts = parts.slice(0, 2);
-            const prefix = prefixParts.join(' ').toUpperCase();
+
+          // An indexed range scan is only usable while the typed code is still
+          // a bare publication prefix ("I TL"). Once an issue number is typed
+          // ("I TL 3273-6"), a range over the first two words would keep the
+          // publication and throw the number away — it used to return every
+          // Topolino story, OR'd with the precise clause below.
+          if (parts.length > 0 && parts.length <= 2) {
+            const prefix = parts.join(' ').toUpperCase();
             const prefixEnd = prefix.slice(0, -1) + String.fromCharCode(prefix.charCodeAt(prefix.length - 1) + 1);
-            
-            rangeClauses.push("(s.storycode >= ? AND s.storycode < ?)");
+
+            clauses.push("(s.storycode COLLATE NOCASE >= ? AND s.storycode COLLATE NOCASE < ?)");
             whereParams.push(prefix, prefixEnd);
           }
-          
-          likeClauses.push("REPLACE(s.storycode, ' ', '') LIKE ?");
+
+          // Whitespace-insensitive prefix match: story codes are padded for
+          // column alignment ("I TL   18-A"), so the raw column cannot be
+          // compared against what the user typed.
+          clauses.push("REPLACE(s.storycode, ' ', '') COLLATE NOCASE LIKE ?");
           whereParams.push(cand.packed + '%');
         }
-        
-        if (rangeClauses.length > 0) {
-          where.push("(" + rangeClauses.join(" OR ") + ")");
-        }
-        if (likeClauses.length > 0) {
-          where.push("(" + likeClauses.join(" OR ") + ")");
-        }
+
+        where.push("(" + clauses.join(" OR ") + ")");
       }
     }
   }
 
   if (filters.title) {
-    where.push("(s.storyheadercode IN (SELECT sh.storyheadercode FROM inducks_storyheader sh WHERE sh.title LIKE ?) OR s.storycode IN (SELECT sv_t.storycode FROM inducks_entry e_t JOIN inducks_storyversion sv_t ON e_t.storyversioncode = sv_t.storyversioncode WHERE e_t.title LIKE ?))");
-    whereParams.push(`%${filters.title}%`, `%${filters.title}%`);
+    const likeVal = `%${filters.title}%`;
+    where.push("(s.title LIKE ? OR s.storycode LIKE ? OR s.storycomment LIKE ? OR s.storyheadercode IN (SELECT sh.storyheadercode FROM inducks_storyheader sh WHERE sh.title LIKE ?) OR s.storycode IN (SELECT sv_t.storycode FROM inducks_entry e_t JOIN inducks_storyversion sv_t ON e_t.storyversioncode = sv_t.storyversioncode WHERE e_t.title LIKE ?))");
+    whereParams.push(likeVal, likeVal, likeVal, likeVal, likeVal);
   }
 
   if (filters.description) {
@@ -202,106 +223,69 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     svWhere.push(descClause);
   }
 
-  if (filters.kind !== undefined && filters.kind !== null) {
-    const kinds = (Array.isArray(filters.kind) ? filters.kind : String(filters.kind).split(",")).map(k => k.trim());
-    if (kinds.length > 0) {
-      // Inducks uses 'n' for "Histoire" (which is technically narrative text story).
-      // Standard comic stories have no kind (NULL or empty string). 
-      // If the user selects "Histoire" ('n'), we should also include empty kinds.
-      const hasN = kinds.includes("n");
-      const hasEmpty = kinds.includes("") || hasN;
-      const otherKinds = kinds.filter(k => k !== "");
-      
-      let clauses = [];
-      if (hasEmpty) {
-        clauses.push("(sv.kind = '' OR sv.kind IS NULL)");
-      }
-      if (otherKinds.length > 0) {
-        clauses.push(`sv.kind IN (${otherKinds.map(() => "?").join(",")})`);
-        svWhereParams.push(...otherKinds);
-      }
-      if (clauses.length > 0) {
-        svWhere.push(`(${clauses.join(" OR ")})`);
-      }
-    }
+  const kinds = normalizeList(filters.kind);
+  if (kinds.length > 0) {
+    svWhere.push(`sv.kind IN (${kinds.map(() => "?").join(",")})`);
+    svWhereParams.push(...kinds);
   }
 
-  if (filters.charactercode) {
-    const codes = (Array.isArray(filters.charactercode) ? filters.charactercode : String(filters.charactercode).split(",")).map(c => c.trim()).filter(Boolean);
-    if (codes.length > 0) {
-      codes.forEach(code => {
-        where.push(`s.storycode IN (SELECT sv_c.storycode FROM inducks_storyversion sv_c JOIN inducks_appearance app_c ON sv_c.storyversioncode = app_c.storyversioncode WHERE app_c.charactercode COLLATE NOCASE = ?)`);
-        whereParams.push(code);
-      });
-    }
+  const characterCodes = normalizeList(filters.charactercode);
+  characterCodes.forEach(code => {
+    where.push(`s.storycode IN (SELECT sv_c.storycode FROM inducks_storyversion sv_c JOIN inducks_appearance app_c ON sv_c.storyversioncode = app_c.storyversioncode WHERE app_c.charactercode COLLATE NOCASE = ?)`);
+    whereParams.push(code);
+  });
+
+  const heroCodes = normalizeList(filters.herocode);
+  heroCodes.forEach(code => {
+    where.push(`s.storycode IN (SELECT sv_h.storycode FROM inducks_storyversion sv_h JOIN inducks_appearance app_h ON sv_h.storyversioncode = app_h.storyversioncode WHERE app_h.charactercode COLLATE NOCASE = ? AND app_h.number = 0)`);
+    whereParams.push(code);
+  });
+
+  const excludedCharacterCodes = normalizeList(filters.excludeCharactercode);
+  if (excludedCharacterCodes.length > 0) {
+    svWhere.push(`NOT EXISTS (SELECT 1 FROM inducks_appearance app_ex WHERE app_ex.storyversioncode = sv.storyversioncode AND app_ex.charactercode COLLATE NOCASE IN (${excludedCharacterCodes.map(() => "?").join(",")}))`);
+    svWhereParams.push(...excludedCharacterCodes);
   }
 
-  if (filters.herocode) {
-    const codes = (Array.isArray(filters.herocode) ? filters.herocode : String(filters.herocode).split(",")).map(c => c.trim()).filter(Boolean);
-    if (codes.length > 0) {
-      codes.forEach(code => {
-        where.push(`s.storycode IN (SELECT sv_h.storycode FROM inducks_storyversion sv_h JOIN inducks_appearance app_h ON sv_h.storyversioncode = app_h.storyversioncode WHERE app_h.charactercode COLLATE NOCASE = ? AND app_h.number = 0)`);
-        whereParams.push(code);
-      });
-    }
-  }
-
-  if (filters.excludeCharactercode) {
-    const codes = (Array.isArray(filters.excludeCharactercode) ? filters.excludeCharactercode : String(filters.excludeCharactercode).split(",")).map(c => c.trim()).filter(Boolean);
-    if (codes.length > 0) {
-      svWhere.push(`NOT EXISTS (SELECT 1 FROM inducks_appearance app_ex WHERE app_ex.storyversioncode = sv.storyversioncode AND app_ex.charactercode COLLATE NOCASE IN (${codes.map(() => "?").join(",")}))`);
-      svWhereParams.push(...codes);
-    }
-  }
-
-  if (filters.universes && Array.isArray(filters.universes)) {
-    const universes = filters.universes.filter(u => u && String(u).trim());
-    if (universes.length > 0) {
-      where.push(`s.storycode IN (SELECT sv_u.storycode FROM inducks_storyversion sv_u JOIN inducks_appearance app_u ON sv_u.storyversioncode = app_u.storyversioncode JOIN inducks_ucrelation ucr ON app_u.charactercode = ucr.charactercode WHERE app_u.number = 0 AND ucr.universecode IN (${universes.map(() => "?").join(",")}))`);
-      whereParams.push(...universes);
-    }
+  const universes = normalizeList(filters.universes);
+  if (universes.length > 0) {
+    where.push(`s.storycode IN (SELECT sv_u.storycode FROM inducks_storyversion sv_u JOIN inducks_appearance app_u ON sv_u.storyversioncode = app_u.storyversioncode JOIN inducks_ucrelation ucr ON app_u.charactercode = ucr.charactercode WHERE app_u.number = 0 AND ucr.universecode IN (${universes.map(() => "?").join(",")}))`);
+    whereParams.push(...universes);
   }
 
   if (filters.noOtherCharacters === true || String(filters.noOtherCharacters) === "true") {
-    const selectedCharCodes = [
-      ...(Array.isArray(filters.charactercode || []) ? (filters.charactercode || []) : String(filters.charactercode || "").split(",")),
-      ...(Array.isArray(filters.herocode || []) ? (filters.herocode || []) : String(filters.herocode || "").split(","))
-    ].map(c => c.trim()).filter(Boolean);
-    const distinctSelectedCount = new Set(selectedCharCodes).size;
+    const distinctSelectedCount = new Set([...characterCodes, ...heroCodes]).size;
     if (distinctSelectedCount > 0) {
       where.push(`s.storycode IN (SELECT sv_no.storycode FROM inducks_storyversion sv_no WHERE (SELECT COUNT(DISTINCT charactercode) FROM inducks_appearance app_count WHERE app_count.storyversioncode = sv_no.storyversioncode) = ?)`);
       whereParams.push(distinctSelectedCount);
     }
   }
 
-  if (filters.personRoles && Array.isArray(filters.personRoles)) {
-    const roles = filters.personRoles.filter(pr => pr.code && String(pr.code).trim());
-    if (roles.length > 0) {
-      roles.forEach(pr => {
-        let roleCondition = "";
-        if (pr.role && pr.role !== 'any') {
-          roleCondition = `AND sj.plotwritartink LIKE '%${pr.role}%'`;
-        }
-        svWhere.push(`sv.storyversioncode IN (SELECT sj.storyversioncode FROM inducks_storyjob sj WHERE sj.personcode = ? ${roleCondition})`);
-        svWhereParams.push(pr.code.trim());
-      });
-    }
+  // Credits are recorded per *storyversion*, and a single story can spread its
+  // credits over several versions (an original and a redrawn one, for
+  // instance). Matching authors at the storyversion level therefore drops
+  // stories whose co-authors sit on different versions, so every author filter
+  // is evaluated at the story level instead — one clause per author, ANDed.
+  const personRoles = (filters.personRoles ?? []).filter(pr => pr?.code && String(pr.code).trim());
+  personRoles.forEach(pr => {
+    const hasRole = pr.role && pr.role !== "any";
+    where.push(
+      `s.storycode IN (SELECT sv_p.storycode FROM inducks_storyversion sv_p JOIN inducks_storyjob sj_p ON sv_p.storyversioncode = sj_p.storyversioncode WHERE sj_p.personcode = ?${hasRole ? " AND sj_p.plotwritartink LIKE ?" : ""})`
+    );
+    whereParams.push(String(pr.code).trim());
+    if (hasRole) whereParams.push(`%${pr.role}%`);
+  });
+
+  const excludedPersonCodes = normalizeList(filters.excludePersoncode);
+  if (excludedPersonCodes.length > 0) {
+    where.push(`s.storycode NOT IN (SELECT sv_ex.storycode FROM inducks_storyversion sv_ex JOIN inducks_storyjob sj_ex ON sv_ex.storyversioncode = sj_ex.storyversioncode WHERE sj_ex.personcode IN (${excludedPersonCodes.map(() => "?").join(",")}))`);
+    whereParams.push(...excludedPersonCodes);
   }
 
-  if (filters.excludePersoncode) {
-    const codes = (Array.isArray(filters.excludePersoncode) ? filters.excludePersoncode : String(filters.excludePersoncode).split(",")).map(c => c.trim()).filter(Boolean);
-    if (codes.length > 0) {
-      svWhere.push(`sv.storyversioncode NOT IN (SELECT sj_ex.storyversioncode FROM inducks_storyjob sj_ex WHERE sj_ex.personcode IN (${codes.map(() => "?").join(",")}))`);
-      svWhereParams.push(...codes);
-    }
-  }
-
-  if (filters.nationality) {
-    const nationalities = (Array.isArray(filters.nationality) ? filters.nationality : String(filters.nationality).split(",")).map(n => n.trim()).filter(Boolean);
-    if (nationalities.length > 0) {
-      svWhere.push(`EXISTS (SELECT 1 FROM inducks_storyjob sj_n JOIN inducks_person p_n ON sj_n.personcode = p_n.personcode WHERE sj_n.storyversioncode = sv.storyversioncode AND p_n.nationalitycountrycode IN (${nationalities.map(() => "?").join(",")}))`);
-      svWhereParams.push(...nationalities);
-    }
+  const nationalities = normalizeList(filters.nationality);
+  if (nationalities.length > 0) {
+    where.push(`s.storycode IN (SELECT sv_n.storycode FROM inducks_storyversion sv_n JOIN inducks_storyjob sj_n ON sv_n.storyversioncode = sj_n.storyversioncode JOIN inducks_person p_n ON sj_n.personcode = p_n.personcode WHERE p_n.nationalitycountrycode IN (${nationalities.map(() => "?").join(",")}))`);
+    whereParams.push(...nationalities);
   }
 
   if (filters.publisherid) {
@@ -309,33 +293,26 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     svWhereParams.push(filters.publisherid);
   }
 
-  if (filters.country || filters.language) {
-    const countries = (Array.isArray(filters.country) ? filters.country : [filters.country || ""]).filter(Boolean);
-    const languages = (Array.isArray(filters.language) ? filters.language : [filters.language || ""]).filter(Boolean);
+  const countries = normalizeList(filters.country);
+  if (countries.length > 0) {
+    const actualCountries = countries.filter(c => c !== 'UNPUBLISHED');
+    const hasUnpublished = countries.includes('UNPUBLISHED');
 
-    if (countries.length > 0 || languages.length > 0) {
-      if (countries.length > 0) {
-        const actualCountries = countries.filter(c => c !== 'UNPUBLISHED');
-        const hasUnpublished = countries.includes('UNPUBLISHED');
-
-        const parts = [];
-        if (actualCountries.length > 0) {
-          parts.push(`EXISTS (SELECT 1 FROM inducks_entry e_c JOIN inducks_issue i_c ON e_c.issuecode = i_c.issuecode JOIN inducks_publication p_c ON i_c.publicationcode = p_c.publicationcode WHERE e_c.storyversioncode = sv.storyversioncode AND p_c.countrycode IN (${actualCountries.map(() => "?").join(",")}))`);
-          svWhereParams.push(...actualCountries);
-        }
-        if (hasUnpublished) {
-          parts.push(`NOT EXISTS (SELECT 1 FROM inducks_entry e_unpub WHERE e_unpub.storyversioncode = sv.storyversioncode)`);
-        }
-
-        if (parts.length > 0) {
-          svWhere.push(`(${parts.join(" OR ")})`);
-        }
-      }
-      if (languages.length > 0) {
-        svWhere.push(`EXISTS (SELECT 1 FROM inducks_entry e_l JOIN inducks_issue i_l ON e_l.issuecode = i_l.issuecode JOIN inducks_publication p_l ON i_l.publicationcode = p_l.publicationcode WHERE e_l.storyversioncode = sv.storyversioncode AND p_l.languagecode IN (${languages.map(() => "?").join(",")}))`);
-        svWhereParams.push(...languages);
-      }
+    const parts: string[] = [];
+    if (actualCountries.length > 0) {
+      parts.push(`EXISTS (SELECT 1 FROM inducks_entry e_c JOIN inducks_issue i_c ON e_c.issuecode = i_c.issuecode JOIN inducks_publication p_c ON i_c.publicationcode = p_c.publicationcode WHERE e_c.storyversioncode = sv.storyversioncode AND p_c.countrycode IN (${actualCountries.map(() => "?").join(",")}))`);
+      svWhereParams.push(...actualCountries);
     }
+    if (hasUnpublished) {
+      parts.push(`NOT EXISTS (SELECT 1 FROM inducks_entry e_unpub WHERE e_unpub.storyversioncode = sv.storyversioncode)`);
+    }
+    svWhere.push(`(${parts.join(" OR ")})`);
+  }
+
+  const languages = normalizeList(filters.language);
+  if (languages.length > 0) {
+    svWhere.push(`EXISTS (SELECT 1 FROM inducks_entry e_l JOIN inducks_issue i_l ON e_l.issuecode = i_l.issuecode JOIN inducks_publication p_l ON i_l.publicationcode = p_l.publicationcode WHERE e_l.storyversioncode = sv.storyversioncode AND p_l.languagecode IN (${languages.map(() => "?").join(",")}))`);
+    svWhereParams.push(...languages);
   }
 
   if (filters.hasImage && filters.hasImage !== 'all') {
@@ -355,44 +332,34 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     if (filters.pagesMax) { svWhere.push("sv.entirepages <= ?"); svWhereParams.push(parseInt(String(filters.pagesMax), 10)); }
   }
 
-  // Removed the '1920' hardcoded limit as it breaks empty dates
+  // Note: no hardcoded '1920' floor here — it would drop every story with an
+  // empty firstpublicationdate, which is the majority of the catalogue.
+  const dateAfter = filters.dateAfter?.trim() || "";
+  const dateBefore = filters.dateBefore?.trim() || "";
 
-  const hasDateAfter = !!filters.dateAfter;
-  const hasDateBefore = !!filters.dateBefore;
-
-  if (hasDateAfter || hasDateBefore) {
-    const mainDateConds = [];
-    const issueDateConds = [];
+  if (dateAfter || dateBefore) {
+    // Stories without a reliable firstpublicationdate fall back to the oldest
+    // issue date of any of their entries.
     const issueDateSubquery = `(SELECT MIN(i_d.oldestdate) FROM inducks_storyversion sv_d JOIN inducks_entry e_d ON sv_d.storyversioncode = e_d.storyversioncode JOIN inducks_issue i_d ON e_d.issuecode = i_d.issuecode WHERE sv_d.storycode = s.storycode AND i_d.oldestdate IS NOT NULL AND i_d.oldestdate != '')`;
-    
-    if (hasDateAfter) {
-      const da = filters.dateAfter!.trim();
-      let daParam = da;
+
+    const mainDateConds: string[] = [];
+    const issueDateConds: string[] = [];
+    const bounds: string[] = [];
+
+    if (dateAfter) {
       mainDateConds.push("s.firstpublicationdate >= ?");
       issueDateConds.push(`${issueDateSubquery} >= ?`);
-      whereParams.push(daParam);
+      bounds.push(dateAfter);
     }
-    
-    if (hasDateBefore) {
-      const db = filters.dateBefore!.trim();
-      let dbParam = db;
+    if (dateBefore) {
       mainDateConds.push("s.firstpublicationdate <= ?");
       issueDateConds.push(`${issueDateSubquery} <= ?`);
-      whereParams.push(dbParam);
+      bounds.push(dateBefore);
     }
 
     where.push(`((s.firstpublicationdate != '' AND s.firstpublicationdate NOT LIKE '?%' AND ${mainDateConds.join(" AND ")}) OR ((s.firstpublicationdate = '' OR s.firstpublicationdate IS NULL OR s.firstpublicationdate LIKE '?%') AND ${issueDateConds.join(" AND ")}))`);
-    
-    if (hasDateAfter) {
-      const da = filters.dateAfter!.trim();
-      let daParam = da;
-      whereParams.push(daParam);
-    }
-    if (hasDateBefore) {
-      const db = filters.dateBefore!.trim();
-      let dbParam = db;
-      whereParams.push(dbParam);
-    }
+    // The same bounds are bound twice: once for the main branch, once for the fallback.
+    whereParams.push(...bounds, ...bounds);
   }
 
   if (filters.stripsperpage && filters.stripsperpage !== 'all') {
@@ -412,12 +379,10 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     svWhere.push(`EXISTS (SELECT 1 FROM inducks_entry e_p WHERE e_p.storyversioncode = sv.storyversioncode AND e_p.part IS NOT NULL AND e_p.part != '')`);
   }
 
-  if (filters.subseriescode) {
-    const codes = (Array.isArray(filters.subseriescode) ? filters.subseriescode : String(filters.subseriescode).split(",")).map(c => c.trim()).filter(Boolean);
-    if (codes.length > 0) {
-      where.push(`s.storycode IN (SELECT ss.storycode FROM inducks_storysubseries ss WHERE ss.subseriescode IN (${codes.map(() => "?").join(",")}))`);
-      whereParams.push(...codes);
-    }
+  const subseriesCodes = normalizeList(filters.subseriescode);
+  if (subseriesCodes.length > 0) {
+    where.push(`s.storycode IN (SELECT ss.storycode FROM inducks_storysubseries ss WHERE ss.subseriescode IN (${subseriesCodes.map(() => "?").join(",")}))`);
+    whereParams.push(...subseriesCodes);
   }
 
   if (svWhere.length > 0) {
@@ -463,9 +428,14 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     orderBy = "(SELECT COUNT(e_sort.entrycode) FROM inducks_entry e_sort JOIN inducks_storyversion sv_sort ON e_sort.storyversioncode = sv_sort.storyversioncode WHERE sv_sort.storycode = s.storycode) DESC, s.storycode ASC";
   } else if (sort === "published_least") {
     orderBy = "(SELECT COUNT(e_sort.entrycode) FROM inducks_entry e_sort JOIN inducks_storyversion sv_sort ON e_sort.storyversioncode = sv_sort.storyversioncode WHERE sv_sort.storycode = s.storycode) ASC, s.storycode ASC";
-  } else if (sort === "pubdate_desc" && isPreciseStorycodeSearch) {
-    // Optimization: if searching for a precise storycode, order by length to prioritize exact matches
-    orderBy = "LENGTH(s.storycode) ASC, s.storycode ASC";
+  }
+
+  // When a full story code is typed, the code itself is the ranking the user
+  // expects: the exact match, then its parts (…-6A, …-6B). Publication date
+  // would scatter them. This used to be wired to `pubdate_desc` only, while the
+  // form defaults to `pubdate_asc`, so it never applied.
+  if (isPreciseStorycodeSearch) {
+    orderBy = `LENGTH(s.storycode) ASC, s.storycode ASC`;
   }
 
   const whereSql = where.length > 0 ? "WHERE " + where.join(" AND ") : "";
@@ -560,20 +530,26 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
            ELSE sv.plotsummary
          END)
       ) as full_description,
-      (SELECT GROUP_CONCAT(DISTINCT sj.plotwritartink || ':' || p.personcode || '|' || p.fullname) 
-       FROM inducks_storyjob sj 
-       JOIN inducks_person p ON sj.personcode = p.personcode 
+      -- GROUP_CONCAT(DISTINCT ...) silently ignores the separator argument and
+      -- always joins with ',', which glued every credit into a single entry
+      -- ("Roberto Moscato,w") and hid the artists. Duplicates are removed on
+      -- the client instead, so the ';' separator is honoured here.
+      (SELECT GROUP_CONCAT(sj.plotwritartink || ':' || p.personcode || '|' || p.fullname, ';')
+       FROM inducks_storyjob sj
+       JOIN inducks_person p ON sj.personcode = p.personcode
        WHERE sj.storyversioncode = sv.storyversioncode) as creators,
       (SELECT GROUP_CONCAT(app_c.charactercode || '|' || COALESCE(cn.charactername, c.charactername) || '|' || COALESCE(app_c.appearancecomment, '') || '|' || COALESCE(cn.characternamecomment, c.charactercomment, '') || '|' || COALESCE((SELECT url FROM inducks_characterurl cu WHERE cu.charactercode = app_c.charactercode LIMIT 1), ''), ';')
        FROM (SELECT charactercode, appearancecomment, number FROM inducks_appearance WHERE storyversioncode = sv.storyversioncode ORDER BY number ASC) app_c
        JOIN inducks_character c ON app_c.charactercode = c.charactercode
        LEFT JOIN inducks_charactername cn ON app_c.charactercode = cn.charactercode AND cn.languagecode = ? AND cn.preferred = 'Y'
       ) as character_list,
-      (SELECT GROUP_CONCAT(DISTINCT p_c.countrycode || '|' || p_c.title || '|' || i_c.issuenumber) 
-       FROM inducks_entry e_c 
+      -- Same reason as the creators column: ',' cannot separate these,
+      -- because 120 publication titles contain one.
+      (SELECT GROUP_CONCAT(p_c.countrycode || '|' || p_c.title || '|' || i_c.issuenumber, ';')
+       FROM inducks_entry e_c
        JOIN inducks_storyversion sv_c ON e_c.storyversioncode = sv_c.storyversioncode
-       JOIN inducks_issue i_c ON e_c.issuecode = i_c.issuecode 
-       JOIN inducks_publication p_c ON i_c.publicationcode = p_c.publicationcode 
+       JOIN inducks_issue i_c ON e_c.issuecode = i_c.issuecode
+       JOIN inducks_publication p_c ON i_c.publicationcode = p_c.publicationcode
        WHERE sv_c.storycode = s.storycode) as publication_list,
       (SELECT app_h.charactercode 
        FROM inducks_appearance app_h 
@@ -614,7 +590,9 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
 
   if (filters.title) {
     const like = `%${filters.title.trim()}%`;
-    where.push("(pn.publicationname LIKE ? OR i.title LIKE ? OR p.publicationcode LIKE ?)");
+    // EXISTS rather than a join: a publication carries one name per language,
+    // and joining them would multiply every issue row (and the total count).
+    where.push("(EXISTS (SELECT 1 FROM inducks_publicationname pn_t WHERE pn_t.publicationcode = p.publicationcode AND pn_t.publicationname LIKE ?) OR i.title LIKE ? OR p.publicationcode LIKE ?)");
     p.push(like, like, like);
   }
 
@@ -725,55 +703,60 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
     SELECT COUNT(*) as total
     FROM inducks_issue i
     JOIN inducks_publication p ON i.publicationcode = p.publicationcode
-    LEFT JOIN inducks_publicationname pn ON p.publicationcode = pn.publicationcode
     ${whereClause}
   `;
+
+  // `inducks_publicationname` lists every historic/alternative name of a
+  // publication, so it must never be joined (it would duplicate issue rows).
+  // The canonical current title lives on `inducks_publication.title`.
+  const seriesTitle = `COALESCE(
+        NULLIF(p.title, ''),
+        (SELECT pn.publicationname FROM inducks_publicationname pn WHERE pn.publicationcode = p.publicationcode LIMIT 1)
+      ) as series_title`;
 
   const mainQuery = `
     WITH MatchedIssues AS (
       SELECT i.issuecode
       FROM inducks_issue i
       JOIN inducks_publication p ON i.publicationcode = p.publicationcode
-      LEFT JOIN inducks_publicationname pn ON p.publicationcode = pn.publicationcode
       ${whereClause}
       ORDER BY ${orderBy}
       LIMIT ? OFFSET ?
     )
-    SELECT 
-      i.issuecode, 
-      i.issuenumber, 
-      i.title as issue_title, 
-      i.pages, 
-      i.price, 
-      i.attached, 
-      i.size, 
+    SELECT
+      i.issuecode,
+      i.issuenumber,
+      i.title as issue_title,
+      i.pages,
+      i.price,
+      i.attached,
+      i.size,
       i.oldestdate,
-      p.publicationcode, 
-      p.countrycode, 
-      p.languagecode, 
-      pn.publicationname as series_title,
-      (SELECT iu.sitecode || '|' || iu.url 
-       FROM inducks_issueurl iu 
-       WHERE iu.issuecode = i.issuecode 
+      p.publicationcode,
+      p.countrycode,
+      p.languagecode,
+      ${seriesTitle},
+      (SELECT iu.sitecode || '|' || iu.url
+       FROM inducks_issueurl iu
+       WHERE iu.issuecode = i.issuecode
        ORDER BY CASE WHEN iu.sitecode = 'webusers' THEN 0 ELSE 1 END LIMIT 1) as issue_thumb,
-      (SELECT pub.publishername 
-       FROM inducks_publishingjob pj 
-       JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid 
+      (SELECT pub.publishername
+       FROM inducks_publishingjob pj
+       JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid
        WHERE pj.issuecode = i.issuecode LIMIT 1) as publishername
     FROM MatchedIssues mi
     JOIN inducks_issue i ON mi.issuecode = i.issuecode
     JOIN inducks_publication p ON i.publicationcode = p.publicationcode
-    LEFT JOIN inducks_publicationname pn ON p.publicationcode = pn.publicationcode
     ORDER BY ${orderBy}
   `;
 
-  return { 
-    query: mainQuery, 
-    countQuery, 
-    params: [...p, pageSize, offset], 
-    countParams: p, 
-    pageSize, 
-    page 
+  return {
+    query: mainQuery,
+    countQuery,
+    params: [...p, pageSize, offset],
+    countParams: p,
+    pageSize,
+    page
   };
 }
 

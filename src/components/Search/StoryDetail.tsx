@@ -44,7 +44,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
         setStory(details)
       } catch (e) {
         console.error(e)
-        toast.error(t("common.error", { defaultValue: "Une erreur est survenue" }))
+        toast.error(t("common.error"))
       } finally {
         setLoading(false)
       }
@@ -55,7 +55,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   const copyToClipboard = () => {
     navigator.clipboard.writeText(storycode)
     setCopied(true)
-    toast.success(t("story.code_copied", { defaultValue: "Code copié !" }))
+    toast.success(t("story.code_copied"))
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -66,7 +66,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   if (!story) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        <p>{t("story.not_found", { defaultValue: "Histoire introuvable." })}</p>
+        <p>{t("story.not_found")}</p>
         <Button onClick={onBack} variant="outline" className="mt-4 gap-2 rounded-xl">
           <ArrowLeft className="w-4 h-4" />
           {t("common.back")}
@@ -111,8 +111,8 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
       creatorsMap.set(c.personcode, { code: c.personcode, name: c.fullname || c.personcode, roles: [] })
     }
     let roleName = c.role
-    if (["w", "p", "pw"].includes(c.role)) roleName = t("story.script", { defaultValue: "Scénario" })
-    else if (["a", "i", "pa"].includes(c.role)) roleName = t("story.art", { defaultValue: "Dessin" })
+    if (["w", "p", "pw"].includes(c.role)) roleName = t("story.script")
+    else if (["a", "i", "pa"].includes(c.role)) roleName = t("story.art")
     
     const creator = creatorsMap.get(c.personcode)!
     if (!creator.roles.includes(roleName)) {
@@ -126,7 +126,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
       <div className="flex items-center gap-4">
         <Button onClick={onBack} variant="outline" size="sm" className="rounded-xl gap-1.5 h-9">
           <ArrowLeft className="w-4 h-4" />
-          {t("common.back") || "Retour"}
+          {t("common.back")}
         </Button>
       </div>
 
@@ -139,7 +139,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               {(() => {
                 const original = story.original_title;
                 const translated = story.translated_title;
-                let mainTitle = original || t("story.no_title") || "Sans titre";
+                let mainTitle = original || t("story.no_title");
                 let subTitle = null;
                 
                 if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
@@ -148,7 +148,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                     subTitle = original;
                   }
                 } else if (!original || original === 'Untitled') {
-                  mainTitle = t("story.no_title") || "Sans titre";
+                  mainTitle = t("story.no_title");
                 }
 
                 return (
@@ -194,10 +194,10 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
           <div 
             className="flex items-center gap-3 p-3 bg-surface-2 border border-border-subtle rounded-2xl cursor-pointer hover:bg-surface-3 transition-all active:scale-[0.99] group/copy"
             onClick={copyToClipboard}
-            title={t("common.copy_to_clipboard") || "Copier dans le presse-papier"}
+            title={t("common.copy_to_clipboard")}
           >
             <div className="space-y-0.5 flex-1">
-              <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">{t("story.story_code", { defaultValue: "Code de l'histoire" })}</p>
+              <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">{t("story.story_code")}</p>
               <p className="font-mono text-sm font-bold text-foreground">{storycode}</p>
             </div>
             <Button size="icon" variant="ghost" className="h-9 w-9 group-hover/copy:bg-surface rounded-xl pointer-events-none">
@@ -209,7 +209,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <FileText className="w-4 h-4 text-primary" />
-              {t('story.description') || "Description"}
+              {t('story.description')}
             </h3>
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden">
               <CardContent className="p-4 space-y-4">
@@ -223,7 +223,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                     <p className="text-sm text-text-body leading-relaxed whitespace-pre-wrap">{defaultDesc.desctext}</p>
                   </div>
                 ) : (
-                  <p className="text-sm text-text-secondary italic">{t("story.no_description", { defaultValue: "Aucune description disponible pour cette histoire." })}</p>
+                  <p className="text-sm text-text-secondary italic">{t("story.no_description")}</p>
                 )}
 
                 {/* Accordion for descriptions in other languages */}
@@ -235,8 +235,8 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                     >
                       <span>
                         {showAllDescriptions
-                          ? t("story.hide_languages", { defaultValue: "Masquer les autres langues" })
-                          : `${t("story.show_languages", { defaultValue: "Afficher les descriptions dans d'autres langues" })} (${otherDescriptions.length})`}
+                          ? t("story.hide_languages")
+                          : `${t("story.show_languages")} (${otherDescriptions.length})`}
                       </span>
                       {showAllDescriptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
@@ -268,7 +268,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
-              {t("story.creators", { defaultValue: "Auteurs / Créateurs" })}
+              {t("story.creators")}
             </h3>
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
               <CardContent className="p-4 space-y-3">
@@ -283,7 +283,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                           type="creator"
                           code={creator.code}
                           name={creator.name}
-                          onSelect={(code) => navigate(`/authors/${code}`)}
+                          onSelect={(code) => navigate(routes.author(code))}
                         />
                       </div>
                     ))}
@@ -315,7 +315,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
           {/* Characters Panel */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-foreground">{t("story.characters", { defaultValue: "Personnages" })}</h3>
+            <h3 className="text-sm font-bold text-foreground">{t("story.characters")}</h3>
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
               <CardContent className="p-4">
                 {story.characters && story.characters.length > 0 ? (
@@ -335,7 +335,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-text-secondary italic">{t("story.no_characters", { defaultValue: "Aucun personnage répertorié." })}</p>
+                  <p className="text-xs text-text-secondary italic">{t("story.no_characters")}</p>
                 )}
               </CardContent>
             </Card>
@@ -346,7 +346,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Link className="w-4 h-4 text-primary" />
-                {t("story.xrefs", { defaultValue: "Références" })}
+                {t("story.xrefs")}
               </h3>
               <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
                 <CardContent className="p-4 space-y-3">
@@ -398,7 +398,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
       <div className="space-y-3 pt-6 border-t border-border-subtle mt-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-            {t("tabs.publications") || "Publications"}
+            {t("tabs.publications")}
             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
               {story.publications?.length || 0}
             </span>
@@ -410,7 +410,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
             className="h-8 rounded-xl text-xs font-medium bg-surface hover:bg-surface-2 gap-1.5"
           >
             <Calendar className="w-3.5 h-3.5" />
-            {pubSortOrder === "asc" ? t("sort.oldest_first") || "Plus anciennes d'abord" : t("sort.newest_first") || "Plus récentes d'abord"}
+            {pubSortOrder === "asc" ? t("sort.oldest_first") : t("sort.newest_first")}
           </Button>
         </div>
 
@@ -453,7 +453,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                         key={pub.entrycode + i}
                         onClick={() => {
                           if (pub.position) {
-                            navigate(`${routes.issue(pub.issuecode)}?pos=${encodeURIComponent(pub.position.trim().toLowerCase())}`);
+                            navigate(`${routes.issue(pub.issuecode, pub.publicationcode)}?pos=${encodeURIComponent(pub.position.trim().toLowerCase())}`);
                           } else if (onSelectIssue) {
                             onSelectIssue(pub.issuecode);
                           }
@@ -462,7 +462,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                       >
                         <div className="space-y-0.5 min-w-0 flex-1">
                           <p className="text-xs font-bold text-foreground truncate">
-                            {pub.publication_title} {t("story.issue_symbol", { defaultValue: "#" })} {pub.issuenumber}
+                            {pub.publication_title} {t("story.issue_symbol")} {pub.issuenumber}
                           </p>
                           <p className="text-[10px] text-muted-foreground font-medium">
                             {pub.position ? `Pos. ${pub.position}` : ""}
@@ -472,7 +472,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                         <div className="text-right shrink-0 ml-2">
                           {pub.entirepages && (
                             <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">
-                              {pub.entirepages} {t("story.pages_short", { defaultValue: "p." })}
+                              {pub.entirepages} {t("story.pages_short")}
                             </span>
                           )}
                         </div>

@@ -27,9 +27,9 @@ export function InducksCookieCard() {
     setIsSavingCookie(true)
     try {
       localStorage.setItem("inducks_cookie", cookieValue)
-      toast.success(t("settings.cookie_saved") || "Cookie enregistré avec succès !")
+      toast.success(t("settings.cookie_saved"))
     } catch (e) {
-      toast.error("Erreur lors de la sauvegarde du cookie.")
+      toast.error(t("settings.cookie_save_error"))
     } finally {
       setIsSavingCookie(false)
     }
@@ -40,10 +40,10 @@ export function InducksCookieCard() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Monitor className="w-4 h-4 text-primary" />
-          {t("settings.inducks_cookie") || "Cookie Inducks"}
+          {t("settings.inducks_cookie")}
         </CardTitle>
         <CardDescription>
-          {t("settings.cookie_desc") || "Nécessaire pour charger les images en haute résolution depuis Inducks."}
+          {t("settings.cookie_desc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -53,20 +53,19 @@ export function InducksCookieCard() {
           </Label>
           <Input
             id="inducks-cookie"
-            placeholder="Ex: coa-session=..."
+            placeholder={t("common.example", { value: "coa-session=..." })}
             value={cookieValue}
             onChange={(e) => setCookieValue(e.target.value)}
             className="h-10 border-border-subtle bg-surface/50 rounded-xl"
           />
           <p className="text-[10px] text-muted-foreground leading-normal">
-            {t("settings.cookie_help") ||
-              "Ce cookie permet d'accéder aux images haute résolution. Récupérez-le dans l'inspecteur du navigateur sur inducks.org."}
+            {t("settings.cookie_help")}
           </p>
         </div>
         <div className="mt-auto pt-4">
           <Button onClick={handleSaveCookie} disabled={isSavingCookie} className="w-full gap-2 rounded-xl">
             {isSavingCookie ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {t("common.save") || "Enregistrer"}
+            {t("common.save")}
           </Button>
         </div>
       </CardContent>

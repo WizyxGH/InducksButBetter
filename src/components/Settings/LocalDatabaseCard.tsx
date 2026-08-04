@@ -7,6 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { installDatabase, hasLocalDb, getLocalDbStats, clearLocalDbCache, unloadLocalDb } from "@/lib/localDb"
+import {
+  describeInstallError,
+  describeInstallProgress,
+  formatBytes,
+  resolveDatabaseSources,
+  type InstallProgress,
+} from "@/lib/dbInstall"
 
 /**
  * Renders a progress bar inside a toast notification.
@@ -28,26 +35,6 @@ function ToastProgress({ msg, percent }: { msg: string; percent: number }) {
   )
 }
 
-/** Formats a byte count into a human-readable string. */
-function formatBytes(bytes: number, decimals = 2): string {
-  if (bytes === 0) return "0 Bytes"
-  const k = 1024
-  const dm = decimals < 0 ? 0 : decimals
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
-}
-
-interface GitHubAsset {
-  name: string
-  browser_download_url: string
-  size: number
-  url?: string
-}
-
-const GITHUB_RELEASE_API =
-  "https://api.github.com/repos/WizyxGH/InducksButBetter/releases/tags/datas"
-
 export function LocalDatabaseCard() {
   const { t } = useTranslation()
 
@@ -67,41 +54,12 @@ export function LocalDatabaseCard() {
     toast.loading(<ToastProgress msg={msg} percent={percent} />, { id: toastId })
   }
 
-  const getProgressMessage = (progress: { step: string; current: number; total: number; percent: number }) => {
-    switch (progress.step) {
-      case 'download':
-        return t("localDb.step_download", { percent: progress.percent }) || `Téléchargement : ${progress.percent}%`;
-      case 'decompress':
-        return t("localDb.step_decompress") || "Décompression de la base...";
-      case 'validate':
-        return t("localDb.step_validate") || "Vérification de l'intégrité...";
-      case 'install':
-        return t("localDb.step_install") || "Installation de la base de données...";
-      default:
-        return t("localDb.progress_start") || "Démarrage...";
-    }
-  };
+  const reportProgress = (toastId: string) => (progress: InstallProgress) =>
+    showProgressToast(toastId, describeInstallProgress(progress, t), Math.round(progress.percent || 0))
 
-  const handleError = (e: any, toastId: string) => {
+  const handleError = (e: unknown, toastId: string) => {
     console.error(e)
-    const msg = e.message || ""
-    let translated = msg
-    
-    if (msg.startsWith("error_download|")) {
-      translated = t("localDb.error_download", { msg: msg.split('|')[1] }) || `Failed to download: ${msg.split('|')[1]}`
-    } else if (msg.startsWith("error_validation|")) {
-      translated = t("localDb.error_validation", { msg: msg.split('|')[1] }) || `Validation failed: ${msg.split('|')[1]}`
-    } else if (msg === "error_no_url") {
-      translated = t("localDb.error_no_url") || "No database URL or file provided."
-    } else if (msg === "error_empty") {
-      translated = t("localDb.error_empty") || "Empty database stream."
-    } else if (msg.startsWith("error_deserialize|")) {
-      translated = t("localDb.error_deserialize", { code: msg.split('|')[1] }) || `Failed to deserialize database (code ${msg.split('|')[1]}).`
-    } else if (msg === "error_not_loaded") {
-      translated = t("localDb.error_not_loaded") || "Database not loaded."
-    }
-    
-    toast.error(translated, { id: toastId })
+    toast.error(describeInstallError(e, t), { id: toastId, duration: 10000 })
   }
 
   // ─── Local file import ─────────────────────────────────────────────────────
@@ -112,19 +70,14 @@ export function LocalDatabaseCard() {
 
     setIsLoadingDb(true)
     const toastId = "settings-db-upload"
-    showProgressToast(toastId, t("localDb.progress_start") || "Démarrage...", 0)
+    showProgressToast(toastId, t("localDb.progress_start"), 0)
 
     try {
-      await installDatabase(file, (progress) => {
-        const msg = getProgressMessage(progress);
-        showProgressToast(toastId, msg, progress.percent || 0);
-      });
+      await installDatabase(file, reportProgress(toastId));
 
       setIsActiveDb(true)
       window.dispatchEvent(new Event("db-local-loaded"))
-      toast.success(t("localDb.success") || "Base de données installée avec succès !", {
-        id: toastId,
-      })
+      toast.success(t("localDb.success"), { id: toastId })
     } catch (e: any) {
       handleError(e, toastId)
     } finally {
@@ -138,49 +91,15 @@ export function LocalDatabaseCard() {
   const handleCloudImport = async () => {
     setIsLoadingDb(true)
     const toastId = "settings-db-cloud"
-    showProgressToast(toastId, t("localDb.progress_start") || "Démarrage...", 0)
+    showProgressToast(toastId, t("localDb.progress_start"), 0)
 
     try {
-      const urls: string[] = []
-      try {
-        const res = await fetch(GITHUB_RELEASE_API)
-        if (res.ok) {
-          const release = await res.json()
-          const assets: GitHubAsset[] = release.assets || []
-          const sqliteAsset = assets.find((a) => a.name === "inducks.sqlite.gz")
-          if (sqliteAsset) {
-            const bdu = sqliteAsset.browser_download_url
-            if (bdu) {
-              urls.push(`https://ghp.ci/${bdu}`)
-              urls.push(`https://github.moeyy.xyz/${bdu}`)
-              urls.push(`https://ghproxy.net/${bdu}`)
-              urls.push(`https://mirror.ghproxy.com/${bdu}`)
-              urls.push(`https://corsproxy.io/?${encodeURIComponent(bdu)}`)
-              urls.push(bdu)
-            }
-            if (sqliteAsset.url) {
-              urls.push(sqliteAsset.url)
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("GitHub Release API fetch failed, using local fallback only:", err)
-      }
-
-      const localUrl = `${import.meta.env.BASE_URL}datas/inducks.sqlite.gz`
-      const absoluteLocalUrl = new URL(localUrl, window.location.href).href
-      urls.push(absoluteLocalUrl)
-
-      await installDatabase(urls, (progress) => {
-        const msg = getProgressMessage(progress)
-        showProgressToast(toastId, msg, progress.percent || 0)
-      })
+      const urls = await resolveDatabaseSources(import.meta.env.BASE_URL, window.location.href)
+      await installDatabase(urls, reportProgress(toastId))
 
       setIsActiveDb(true)
       window.dispatchEvent(new Event("db-local-loaded"))
-      toast.success(t("localDb.success") || "Base de données installée avec succès !", {
-        id: toastId,
-      })
+      toast.success(t("localDb.success"), { id: toastId })
     } catch (e: any) {
       handleError(e, toastId)
     } finally {
@@ -189,12 +108,12 @@ export function LocalDatabaseCard() {
   }
 
   const handleClearCache = async () => {
-    if (window.confirm(t("localDb.confirm_clear") || "Voulez-vous vraiment vider le cache de la base de données locale ?")) {
+    if (window.confirm(t("localDb.confirm_clear"))) {
       await clearLocalDbCache();
       unloadLocalDb();
       setIsActiveDb(false);
       window.dispatchEvent(new Event("db-local-unloaded"));
-      toast.success(t("localDb.cache_cleared") || "Le cache a été vidé.");
+      toast.success(t("localDb.cache_cleared"));
     }
   }
 
@@ -203,32 +122,30 @@ export function LocalDatabaseCard() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Database className="w-4 h-4 text-primary" />
-          {t("localDb.title") || "Base de données Inducks locale"}
+          {t("localDb.title")}
 
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className="ml-auto rounded-full p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label={t("localDb.instructions_title") || "Comment installer ?"}
+                aria-label={t("localDb.instructions_title")}
               >
                 <Info className="w-4 h-4" />
               </button>
             </PopoverTrigger>
             <PopoverContent side="top" align="end" className="w-80 text-xs leading-relaxed space-y-3">
               <p className="font-semibold text-sm">
-                {t("localDb.instructions_title") || "Comment installer la base de données locale ?"}
+                {t("localDb.instructions_title")}
               </p>
               <p className="whitespace-pre-line text-muted-foreground">
-                {t("localDb.desc_2") ||
-                  "Étape 1 : Cliquez sur Importer automatiquement pour télécharger la base compilée.\nOu faites glisser votre propre fichier inducks.sqlite ou inducks.sqlite.gz."}
+                {t("localDb.desc_2")}
               </p>
             </PopoverContent>
           </Popover>
         </CardTitle>
 
         <CardDescription>
-          {t("localDb.desc_1") ||
-            "Chargez la base de données Inducks pré-compilée et compressée pour travailler 100% hors ligne à vitesse maximale."}
+          {t("localDb.desc_1")}
         </CardDescription>
       </CardHeader>
 
@@ -236,14 +153,14 @@ export function LocalDatabaseCard() {
         {isActiveDb && (
           <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs">
             <p className="font-semibold">
-              {t("localDb.already_imported") || "Base de données active en local."}
+              {t("localDb.already_imported")}
             </p>
             {dbStats && (
               <p className="mt-1 opacity-90">
                 {t("localDb.imported_stats_new", {
                   count: dbStats.count,
                   size: formatBytes(dbStats.size),
-                }) || `${dbStats.count} tables chargées (${formatBytes(dbStats.size)})`}
+                })}
               </p>
             )}
             <div className="mt-3 flex justify-end">
@@ -253,7 +170,7 @@ export function LocalDatabaseCard() {
                 onClick={handleClearCache}
                 className="h-8 text-xs bg-red-500 hover:bg-red-600 text-white border-0"
               >
-                {t("localDb.clear_cache") || "Vider le cache"}
+                {t("localDb.clear_cache")}
               </Button>
             </div>
           </div>
@@ -278,7 +195,7 @@ export function LocalDatabaseCard() {
             ) : (
               <CloudDownload className="w-4 h-4" />
             )}
-            {t("localDb.btn_cloud") || "Télécharger depuis le Cloud (Recommandé)"}
+            {t("localDb.btn_cloud")}
           </Button>
 
           <div
@@ -300,10 +217,10 @@ export function LocalDatabaseCard() {
             )}
             <div>
               <p className="font-semibold text-sm text-foreground">
-                {t("localDb.btn_select_new") || "Déposer un fichier local"}
+                {t("localDb.btn_select_new")}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {t("localDb.btn_select_sub_new") || "Sélectionnez inducks.sqlite ou inducks.sqlite.gz"}
+                {t("localDb.btn_select_sub_new")}
               </p>
             </div>
           </div>

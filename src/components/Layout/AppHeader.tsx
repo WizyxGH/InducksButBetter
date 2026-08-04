@@ -42,10 +42,10 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
               "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
               ["stories", "publications", "authors", "characters", "sql"].includes(activeTab) && "border-border-subtle bg-surface-2 text-primary"
             )}
-            title={t("header.search") || "Recherche"}
+            title={t("header.search")}
           >
             <Search className="w-5 h-5" />
-            <span className="hidden sm:inline">{t('header.search') || "Recherche"}</span>
+            <span className="hidden sm:inline">{t('header.search')}</span>
           </Button>
 
           {/* Countries / Publications shortcut */}
@@ -57,10 +57,10 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
               "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
               activeTab === "countries" && "border-border-subtle bg-surface-2 text-primary"
             )}
-            title={t("tabs.publications") || "Publications"}
+            title={t("tabs.publications")}
           >
             <LibraryBig className="w-5 h-5" />
-            <span className="hidden sm:inline">{t('tabs.publications') || "Publications"}</span>
+            <span className="hidden sm:inline">{t('tabs.publications')}</span>
           </Button>
 
           {/* Settings shortcut */}
@@ -72,10 +72,10 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
               "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
               activeTab === "settings" && "border-border-subtle bg-surface-2 text-primary"
             )}
-            title={t("settings.title") || "Paramètres"}
+            title={t("settings.title")}
           >
             <SettingsIcon className="w-5 h-5" />
-            <span className="hidden sm:inline">{t('settings.title') || "Paramètres"}</span>
+            <span className="hidden sm:inline">{t('settings.title')}</span>
           </Button>
 
           <div className="flex items-center gap-1 sm:gap-2">

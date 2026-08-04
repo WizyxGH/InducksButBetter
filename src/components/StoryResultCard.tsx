@@ -9,6 +9,8 @@ import { EntityBadge } from "@/components/EntityBadge"
 import { FlagBadge } from "@/components/FlagBadge"
 import { KindBadge } from "@/components/KindBadge"
 import { routes } from "@/lib/routes"
+import { getBasePath, isModifiedClick } from "@/lib/navigation"
+import { parseCredits } from "@/lib/credits"
 
 interface StoryResultCardProps {
   row: any
@@ -58,44 +60,19 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   // Deduplicate by name to avoid "Picsou" appearing twice if multiple codes map to same name
   const characters = charactersRaw.filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.name === v.name) === i);
 
-  const publications = row.publication_list ? row.publication_list.split(',').map((p: string) => {
-    const parts = p.split('|');
-    return { country: parts[0], name: cleanText(parts[1]), issueNumber: parts[2] ? cleanText(parts[2]) : '' };
-  }) : [];
-
-  const creatorsRaw = row.creators ? row.creators.split(';') : [];
-
-  const writers = creatorsRaw
-    .filter((c: string) => {
-      const type = c.split(':')[0].toLowerCase();
-      return ['p', 'w', 'pa', 'wa', 'pw'].includes(type) || type.includes('writer') || type.includes('plot');
+  // The SQL side cannot deduplicate and keep a ';' separator at the same time
+  // (GROUP_CONCAT DISTINCT forces ','), so duplicates are dropped here.
+  const publications = (row.publication_list ? row.publication_list.split(';') : [])
+    .map((p: string) => {
+      const parts = p.split('|');
+      return { country: parts[0], name: cleanText(parts[1]), issueNumber: parts[2] ? cleanText(parts[2]) : '' };
     })
-    .map((c: string) => {
-      const parts = c.split(':');
-      if (!parts[1]) return null;
-      if (parts[1].includes('|')) {
-        const [code, name] = parts[1].split('|');
-        return { code, name };
-      }
-      return { code: parts[1], name: parts[1] };
-    }).filter(Boolean)
-    .filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.code === v.code) === i);
+    .filter(
+      (v: any, i: number, a: any[]) =>
+        a.findIndex((t: any) => t.country === v.country && t.name === v.name && t.issueNumber === v.issueNumber) === i
+    );
 
-  const artists = creatorsRaw
-    .filter((c: string) => {
-      const type = c.split(':')[0].toLowerCase();
-      return ['a', 'i', 'pa', 'wa', 'art'].includes(type) || type.includes('penciller') || type.includes('ink');
-    })
-    .map((c: string) => {
-      const parts = c.split(':');
-      if (!parts[1]) return null;
-      if (parts[1].includes('|')) {
-        const [code, name] = parts[1].split('|');
-        return { code, name };
-      }
-      return { code: parts[1], name: parts[1] };
-    }).filter(Boolean)
-    .filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.code === v.code) === i);
+  const { writers, artists } = React.useMemo(() => parseCredits(row.creators), [row.creators]);
 
   const text = React.useMemo(() => {
     return (row.full_description || "").trim();
@@ -138,27 +115,26 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   const targetHref = routes.story(row.storycode);
 
   const handleClick = (e: React.MouseEvent) => {
-    // Let EntityBadge or other links handle their own clicks
+    // Let EntityBadge or other nested links handle their own clicks.
     if ((e.target as HTMLElement).closest('a')) {
       return;
     }
 
-    // If user command-clicked or control-clicked, open in new tab manually
-    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
-      window.open(import.meta.env.BASE_URL + targetHref.replace(/^\//, ''), "_blank");
+    // The card is not an anchor (it embeds anchors, which cannot be nested),
+    // so ctrl/cmd/shift/middle click is opened explicitly. Doing it inline in
+    // the click handler keeps it a user gesture, so popup blockers allow it.
+    if (isModifiedClick(e)) {
+      window.open(`${getBasePath()}${targetHref}`, "_blank", "noopener");
       return;
     }
-    
-    if (onSelect) {
-      onSelect(row.storycode);
-    }
+
+    onSelect?.(row.storycode);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
-      if (onSelect) {
-        onSelect(row.storycode);
-      }
+      e.preventDefault();
+      onSelect?.(row.storycode);
     }
   };
 
@@ -293,7 +269,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                         content={
                           <div className="flex flex-col gap-2">
                             <p className="font-bold text-xs text-zinc-700 dark:text-zinc-300 border-b pb-1 mb-1">
-                              {t('story.other_publications') || 'Autres publications'}
+                              {t('story.other_publications')}
                             </p>
                             <div className="flex flex-col gap-1.5">
                               {publications.slice(3).map((p: any, i: number) => (
@@ -317,23 +293,25 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-zinc-50 dark:border-zinc-800 pt-3">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <div className="text-[11px] flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-zinc-500 dark:text-zinc-400 tracking-tighter mr-0.5">{t('story.script')} :</span>
                 {writers.length > 0 ? writers.map((w: any, i: number) => (
-                  <EntityBadge key={i} type="creator" code={w.code} name={w.name} onSelect={onSelectCharacter} />
+                  <EntityBadge key={i} type="creator" code={w.code} name={w.name} />
                 )) : <span className="text-zinc-400">?</span>}
               </div>
               <div className="text-[11px] flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-zinc-500 dark:text-zinc-400 tracking-tighter mr-0.5">{t('story.art')} :</span>
+                {/* Same badge size as the script line above and as the
+                    characters below: one credit, one type size. */}
                 {artists.length > 0 ? artists.map((a: any, i: number) => (
-                  <EntityBadge key={i} type="creator" code={a.code} name={a.name} size="sm" onSelect={onSelectCharacter} />
+                  <EntityBadge key={i} type="creator" code={a.code} name={a.name} />
                 )) : <span className="text-zinc-400">?</span>}
               </div>
             </div>
 
             {/* Characters section */}
-            <div className="flex flex-row flex-wrap gap-2 border-t border-zinc-50 dark:border-zinc-800">
+            <div className="flex flex-row flex-wrap gap-2">
               {characters.slice(0, 15).map((c: any, i: number) => {
                 const charImageUrl = c.url
                   ? `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=https://outducks.org/webusers/${c.url.startsWith('/') ? c.url.substring(1) : c.url}`)}`
@@ -385,7 +363,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                     setIsExpanded(!isExpanded);
                   }}
                 >
-                  {isExpanded ? t('story.read_less') || 'Moins' : t('story.read_more')}
+                  {isExpanded ? t('story.read_less') : t('story.read_more')}
                 </span>
               )}
             </div>

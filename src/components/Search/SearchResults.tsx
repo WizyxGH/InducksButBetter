@@ -111,7 +111,7 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
               className="h-10 border-border-subtle bg-surface/80 rounded-xl hover:bg-surface-2 transition-all font-medium text-sm flex items-center gap-2 px-3"
             >
               <Download className={`w-4 h-4 ${isExporting ? 'animate-bounce' : ''}`} />
-              <span className="hidden sm:inline">Export CSV</span>
+              <span className="hidden sm:inline">{t("search.export_csv")}</span>
             </Button>
           )}
           {copySql && totalCount > 0 && (
@@ -120,15 +120,17 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
               size="sm"
               onClick={handleCopySql}
               className="h-10 border-border-subtle bg-surface/80 rounded-xl hover:bg-surface-2 transition-all font-medium text-sm flex items-center gap-2 px-3"
-              title="Copier la requête SQL"
+              title={t("search.copy_sql")}
             >
               {hasCopiedSql ? <Check className="w-4 h-4 text-green-500" /> : <Code className="w-4 h-4" />}
             </Button>
           )}
         </div>
         {totalCount > 0 && (
+          // `actualFoundLabel` already embeds the count (i18n `{{count, number}}`),
+          // so it must not be prefixed with the number a second time.
           <span className="px-3 text-sm font-medium text-blue-600 dark:text-blue-400">
-            {totalCount.toLocaleString()} {foundLabel || (totalCount > 1 ? t('search.results_plural') || 'résultats' : t('search.result_singular') || 'résultat')}
+            {actualFoundLabel}
           </span>
         )}
       </div>
@@ -159,9 +161,9 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
             <div className="relative mb-8 transform transition-transform group-hover:scale-110 duration-700">
               <Search className="w-20 h-20 text-text-secondary stroke-[1px]" />
             </div>
-            <h3 className="text-foreground font-semibold text-xl mb-4">{t("search.initial_title", { defaultValue: "Prêt à chercher ?" })}</h3>
+            <h3 className="text-foreground font-semibold text-xl mb-4">{t("search.initial_title")}</h3>
             <p className="text-muted-foreground max-w-[340px] leading-relaxed text-sm">
-              {t("search.initial_desc", { defaultValue: "Remplissez le formulaire à gauche et lancez la recherche pour explorer la base de données Inducks." })}
+              {t("search.initial_desc")}
             </p>
           </div>
         ) : (
@@ -181,8 +183,7 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
       {totalCount > rowsPerPage && (
         <div className="px-4 pt-6 pb-4 lg:pb-6 flex items-center justify-between shrink-0 bg-surface border-t border-border-subtle mt-4">
           <div className="text-sm font-medium text-muted-foreground">
-            Page <span className="text-foreground">{currentPage}</span>{" "}
-            <span className="mx-1 text-text-secondary">/</span> {totalPages}
+            {t("search.page_indicator", { current: currentPage, total: totalPages })}
           </div>
           <div className="flex items-center gap-3">
             <Button

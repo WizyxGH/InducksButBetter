@@ -1,4 +1,5 @@
 import { executeQuery } from "./db";
+import { splitIssueCode, issueCodeKey } from "./issueCode";
 
 // Polyfill for autocomplete queries
 export async function autocompleteCharacter(q: string, lang: string = 'fr') {
@@ -292,60 +293,64 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
   };
 }
 
-export async function getIssueDetail(issuecode: string) {
-  let issue = null;
-  try {
-    const coreResult = await executeQuery({
-      sql: `
-        SELECT 
-          i.issuecode,
-          i.issuenumber,
-          i.oldestdate,
-          i.pages,
-          i.price,
-          i.size,
-          i.attached,
-          p.title as publication_title,
-          p.countrycode,
-          c.countryname
-        FROM inducks_issue i
-        JOIN inducks_publication p ON i.publicationcode = p.publicationcode
-        LEFT JOIN inducks_country c ON p.countrycode = c.countrycode
-        WHERE i.issuecode = ?
-      `,
-      args: [issuecode]
+/**
+ * Resolves an issue whose code may be missing the database's alignment
+ * padding — URLs carry `fr/PM 272` while the row stores `fr/PM  272`.
+ *
+ * Tries the cheapest indexed match first, then the publication/number columns,
+ * then a whitespace-insensitive scan as a last resort.
+ */
+export async function resolveIssue(issuecode: string) {
+  const SELECT = `
+    SELECT
+      i.issuecode,
+      i.issuenumber,
+      i.publicationcode,
+      i.oldestdate,
+      i.pages,
+      i.price,
+      i.size,
+      i.attached,
+      p.title as publication_title,
+      p.countrycode,
+      c.countryname
+    FROM inducks_issue i
+    LEFT JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+    LEFT JOIN inducks_country c ON p.countrycode = c.countrycode
+  `;
+
+  const exact = await executeQuery({ sql: `${SELECT} WHERE i.issuecode = ?`, args: [issuecode] });
+  if (exact.rows.length > 0) return exact.rows[0] as any;
+
+  const { publicationcode, issuenumber } = splitIssueCode(issuecode);
+  if (publicationcode && issuenumber) {
+    const byColumns = await executeQuery({
+      sql: `${SELECT} WHERE i.publicationcode = ? AND i.issuenumber = ? LIMIT 1`,
+      args: [publicationcode, issuenumber],
     });
-    if (coreResult.rows.length > 0) issue = coreResult.rows[0];
-  } catch (e) {
-    console.warn("Could not fetch issue with publication join, trying fallback", e);
+    if (byColumns.rows.length > 0) return byColumns.rows[0] as any;
   }
 
-  if (!issue) {
-    const fallbackResult = await executeQuery({
-      sql: `
-        SELECT 
-          i.issuecode,
-          i.issuenumber,
-          i.oldestdate,
-          i.pages,
-          i.price,
-          i.size,
-          i.attached,
-          i.publicationcode as publication_title,
-          i.publicationcode as countrycode,
-          i.publicationcode as countryname
-        FROM inducks_issue i
-        WHERE i.issuecode = ?
-      `,
-      args: [issuecode]
-    });
-    if (fallbackResult.rows.length === 0) return null;
-    issue = fallbackResult.rows[0] as any;
-    const parts = (issue.countrycode as string || "").split('/');
-    if (parts.length > 0) {
-      issue.countrycode = parts[0];
-      issue.countryname = parts[0].toUpperCase();
-    }
+  // Covers the few unpadded codes whose issue number contains a space, where
+  // the publication/number split above lands one character off.
+  const loose = await executeQuery({
+    sql: `${SELECT} WHERE REPLACE(i.issuecode, ' ', '') = ? LIMIT 1`,
+    args: [issueCodeKey(issuecode)],
+  });
+  return (loose.rows[0] as any) ?? null;
+}
+
+export async function getIssueDetail(issuecode: string) {
+  const issue = await resolveIssue(issuecode);
+  if (!issue) return null;
+
+  // Every follow-up query keys off the canonical, padded code from the row.
+  issuecode = issue.issuecode;
+
+  if (!issue.countryname) {
+    const country = String(issue.publicationcode || "").split("/")[0];
+    issue.countrycode = issue.countrycode || country;
+    issue.countryname = country.toUpperCase();
   }
 
   // 2. Cover / thumbnail

@@ -128,7 +128,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
           </Button>
           <div className="min-w-0">
             <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 truncate">
-              <span>{t("countryPubs.title_prefix") || "Publications de"}</span>
+              <span>{t("countryPubs.title_prefix")}</span>
               {flagUrl && (
                 <img
                   src={flagUrl}
@@ -142,20 +142,20 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
           <Input
-            placeholder={t("countryPubs.search_placeholder") || "Filtrer les publications..."}
+            placeholder={t("countryPubs.search_placeholder")}
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             className="w-full sm:w-64 rounded-xl h-10 border-border-subtle bg-surface"
           />
           <Select value={sortOrder} onValueChange={setSortOrder}>
             <SelectTrigger className="w-full sm:w-48 h-10 border-border-subtle bg-surface rounded-xl text-sm">
-              <SelectValue placeholder={t("sort.title_az") || "Trier par..."} />
+              <SelectValue placeholder={t("sort.title_az")} />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-border-subtle bg-surface">
-              <SelectItem value="title_asc" className="rounded-lg">{t("sort.title_az") || "Titre A-Z"}</SelectItem>
-              <SelectItem value="title_desc" className="rounded-lg">{t("sort.title_za") || "Titre Z-A"}</SelectItem>
-              <SelectItem value="issues_desc" className="rounded-lg">{t("sort.issues_desc") || "Plus de numéros"}</SelectItem>
-              <SelectItem value="issues_asc" className="rounded-lg">{t("sort.issues_asc") || "Moins de numéros"}</SelectItem>
+              <SelectItem value="title_asc" className="rounded-lg">{t("sort.title_az")}</SelectItem>
+              <SelectItem value="title_desc" className="rounded-lg">{t("sort.title_za")}</SelectItem>
+              <SelectItem value="issues_desc" className="rounded-lg">{t("sort.issues_desc")}</SelectItem>
+              <SelectItem value="issues_asc" className="rounded-lg">{t("sort.issues_asc")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -171,7 +171,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
             >
               <div className="min-w-0 space-y-0.5 flex-1">
                 <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors leading-tight">
-                  {p.title || "Sans titre"}
+                  {p.title || t("publication.untitled")}
                 </h3>
                 <p className="text-[10px] text-muted-foreground font-mono">{p.publicationcode}</p>
                 {p.publishername && (
@@ -203,7 +203,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
               variant="outline"
               className="rounded-xl border-border-subtle hover:bg-surface-2 font-medium px-6"
             >
-              Afficher plus
+              {t("common.show_more")}
             </Button>
           </div>
         )}

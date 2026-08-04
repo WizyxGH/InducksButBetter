@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { executeQuery, hasLocalDb } from "@/lib/db";
+import { executeQuery } from "@/lib/db";
 import { buildAdvancedSearchQuery, SearchFilters } from "@/lib/searchService";
 import { handleDbError } from "@/lib/utils";
 
@@ -16,6 +16,8 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
   const [loading, setLoading] = useState(false);
   const [lastSearchFilters, setLastSearchFilters] = useState<SearchFilters | null>(null);
   const [lastExecutedQuery, setLastExecutedQuery] = useState<{ sql: string; args: any[] } | null>(null);
+  /** Monotonic id used to discard results of superseded searches. */
+  const searchRunId = useRef(0);
 
   const executeLocalQuery = async (query: string, params: any[]) => {
     const res: any[] = [];
@@ -24,67 +26,45 @@ export function useSearchExecution({ filters, pagesSliderMoved }: UseSearchExecu
   };
 
   const performSearch = async (searchFilters: SearchFilters) => {
+    const runId = ++searchRunId.current;
+    /** True while a newer search has superseded this one. */
+    const isStale = () => runId !== searchRunId.current;
+
     setLoading(true);
     try {
-      const filtersForQuery = {
+      // The query builder normalises every multi-value filter itself
+      // (see `normalizeList`), so arrays are passed through untouched.
+      const filtersForQuery: SearchFilters = {
         ...searchFilters,
-        charactercode: Array.isArray(searchFilters.charactercode)
-          ? searchFilters.charactercode.join(",")
-          : searchFilters.charactercode,
-        herocode: Array.isArray(searchFilters.herocode)
-          ? searchFilters.herocode.join(",")
-          : searchFilters.herocode,
-        excludeCharactercode: Array.isArray(searchFilters.excludeCharactercode)
-          ? searchFilters.excludeCharactercode.join(",")
-          : searchFilters.excludeCharactercode,
-        personRoles: searchFilters.personRoles?.filter((pr: any) => pr.code !== ""),
-        excludePersoncode: Array.isArray(searchFilters.excludePersoncode)
-          ? searchFilters.excludePersoncode.filter(Boolean)
-          : searchFilters.excludePersoncode ? [searchFilters.excludePersoncode].filter(Boolean) : [],
-        nationality: Array.isArray(searchFilters.nationality)
-          ? searchFilters.nationality.join(",")
-          : searchFilters.nationality,
-        universes: Array.isArray(searchFilters.universes)
-          ? searchFilters.universes.join(",")
-          : searchFilters.universes,
-        subseriescode: Array.isArray(searchFilters.subseriescode)
-          ? searchFilters.subseriescode.join(",")
-          : searchFilters.subseriescode,
+        personRoles: searchFilters.personRoles?.filter((pr) => pr.code !== ""),
         lang: i18n.language,
-        noOtherCharacters: searchFilters.noOtherCharacters,
-        country: Array.isArray(searchFilters.country)
-          ? searchFilters.country.join(",")
-          : searchFilters.country,
-        language: Array.isArray(searchFilters.language)
-          ? searchFilters.language.join(",")
-          : searchFilters.language,
-        kind: Array.isArray(searchFilters.kind)
-          ? searchFilters.kind.join(",")
-          : searchFilters.kind,
+        // The max-pages bound only applies once the user actually moved the slider,
+        // otherwise its default (500) would silently exclude longer stories.
         pagesMax: pagesSliderMoved ? searchFilters.pagesMax : undefined,
       };
 
       const { query, countQuery, params, countParams } = buildAdvancedSearchQuery(filtersForQuery);
 
       setLastExecutedQuery({ sql: query, args: params });
-
       setResults([]);
-      
-      const countResult = await executeQuery({ sql: countQuery, args: countParams });
-      
-      const mainResult = await executeQuery({ sql: query, args: params });
 
-      if (mainResult && mainResult.rows) {
-        setResults(mainResult.rows);
-      }
+      // Count and page fetch are independent: run them concurrently.
+      const [countResult, mainResult] = await Promise.all([
+        executeQuery({ sql: countQuery, args: countParams }),
+        executeQuery({ sql: query, args: params }),
+      ]);
 
-      setTotalCount(Number(countResult.rows[0]?.total || countResult.rows[0]?.COUNT || 0));
+      if (isStale()) return;
+
+      setResults(mainResult?.rows ?? []);
+      setTotalCount(Number(countResult?.rows?.[0]?.total ?? 0));
     } catch (err) {
-      handleDbError(err, t("search.error_fetch", { defaultValue: "Erreur: impossible de récupérer les données." }));
+      if (isStale()) return;
+      handleDbError(err, t("search.error_fetch"));
       setResults([]);
       setTotalCount(0);
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   };
 

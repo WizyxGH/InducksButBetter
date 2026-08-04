@@ -67,7 +67,7 @@
     "searching": "Recherche en cours...",
     "results": "Résultats",
     "sort_by": "Trier par",
-    "stories_found": "{{count}} histoires trouvées",
+    "stories_found": "{{count, number}} histoires trouvées",
     "no_results_title": "Aucun résultat trouvé",
     "no_results_desc": "Nous n'avons trouvé aucune histoire correspondant à vos critères. Essayez d'alléger vos filtres.",
     "initial_title": "Prêt à chercher ?",
@@ -97,13 +97,17 @@
     "rows_per_page": "Résultats par page",
     "title_pub_label": "Titre de la publication",
     "title_pub_placeholder": "Ex : Mickey Parade, FR/MP...",
-    "publications_found": "{{count}} publications trouvées",
+    "publications_found": "{{count, number}} publications trouvées",
     "display": "Affichage",
     "all_stories": "Toutes les histoires",
     "with_image_only": "Avec image uniquement",
     "without_image": "Sans image uniquement",
-    "result_singular": "résultat",
-    "results_plural": "résultats"
+    "pages_placeholder": "Ex : 48...",
+    "export_success": "Export réussi",
+    "export_error": "Échec de l'exportation CSV",
+    "copy_sql": "Copier la requête SQL",
+    "export_csv": "Export CSV",
+    "page_indicator": "Page {{current}} sur {{total}}"
   },
   "roles": {
     "any": "N'importe",
@@ -147,7 +151,16 @@
     "or": "ou",
     "all_countries": "Tous les pays",
     "code": "Code",
-    "present": "Présent"
+    "present": "Présent",
+    "show_more": "Afficher plus",
+    "autocomplete_error": "Erreur lors de l'autocomplétion.",
+    "copy_to_clipboard": "Copier dans le presse-papier",
+    "finish": "Terminer",
+    "informations": "Informations",
+    "next": "Suivant",
+    "skip": "Passer",
+    "example": "Ex : {{value}}",
+    "hide_column": "Masquer la colonne"
   },
   "story": {
     "not_found": "Histoire introuvable.",
@@ -179,7 +192,9 @@
     "xrefs": "Références croisées",
     "hide_languages": "Masquer les autres langues",
     "show_languages": "Afficher les descriptions dans d'autres langues",
-    "pages_short": "p."
+    "pages_short": "p.",
+    "code_copied": "Code copié !",
+    "page": "page"
   },
   "kinds": {
     "k": "Bandes quotidienne, hebdomadaire",
@@ -212,8 +227,6 @@
     "settings": "Paramètres"
   },
   "home": {
-    "welcome_title": "InducksButBetter",
-    "welcome_subtitle": "Explorez la base de données Inducks",
     "search_placeholder": "Rechercher un code, un auteur, un personnage, un magazine...",
     "db_stats_title": "Statistiques de la base de données",
     "latest_releases_title": "Dernières sorties",
@@ -233,7 +246,10 @@
     "or_advanced": "Ou accédez à la",
     "advanced_search_link": "recherche avancée",
     "latest_releases_range": "7 derniers jours",
-    "no_releases": "Aucune sortie enregistrée dans les 7 derniers jours."
+    "no_releases": "Aucune sortie enregistrée dans les 7 derniers jours.",
+    "voice_search": "Recherche vocale",
+    "title": "InducksButBetter",
+    "subtitle": "Explorez la base de données Inducks"
   },
   "header": {
     "title": "InducksButBetter",
@@ -268,7 +284,8 @@
     "tables": "Tables :",
     "results_count_one": "1 résultat trouvé",
     "results_count_other": "{{count}} résultats trouvés",
-    "query_success": "Requête exécutée avec succès."
+    "query_success": "Requête exécutée avec succès.",
+    "docs_title": "Documentation de la base Inducks"
   },
   "continents": {
     "europe": "Europe",
@@ -368,7 +385,8 @@
     "cookie_saved": "Cookie sauvegardé !",
     "cookie_help": "Ce cookie permet d'accéder aux images haute résolution. Récupérez-le dans l'inspecteur du navigateur sur inducks.org.",
     "download_isv": "Télécharger les fichiers ISV",
-    "translations": "Traductions"
+    "translations": "Traductions",
+    "cookie_save_error": "Erreur lors de la sauvegarde du cookie."
   },
   "localDb": {
     "title": "Stockage local de l'application",
@@ -442,7 +460,7 @@
     "searching": "Recherche en cours...",
     "results": "Résultats",
     "sort_by": "Trier par",
-    "authors_found": "{{count}} auteurs trouvés",
+    "authors_found": "{{count, number}} auteurs trouvés",
     "no_results_title": "Aucun auteur trouvé",
     "no_results_desc": "Nous n'avons trouvé aucun auteur correspondant à vos critères. Essayez d'alléger vos filtres.",
     "initial_title": "Prêt à chercher ?",
@@ -456,7 +474,8 @@
     "country": "Pays",
     "web_link": "Lien web",
     "stories": "Histoires",
-    "no_description": "Aucune description disponible pour cet auteur."
+    "no_description": "Aucune description disponible pour cet auteur.",
+    "load_more": "Afficher plus d'histoires"
   },
   "characters": {
     "code": "Code du personnage",
@@ -482,7 +501,7 @@
     "searching": "Recherche en cours...",
     "results": "Résultats",
     "sort_by": "Trier par",
-    "characters_found": "{{count}} personnages trouvés",
+    "characters_found": "{{count, number}} personnages trouvés",
     "no_results_title": "Aucun personnage trouvé",
     "no_results_desc": "Nous n'avons trouvé aucun personnage correspondant à vos critères. Essayez d'alléger vos filtres.",
     "initial_title": "Prêt à chercher ?",
@@ -498,7 +517,8 @@
     "original_name": "Original",
     "international_names": "Noms internationaux",
     "no_description": "Aucune description disponible pour ce personnage.",
-    "character_code": "Code du personnage"
+    "character_code": "Code du personnage",
+    "name_or_code": "Nom ou code"
   },
   "legal": {
     "link": "Mentions légales",
@@ -542,7 +562,9 @@
     "entry_other": "{{count}} entrées",
     "issue_singular": "numéro",
     "issues_plural": "numéros",
-    "error_load": "Impossible de charger les détails du numéro."
+    "error_load": "Impossible de charger les détails du numéro.",
+    "show_more_years": "Afficher plus d'années",
+    "untitled": "Sans titre"
   },
   "publisher": {
     "title": "Éditeur : {{publisher}}",
@@ -591,5 +613,22 @@
     "submit": "Envoyer la suggestion",
     "error_short": "Votre message est trop court (min 10 caractères).",
     "success": "Merci ! Votre suggestion a bien été envoyée."
+  },
+  "csv": {
+    "storyCode": "Code histoire",
+    "originalTitle": "Titre (original)",
+    "translatedTitle": "Titre (traduit)",
+    "releaseDate": "Date de parution",
+    "pages": "Pages",
+    "type": "Type",
+    "hero": "Héros",
+    "creators": "Auteurs",
+    "publications": "Publications"
+  },
+  "speech": {
+    "error_denied": "Accès au microphone refusé. Vérifiez les autorisations de votre navigateur.",
+    "error_no_speech": "Aucune voix détectée. Parlez plus fort ou vérifiez votre micro.",
+    "error_start": "Impossible de démarrer l’enregistrement vocal.",
+    "error_generic": "Erreur du microphone : {{error}}"
   }
 }

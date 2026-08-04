@@ -17,17 +17,17 @@ export function LegalModal() {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <button className="hover:text-foreground transition-colors underline underline-offset-2 opacity-70 hover:opacity-100">
-          {t('legal.link') || 'Mentions légales'}
+          {t('legal.link')}
         </button>
       </DialogTrigger>
       
       <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader>
-          <DialogTitle>{t('legal.title') || 'Mentions légales'}</DialogTitle>
+          <DialogTitle>{t('legal.title')}</DialogTitle>
           <DialogDescription className="pt-4 space-y-4 text-sm text-foreground" asChild>
             <div>
               <p>
-                {t('legal.content') || 'Ce site utilise les données issues de la base INDUCKS (mentions à compléter plus tard quand la base sera de nouveau active).'}
+                {t('legal.content')}
               </p>
             </div>
           </DialogDescription>

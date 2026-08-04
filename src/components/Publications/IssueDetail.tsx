@@ -1,18 +1,63 @@
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { getIssueDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { getFlagUrl } from "@/lib/utils"
+import { getFlagUrl, formatInducksDate } from "@/lib/utils"
 import { toast } from "sonner"
 import { KindBadge } from "@/components/KindBadge"
+import { Link } from "@/components/ui/link"
+import { routes } from "@/lib/routes"
+import { isModifiedClick } from "@/lib/navigation"
 
 interface IssueDetailProps {
   issuecode: string
   onBack: () => void
   onSelectStory?: (storycode: string) => void
+}
+
+interface StoryEntryCardProps {
+  storycode?: string
+  anchorId?: string
+  onSelectStory?: (storycode: string) => void
+  children: React.ReactNode
+}
+
+/**
+ * One entry of an issue's table of contents.
+ *
+ * Rendered as a real anchor so ctrl/cmd/middle-click opens the story in a new
+ * tab. A plain click is handled in-app, and `preventDefault` there is what
+ * stops the click from *also* pushing a history entry through `<Link>` — the
+ * duplicate push is what previously made the entry look like it needed two
+ * clicks and left the back button one step behind.
+ */
+function StoryEntryCard({ storycode, anchorId, onSelectStory, children }: StoryEntryCardProps) {
+  const className =
+    "group block rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs border text-left hover:border-primary/20"
+
+  if (!storycode) {
+    return <div id={anchorId} className={className}>{children}</div>
+  }
+
+  return (
+    <Link
+      id={anchorId}
+      to={routes.story(storycode)}
+      className={`${className} cursor-pointer`}
+      onClick={(e) => {
+        if (isModifiedClick(e)) return
+        if (onSelectStory) {
+          e.preventDefault()
+          onSelectStory(storycode)
+        }
+      }}
+    >
+      {children}
+    </Link>
+  )
 }
 
 export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailProps) {
@@ -30,7 +75,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
         setIssue(details)
       } catch (e) {
         console.error(e)
-        toast.error(t("publication.error_load") || "Impossible de charger les détails du numéro.")
+        toast.error(t("publication.error_load"))
       } finally {
         setLoading(false)
       }
@@ -90,26 +135,11 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
     )
   }
 
-  // Format date
-  const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr === "0000-00-00" || dateStr === "9999-99-99") return t("story.unknown_date") || "Date inconnue"
-    const parts = dateStr.split("-")
-    if (parts.length < 2) return dateStr
-    const year = parts[0]
-    const month = parts[1]
-    const day = parts.length > 2 ? parts[2] : "00"
-    if (month === "00") return year
-    try {
-      const date = new Date(parseInt(year), parseInt(month) - 1, day === "00" ? 1 : parseInt(day))
-      return new Intl.DateTimeFormat(i18n.language, {
-        year: "numeric",
-        month: "long",
-        day: day !== "00" ? "numeric" : undefined,
-      }).format(date)
-    } catch {
-      return dateStr
-    }
-  }
+  // Inducks stores partial dates (YYYY-00-00, quarters, decades, a trailing
+  // '?'), so formatting goes through the shared Inducks-aware formatter
+  // instead of a local Intl call that would mangle them.
+  const formatDate = (dateStr: string) =>
+    !dateStr || dateStr === "0000-00-00" ? t("story.unknown_date") : formatInducksDate(dateStr, i18n.language)
 
 
   return (
@@ -117,7 +147,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
       <div className="flex items-center gap-4">
         <Button onClick={onBack} variant="outline" size="sm" className="rounded-xl gap-1.5 h-9">
           <ArrowLeft className="w-4 h-4" />
-          {t("common.back") || "Retour"}
+          {t("common.back")}
         </Button>
       </div>
 
@@ -170,7 +200,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <DollarSign className="w-4 h-4 text-primary shrink-0" />
                     <div>
-                      <p className="font-bold">{t("search.price") || "Prix"}</p>
+                      <p className="font-bold">{t("search.price")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.price}</p>
                     </div>
                   </div>
@@ -180,7 +210,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <Ruler className="w-4 h-4 text-primary shrink-0" />
                     <div>
-                      <p className="font-bold">{t("search.dimensions") || "Format"}</p>
+                      <p className="font-bold">{t("search.dimensions")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.size}</p>
                     </div>
                   </div>
@@ -190,7 +220,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <LinkIcon className="w-4 h-4 text-primary shrink-0" />
                     <div>
-                      <p className="font-bold">{t("search.attached") || "Objet joint"}</p>
+                      <p className="font-bold">{t("search.attached")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.attached}</p>
                     </div>
                   </div>
@@ -216,7 +246,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {issue.publication_title} #{issue.issuenumber}
             </h1>
-            <p className="text-xs font-semibold text-text-secondary">{t("common.code") || "Code"} : {issuecode}</p>
+            <p className="text-xs font-semibold text-text-secondary">{t("common.code")} : {issuecode}</p>
           </div>
 
           {/* Index of Stories */}
@@ -226,7 +256,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
               className="flex items-center justify-between w-full group"
             >
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                {t("publication.content") || "Contenu"} 
+                {t("publication.content")} 
                 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
                   {t("publication.entry", { count: issue.stories?.length || 0 })}
                 </span>
@@ -244,21 +274,13 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
               <div className="space-y-3 pt-1">
                 {issue.stories && issue.stories.length > 0 ? (
                   issue.stories.map((story: any, idx: number) => (
-                    <Card
+                    <StoryEntryCard
                       // Include idx to guarantee uniqueness: the same storycode can
                       // appear multiple times in a single issue (e.g. multi-part stories).
                       key={`${story.storycode ?? ""}-${idx}`}
-                      id={story.position ? `pos-${story.position.trim().toLowerCase()}` : undefined}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => story.storycode && onSelectStory && onSelectStory(story.storycode)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          story.storycode && onSelectStory && onSelectStory(story.storycode);
-                        }
-                      }}
-                      className="group rounded-2xl border-border-subtle bg-surface hover:bg-surface-2 transition-all shadow-xs cursor-pointer border text-left hover:border-primary/20"
+                      storycode={story.storycode}
+                      anchorId={story.position ? `pos-${story.position.trim().toLowerCase()}` : undefined}
+                      onSelectStory={onSelectStory}
                     >
                       <CardContent className="p-4 flex items-start gap-4">
                         {/* Position / Index badge */}
@@ -269,11 +291,16 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                         <div className="space-y-1.5 flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-4">
                             <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                              {story.entry_title || story.original_title || (t("story.untitled") || "Sans titre")}
+                              {(() => {
+                                const title = story.entry_title || story.original_title;
+                                return (!title || title === 'Untitled') 
+                                  ? t("story.no_title") 
+                                  : title;
+                              })()}
                             </p>
                             {story.entirepages && (
                               <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono shrink-0">
-                                {story.entirepages} {t("story.pages_short", "p.")}
+                                {story.entirepages} {t("story.pages_short")}
                               </span>
                             )}
                           </div>
@@ -284,7 +311,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                             )}
                             {story.original_title && story.original_title !== story.entry_title && (
                               <p className="text-[10px] text-muted-foreground italic truncate">
-                                {t("story.original_title") || "Titre original"} : {story.original_title}
+                                {t("story.original_title")} : {story.original_title}
                               </p>
                             )}
                           </div>
@@ -294,12 +321,12 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                             <div className="text-[10px] text-text-secondary space-y-0.5">
                               {story.writers && (
                                 <p className="truncate">
-                                  <span className="font-semibold">{t("story.script") || "Scénario"} :</span> {story.writers}
+                                  <span className="font-semibold">{t("story.script")} :</span> {story.writers}
                                 </p>
                               )}
                               {story.artists && (
                                 <p className="truncate">
-                                  <span className="font-semibold">{t("story.art") || "Dessin"} :</span> {story.artists}
+                                  <span className="font-semibold">{t("story.art")} :</span> {story.artists}
                                 </p>
                               )}
                             </div>
@@ -312,7 +339,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                           )}
                         </div>
                       </CardContent>
-                    </Card>
+                    </StoryEntryCard>
                   ))
                 ) : (
                   <p className="text-sm text-text-secondary italic">{t("publication.empty")}</p>
