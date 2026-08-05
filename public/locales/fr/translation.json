@@ -617,7 +617,6 @@
   "csv": {
     "storyCode": "Code histoire",
     "originalTitle": "Titre (original)",
-    "translatedTitle": "Titre (traduit)",
     "releaseDate": "Date de parution",
     "pages": "Pages",
     "type": "Type",
@@ -630,5 +629,8 @@
     "error_no_speech": "Aucune voix détectée. Parlez plus fort ou vérifiez votre micro.",
     "error_start": "Impossible de démarrer l’enregistrement vocal.",
     "error_generic": "Erreur du microphone : {{error}}"
+  },
+  "issue": {
+    "indexed_by": "Indexé par"
   }
 }

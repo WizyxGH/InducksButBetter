@@ -466,9 +466,28 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
         NULLIF(s.firstpublicationdate, ''),
         (SELECT MIN(i_fb.oldestdate) FROM inducks_storyversion sv_fb JOIN inducks_entry e_fb ON sv_fb.storyversioncode = e_fb.storyversioncode JOIN inducks_issue i_fb ON e_fb.issuecode = i_fb.issuecode WHERE sv_fb.storycode = s.storycode AND i_fb.oldestdate IS NOT NULL AND i_fb.oldestdate != '')
       ) as firstpublicationdate, sv.kind, sv.entirepages, sv.brokenpagenumerator, sv.brokenpagedenominator, sv.plotsummary, s.storycomment,
+      -- Original title. When inducks_story.title is empty the earliest known
+      -- printing is used as a stand-in. Two rules matter here:
+      --   * look across *every* storyversion of the story, not just the one
+      --     picked for display — the original-language printing often sits on
+      --     a country-specific version (the Italian "I SUD  21-5" had only a
+      --     German entry on its selected version);
+      --   * a precise date outranks a year-only one within the same year, so
+      --     an edition dated "2004" cannot outrank the original dated
+      --     "2004-01-20".
       COALESCE(
         NULLIF(NULLIF(s.title, 'Untitled'), ''),
-        (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY COALESCE(NULLIF(i.oldestdate, ''), '9999-99-99') ASC, e.entrycode ASC LIMIT 1)
+        (SELECT e.title
+         FROM inducks_entry e
+         JOIN inducks_storyversion sv_o ON e.storyversioncode = sv_o.storyversioncode
+         JOIN inducks_issue i ON e.issuecode = i.issuecode
+         WHERE sv_o.storycode = s.storycode
+           AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled'
+         ORDER BY COALESCE(NULLIF(SUBSTR(i.oldestdate, 1, 4), ''), '9999') ASC,
+                  CASE WHEN LENGTH(i.oldestdate) > 4 THEN 0 ELSE 1 END ASC,
+                  COALESCE(NULLIF(i.oldestdate, ''), '9999-99-99') ASC,
+                  e.entrycode ASC
+         LIMIT 1)
       ) as original_title,
       (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title,
       COALESCE(
@@ -644,13 +663,17 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
   }
 
   if (filters.indexer) {
-    const like = `%${filters.indexer.trim()}%`;
+    // Picking a suggestion yields a person code, while typing freely yields a
+    // name fragment — both must match, or selecting a suggestion would return
+    // nothing.
+    const indexer = filters.indexer.trim();
     where.push(`EXISTS (
-      SELECT 1 FROM inducks_issuejob ij 
-      JOIN inducks_person per ON ij.personcode = per.personcode 
-      WHERE ij.issuecode = i.issuecode AND ij.inxtransletcol = 'i' AND per.fullname LIKE ?
+      SELECT 1 FROM inducks_issuejob ij
+      JOIN inducks_person per ON ij.personcode = per.personcode
+      WHERE ij.issuecode = i.issuecode AND ij.inxtransletcol = 'i'
+        AND (per.personcode = ? OR per.fullname LIKE ?)
     )`);
-    p.push(like);
+    p.push(indexer, `%${indexer}%`);
   }
 
   if (filters.collects === true || filters.collects === "true") {

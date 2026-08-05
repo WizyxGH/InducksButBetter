@@ -39,17 +39,29 @@ export async function autocompletePerson(q: string) {
   return result.rows;
 }
 
+/**
+ * Suggests people credited as indexers.
+ *
+ * There is no `inducks_indexer` table — querying it made every keystroke fail
+ * with an SQL error. Indexers are people with an `inducks_issuejob` row whose
+ * job column is 'i' ('t', 'l' and 'c' are translator, letterer and colourist).
+ * Ordering by issue count puts the prolific indexers first.
+ */
 export async function autocompleteIndexer(q: string) {
   if (!q || q.length < 2) return [];
+  const like = `%${q}%`;
   const result = await executeQuery({
     sql: `
-      SELECT indexer as personcode, fullname, fullname as displayname 
-      FROM inducks_indexer 
-      WHERE fullname LIKE ? OR indexer LIKE ? 
-      ORDER BY fullname ASC
+      SELECT p.personcode, p.fullname, p.fullname as displayname
+      FROM inducks_issuejob ij
+      JOIN inducks_person p ON ij.personcode = p.personcode
+      WHERE ij.inxtransletcol = 'i'
+        AND (p.fullname LIKE ? OR p.personcode LIKE ?)
+      GROUP BY p.personcode
+      ORDER BY COUNT(DISTINCT ij.issuecode) DESC, p.fullname ASC
       LIMIT 10
     `,
-    args: [`%${q}%`, `%${q}%`]
+    args: [like, like]
   });
   return result.rows;
 }
@@ -389,9 +401,23 @@ export async function getIssueDetail(issuecode: string) {
     args: [issuecode]
   });
 
+  // Who indexed this issue. `inxtransletcol` is the job column: 'i' is the
+  // indexer, the other letters are translator / letterer / colourist.
+  const indexersResult = await executeQuery({
+    sql: `
+      SELECT DISTINCT p.personcode, p.fullname
+      FROM inducks_issuejob ij
+      JOIN inducks_person p ON ij.personcode = p.personcode
+      WHERE ij.issuecode = ? AND ij.inxtransletcol = 'i'
+      ORDER BY p.fullname
+    `,
+    args: [issuecode]
+  });
+
   return {
     ...issue,
     issue_thumb: thumb,
+    indexers: indexersResult.rows,
     stories: storiesResult.rows
   };
 }

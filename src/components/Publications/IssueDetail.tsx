@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp , UserCheck} from "lucide-react"
 import { getIssueDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
@@ -192,6 +192,22 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                     <div>
                       <p className="font-bold">{t("publication.pages")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.pages} {t("search.pages").toLowerCase()}</p>
+                    </div>
+                  </div>
+                )}
+
+                {issue.indexers?.length > 0 && (
+                  <div className="flex items-center gap-3 text-xs text-text-body">
+                    <UserCheck className="w-4 h-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-bold">{t("issue.indexed_by")}</p>
+                      <p className="text-[10px] text-muted-foreground flex flex-wrap gap-x-1.5">
+                        {issue.indexers.map((p: any) => (
+                          <Link key={p.personcode} to={routes.author(p.personcode)} className="hover:text-primary hover:underline">
+                            {p.fullname}
+                          </Link>
+                        ))}
+                      </p>
                     </div>
                   </div>
                 )}

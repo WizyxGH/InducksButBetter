@@ -599,7 +599,6 @@
   "csv": {
     "storyCode": "Story code",
     "originalTitle": "Title (original)",
-    "translatedTitle": "Title (translated)",
     "releaseDate": "Release date",
     "pages": "Pages",
     "type": "Type",
@@ -630,5 +629,8 @@
     "error_no_speech": "No speech detected. Speak louder or check your microphone.",
     "error_start": "Could not start voice recording.",
     "error_generic": "Microphone error: {{error}}"
+  },
+  "issue": {
+    "indexed_by": "Indexed by"
   }
 }

@@ -111,10 +111,16 @@ export function describeInstallError(error: unknown, t: Translate): string {
   }
 }
 
-/** Formats a byte count into a human-readable string. */
+/**
+ * Formats a byte count into a human-readable string.
+ *
+ * Binary units, because the divisor is 1024: labelling 1024-based values "GB"
+ * understated the database as "1.06 GB" when it is 1.13 GB decimal — the same
+ * 1 133 518 848 bytes, correctly named 1.06 GiB.
+ */
 export function formatBytes(bytes: number, decimals = 2): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
+  const units = ["B", "KiB", "MiB", "GiB", "TiB"];
   const k = 1024;
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), units.length - 1);
   const value = bytes / Math.pow(k, i);

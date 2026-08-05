@@ -1,5 +1,11 @@
 import { SearchFilters } from './types';
 import { buildAdvancedSearchQuery } from './queryBuilder';
+import { parseCredits } from '../credits';
+
+/** Splits a ';'-separated aggregate column into its entries. */
+function splitList(value: string | null | undefined): string[] {
+  return value ? String(value).split(';').filter(Boolean) : [];
+}
 
 export async function exportSearchResultsToCsv(
   filters: SearchFilters, 
@@ -21,7 +27,6 @@ export async function exportSearchResultsToCsv(
   const headers = [
     t("csv.storyCode"),
     t("csv.originalTitle"),
-    t("csv.translatedTitle"),
     t("csv.releaseDate"),
     t("csv.pages"),
     t("csv.type"),
@@ -31,22 +36,27 @@ export async function exportSearchResultsToCsv(
   ];
 
   const rows = results.map(row => {
-    let creatorsStr = "";
-    try {
-      const creators = row.creator_list ? JSON.parse(row.creator_list) : [];
-      creatorsStr = creators.map((c: any) => c.name).join(", ");
-    } catch(e) {}
+    // These columns arrive as ';'-separated `role:code|name` and
+    // `country|title|issue` strings — never JSON. Parsing them as JSON threw
+    // on every row, so both columns always exported empty.
+    const { writers, artists } = parseCredits(row.creators);
+    const creatorsStr = [...writers, ...artists]
+      .filter((c, i, a) => a.findIndex((o) => o.code === c.code) === i)
+      .map((c) => c.name)
+      .join(", ");
 
-    let pubStr = "";
-    try {
-      const pubs = row.publication_list ? JSON.parse(row.publication_list) : [];
-      pubStr = pubs.map((p: any) => `${p.name} ${p.issueNumber || ''}`.trim()).join(", ");
-    } catch(e) {}
+    const pubStr = splitList(row.publication_list)
+      .map((entry) => {
+        const [, title, issueNumber] = entry.split("|");
+        return `${title || ""} ${issueNumber || ""}`.trim();
+      })
+      .filter(Boolean)
+      .filter((p, i, a) => a.indexOf(p) === i)
+      .join(", ");
 
     return [
       row.storycode,
-      row.original_title || "",
-      row.translated_title || row.story_title || "",
+      row.original_title || row.story_title || "",
       row.firstpublicationdate || "",
       row.entirepages || "",
       row.kind || "",

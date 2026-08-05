@@ -146,10 +146,10 @@ describe('formatBytes', () => {
   it.each([
     [0, '0 B'],
     [512, '512 B'],
-    [1024, '1 KB'],
-    [1536, '1.5 KB'],
-    [1024 ** 2, '1 MB'],
-    [1024 ** 3, '1 GB'],
+    [1024, '1 KiB'],
+    [1536, '1.5 KiB'],
+    [1024 ** 2, '1 MiB'],
+    [1024 ** 3, '1 GiB'],
   ])('formats %i as %s', (bytes, expected) => {
     expect(formatBytes(bytes)).toBe(expected);
   });
@@ -160,10 +160,10 @@ describe('formatBytes', () => {
   });
 
   it('caps the unit at terabytes', () => {
-    expect(formatBytes(1024 ** 6)).toContain('TB');
+    expect(formatBytes(1024 ** 6)).toContain('TiB');
   });
 
   it('honours the requested precision', () => {
-    expect(formatBytes(1536, 0)).toBe('2 KB');
+    expect(formatBytes(1536, 0)).toBe('2 KiB');
   });
 });
