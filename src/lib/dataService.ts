@@ -401,8 +401,14 @@ export async function getIssueDetail(issuecode: string) {
         e.sideways,
         e.printedcode,
         e.includedinentrycode,
-        (SELECT GROUP_CONCAT(p_w.fullname, ', ') FROM inducks_storyjob sj_w JOIN inducks_person p_w ON sj_w.personcode = p_w.personcode WHERE sj_w.storyversioncode = e.storyversioncode AND sj_w.plotwritartink IN ('w', 'p', 'wa', 'pw')) as writers,
-        (SELECT GROUP_CONCAT(p_a.fullname, ', ') FROM inducks_storyjob sj_a JOIN inducks_person p_a ON sj_a.personcode = p_a.personcode WHERE sj_a.storyversioncode = e.storyversioncode AND sj_a.plotwritartink IN ('a', 'i', 'pa', 'wa')) as artists
+        -- One row per job, deduplicated on the client by person code. Two
+        -- plain GROUP_CONCATs listed anyone credited under two roles of the
+        -- same bucket twice ("Fabrizio Petrossi, Fabrizio Petrossi" for an
+        -- artist credited both 'a' and 'i').
+        (SELECT GROUP_CONCAT(sj_c.plotwritartink || ':' || p_c.personcode || '|' || p_c.fullname, ';')
+         FROM inducks_storyjob sj_c
+         JOIN inducks_person p_c ON sj_c.personcode = p_c.personcode
+         WHERE sj_c.storyversioncode = e.storyversioncode) as creators
       FROM inducks_entry e
       LEFT JOIN inducks_storyversion sv ON e.storyversioncode = sv.storyversioncode
       LEFT JOIN inducks_story s ON sv.storycode = s.storycode

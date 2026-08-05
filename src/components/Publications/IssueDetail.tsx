@@ -12,6 +12,7 @@ import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
 import { getEntryAnnotations, hasEntryAnnotations } from "@/lib/entryNotes"
+import { parseCredits } from "@/lib/credits"
 
 interface IssueDetailProps {
   issuecode: string
@@ -58,6 +59,39 @@ function StoryEntryCard({ storycode, anchorId, onSelectStory, children }: StoryE
     >
       {children}
     </Link>
+  )
+}
+
+/**
+ * Script and art credits of one entry.
+ *
+ * `parseCredits` deduplicates by person code, so someone credited under two
+ * roles of the same bucket — 'a' and 'i' for an artist — appears once.
+ */
+function EntryCredits({ creators }: { creators?: string | null }) {
+  const { t } = useTranslation()
+  const { writers, artists } = useMemo(() => parseCredits(creators), [creators])
+
+  if (writers.length === 0 && artists.length === 0) return null
+
+  const line = (label: string, people: { code: string; name: string }[]) =>
+    people.length > 0 && (
+      <p className="truncate">
+        <span className="font-semibold">{label} :</span>{" "}
+        {people.map((p, i) => (
+          <React.Fragment key={p.code}>
+            {i > 0 && ", "}
+            {p.name}
+          </React.Fragment>
+        ))}
+      </p>
+    )
+
+  return (
+    <div className="text-[10px] text-text-secondary space-y-0.5">
+      {line(t("story.script"), writers)}
+      {line(t("story.art"), artists)}
+    </div>
   )
 }
 
@@ -389,21 +423,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
 
                           <EntryAnnotations entry={story} originalPages={story.entirepages} />
 
-                          {/* Credits */}
-                          {(story.writers || story.artists) && (
-                            <div className="text-[10px] text-text-secondary space-y-0.5">
-                              {story.writers && (
-                                <p className="truncate">
-                                  <span className="font-semibold">{t("story.script")} :</span> {story.writers}
-                                </p>
-                              )}
-                              {story.artists && (
-                                <p className="truncate">
-                                  <span className="font-semibold">{t("story.art")} :</span> {story.artists}
-                                </p>
-                              )}
-                            </div>
-                          )}
+                          <EntryCredits creators={story.creators} />
 
                           {story.storycode && (
                             <p className="text-[9px] font-mono font-bold text-primary truncate pt-1">

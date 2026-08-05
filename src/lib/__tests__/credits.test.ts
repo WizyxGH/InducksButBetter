@@ -76,3 +76,29 @@ describe('parseCredits', () => {
     expect(writers).toEqual([{ code: 'XX', name: 'Doe, John' }]);
   });
 });
+
+describe('duplicate credits in an issue index', () => {
+  // fr/DBG 16 showed "Fabrizio Petrossi, Fabrizio Petrossi": two plain
+  // GROUP_CONCATs listed a person once per role, and 'a' and 'i' both land in
+  // the artist bucket.
+  it('lists an artist credited as both penciller and inker once', () => {
+    const { artists } = parseCredits('a:FPe|Fabrizio Petrossi;i:FPe|Fabrizio Petrossi');
+    expect(artists).toEqual([{ code: 'FPe', name: 'Fabrizio Petrossi' }]);
+  });
+
+  it('lists a writer credited for both plot and script once', () => {
+    const { writers } = parseCredits('p:JCh|Joris Chamblain;w:JCh|Joris Chamblain');
+    expect(writers).toEqual([{ code: 'JCh', name: 'Joris Chamblain' }]);
+  });
+
+  it('still lists two different people in the same bucket', () => {
+    const { artists } = parseCredits('a:FPe|Fabrizio Petrossi;i:GCa|Giorgio Cavazzano');
+    expect(artists).toHaveLength(2);
+  });
+
+  it('keeps a person appearing in both buckets in each of them', () => {
+    const { writers, artists } = parseCredits('w:CB|Carl Barks;a:CB|Carl Barks');
+    expect(writers).toHaveLength(1);
+    expect(artists).toHaveLength(1);
+  });
+});
