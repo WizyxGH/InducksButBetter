@@ -251,11 +251,16 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                     <UserCheck className="w-4 h-4 text-primary shrink-0" />
                     <div className="min-w-0">
                       <p className="font-bold">{t("issue.indexed_by")}</p>
-                      <p className="text-[10px] text-muted-foreground flex flex-wrap gap-x-1.5">
-                        {issue.indexers.map((p: any) => (
-                          <Link key={p.personcode} to={routes.indexer(p.personcode)} className="hover:text-primary hover:underline">
-                            {p.fullname}
-                          </Link>
+                      {/* A flex row separated names by whitespace alone, which
+                          read as a list of lines. Commas make it a sentence. */}
+                      <p className="text-[10px] text-muted-foreground">
+                        {issue.indexers.map((p: any, i: number) => (
+                          <React.Fragment key={p.personcode}>
+                            {i > 0 && ", "}
+                            <Link to={routes.indexer(p.personcode)} className="hover:text-primary hover:underline">
+                              {p.fullname}
+                            </Link>
+                          </React.Fragment>
                         ))}
                       </p>
                     </div>
