@@ -150,7 +150,8 @@
     "next": "Next",
     "skip": "Skip",
     "example": "bijv. {{value}}",
-    "hide_column": "Kolom verbergen"
+    "hide_column": "Kolom verbergen",
+    "load_more": "Load more"
   },
   "story": {
     "no_title": "Untitled",
@@ -632,5 +633,33 @@
   },
   "issue": {
     "indexed_by": "Indexed by"
+  },
+  "entry": {
+    "comment": "Comment",
+    "changes": "Changes",
+    "minor_changes": "Minor changes",
+    "printed_code": "Printed code",
+    "unaltered_reprint": "Unaltered reprint",
+    "mirrored": "Mirrored",
+    "sideways": "Rows printed sideways",
+    "included_above": "Included in the entry above",
+    "missing_row": "One row of panels missing",
+    "missing_panels_one": "1 panel missing",
+    "missing_panels_other": "{{count}} panels missing",
+    "cut_one": "1 page cut",
+    "cut_other": "{{count}} pages cut",
+    "cut_comment_one": "1 page cut ({{comment}})",
+    "cut_comment_other": "{{count}} pages cut ({{comment}})",
+    "cut_of_total_one": "1 page cut from the original {{total}}",
+    "cut_of_total_other": "{{count}} pages cut from the original {{total}}",
+    "cut_of_total_comment_one": "1 page cut from the original {{total}} ({{comment}})",
+    "cut_of_total_comment_other": "{{count}} pages cut from the original {{total}} ({{comment}})"
+  },
+  "indexer": {
+    "role": "Inducks indexer",
+    "issues_indexed": "Issues indexed",
+    "countries_covered": "Countries covered",
+    "period": "Period",
+    "indexed_issues": "Indexed issues"
   }
 }

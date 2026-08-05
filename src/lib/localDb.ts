@@ -152,11 +152,37 @@ export function getLocalDbStats() {
   return localDbStats;
 }
 
+/**
+ * Asks the browser to keep the OPFS data.
+ *
+ * Without this the origin sits in the "best-effort" storage bucket, which
+ * browsers evict under storage pressure — that is what made an imported
+ * database disappear and forced a re-import. The request is idempotent and
+ * silently unavailable in some browsers, so failure is never fatal.
+ *
+ * Returns whether storage is persistent after the call.
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+  try {
+    if (!navigator.storage?.persist) return false;
+    if (await navigator.storage.persisted?.()) return true;
+    return await navigator.storage.persist();
+  } catch (err) {
+    console.warn("Could not request persistent storage:", err);
+    return false;
+  }
+}
+
 export async function installDatabase(
   source: string | string[] | File,
   onProgress?: (progress: InstallProgressEvent) => void
 ): Promise<void> {
   onProgressCallback = onProgress ?? null;
+
+  // A ~1 GB database is exactly the kind of payload eviction targets first.
+  // Not awaited: the grant applies to the origin, so it need not precede the
+  // write, and blocking on it would delay the download for no benefit.
+  void requestPersistentStorage();
 
   const payload = source instanceof File ? { file: source } : { url: source };
 

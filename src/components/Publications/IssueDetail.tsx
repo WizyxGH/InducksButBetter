@@ -11,6 +11,7 @@ import { KindBadge } from "@/components/KindBadge"
 import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
+import { getEntryAnnotations, hasEntryAnnotations } from "@/lib/entryNotes"
 
 interface IssueDetailProps {
   issuecode: string
@@ -57,6 +58,55 @@ function StoryEntryCard({ storycode, anchorId, onSelectStory, children }: StoryE
     >
       {children}
     </Link>
+  )
+}
+
+/**
+ * How this printing differs from the original story — Inducks records pages
+ * cut, panels missing, mirrored artwork and editorial comments on each entry.
+ */
+function EntryAnnotations({ entry, originalPages }: { entry: any; originalPages?: number | null }) {
+  const { t } = useTranslation()
+  const annotations = useMemo(() => getEntryAnnotations(entry, originalPages), [entry, originalPages])
+
+  if (!hasEntryAnnotations(annotations)) return null
+
+  return (
+    <div className="text-[10px] text-text-secondary space-y-0.5">
+      {annotations.comment && (
+        <p>
+          <span className="font-semibold">{t("entry.comment")} :</span>{" "}
+          <span className="text-muted-foreground">{annotations.comment}</span>
+        </p>
+      )}
+      {annotations.changes && (
+        <p>
+          <span className="font-semibold">{t("entry.changes")} :</span>{" "}
+          <em className="text-muted-foreground">{annotations.changes}</em>
+        </p>
+      )}
+      {annotations.minorChanges && (
+        <p>
+          <span className="font-semibold">{t("entry.minor_changes")} :</span>{" "}
+          <em className="text-muted-foreground">{annotations.minorChanges}</em>
+        </p>
+      )}
+      {annotations.printedCode && (
+        <p>
+          <span className="font-semibold">{t("entry.printed_code")} :</span>{" "}
+          <span className="font-mono text-muted-foreground">{annotations.printedCode}</span>
+        </p>
+      )}
+      {annotations.notes.length > 0 && (
+        <ul className="flex flex-wrap gap-x-3 gap-y-0.5 text-muted-foreground">
+          {annotations.notes.map((note, i) => (
+            <li key={i} className="before:content-['•'] before:mr-1 before:opacity-50">
+              {String(t(note.key, note.params as any))}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -203,7 +253,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                       <p className="font-bold">{t("issue.indexed_by")}</p>
                       <p className="text-[10px] text-muted-foreground flex flex-wrap gap-x-1.5">
                         {issue.indexers.map((p: any) => (
-                          <Link key={p.personcode} to={routes.author(p.personcode)} className="hover:text-primary hover:underline">
+                          <Link key={p.personcode} to={routes.indexer(p.personcode)} className="hover:text-primary hover:underline">
                             {p.fullname}
                           </Link>
                         ))}
@@ -331,6 +381,8 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                               </p>
                             )}
                           </div>
+
+                          <EntryAnnotations entry={story} originalPages={story.entirepages} />
 
                           {/* Credits */}
                           {(story.writers || story.artists) && (

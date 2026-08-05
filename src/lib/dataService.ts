@@ -382,7 +382,7 @@ export async function getIssueDetail(issuecode: string) {
   // 3. Contained stories (index)
   const storiesResult = await executeQuery({
     sql: `
-      SELECT 
+      SELECT
         e.entrycode,
         e.position,
         sv.entirepages,
@@ -390,6 +390,17 @@ export async function getIssueDetail(issuecode: string) {
         e.title as entry_title,
         s.storycode,
         s.title as original_title,
+        -- How this printing differs from the original story. Inducks shows
+        -- these on every entry; they were fetched nowhere before.
+        e.entrycomment,
+        e.changes,
+        e.minorchanges,
+        e.cut,
+        e.missingpanels,
+        e.mirrored,
+        e.sideways,
+        e.printedcode,
+        e.includedinentrycode,
         (SELECT GROUP_CONCAT(p_w.fullname, ', ') FROM inducks_storyjob sj_w JOIN inducks_person p_w ON sj_w.personcode = p_w.personcode WHERE sj_w.storyversioncode = e.storyversioncode AND sj_w.plotwritartink IN ('w', 'p', 'wa', 'pw')) as writers,
         (SELECT GROUP_CONCAT(p_a.fullname, ', ') FROM inducks_storyjob sj_a JOIN inducks_person p_a ON sj_a.personcode = p_a.personcode WHERE sj_a.storyversioncode = e.storyversioncode AND sj_a.plotwritartink IN ('a', 'i', 'pa', 'wa')) as artists
       FROM inducks_entry e

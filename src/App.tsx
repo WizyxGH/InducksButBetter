@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Toaster } from "sonner"
 import { useRouteMetadata } from "@/hooks/useRouteMetadata"
 import { incrementHistoryCount, navigateBack } from "@/lib/utils"
-import { loadCachedDb, hasLocalDb } from "@/lib/localDb"
+import { loadCachedDb, hasLocalDb, requestPersistentStorage } from "@/lib/localDb"
 import { OnboardingModal } from "@/components/OnboardingModal"
 
 // Lazy load heavy components to code-split the application
@@ -30,6 +30,7 @@ const CountryPublications = lazy(() => import("@/components/Publications/Country
 const CountryList = lazy(() => import("@/components/Publications/CountryList").then(module => ({ default: module.CountryList })))
 const PublicationDetail = lazy(() => import("@/components/Publications/PublicationDetail").then(module => ({ default: module.PublicationDetail })))
 const PublisherDetail = lazy(() => import("@/components/Publications/PublisherDetail").then(module => ({ default: module.PublisherDetail })))
+const IndexerDetail = lazy(() => import("@/components/Publications/IndexerDetail").then(m => ({ default: m.IndexerDetail })))
 const IssueDetail = lazy(() => import("@/components/Publications/IssueDetail").then(module => ({ default: module.IssueDetail })))
 const SuggestionForm = lazy(() => import("@/components/SuggestionForm").then(module => ({ default: module.SuggestionForm })))
 
@@ -54,6 +55,7 @@ function App() {
   const [selectedCountrycode, setSelectedCountrycode] = useState<string | null>(null);
   const [selectedPublicationcode, setSelectedPublicationcode] = useState<string | null>(null);
   const [selectedPublisherid, setSelectedPublisherid] = useState<string | null>(null);
+  const [selectedIndexercode, setSelectedIndexercode] = useState<string | null>(null);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const isRoutingRef = useState(() => ({ current: false }))[0];
@@ -74,6 +76,10 @@ function App() {
     if (!hasLocalDb()) {
       loadCachedDb().then(loaded => {
         if (loaded) {
+          // Re-assert persistence on every boot: the grant can be revoked when
+          // the user clears site data, and a database that is not persisted is
+          // evicted under storage pressure — the cause of spurious re-imports.
+          requestPersistentStorage();
           window.dispatchEvent(new Event("db-local-loaded"));
         }
       });
@@ -128,6 +134,7 @@ function App() {
       if (routeResult.countrycode) setSelectedCountrycode(routeResult.countrycode);
       if (routeResult.publicationcode) setSelectedPublicationcode(routeResult.publicationcode);
       if (routeResult.publisherid) setSelectedPublisherid(routeResult.publisherid);
+      if (routeResult.indexercode) setSelectedIndexercode(routeResult.indexercode);
 
       setIsInitialized(true);
       setTimeout(() => { isRoutingRef.current = false; }, 0);
@@ -189,6 +196,8 @@ function App() {
       pushHashState(routes.author(selectedPersoncode) + queryStr);
     } else if (selectedCharactercode) {
       pushHashState(routes.character(selectedCharactercode) + queryStr);
+    } else if (selectedIndexercode) {
+      pushHashState(routes.indexer(selectedIndexercode) + queryStr);
     } else if (selectedPublisherid) {
       pushHashState(routes.publisher(selectedPublisherid) + queryStr);
     } else if (selectedPublicationcode) {
@@ -274,7 +283,15 @@ function App() {
             <TabsContent value="publications" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
               {activeTab === "publications" && (
                 <Suspense fallback={<TabFallback />}>
-                  {selectedIssuecode ? (
+                  {selectedIndexercode ? (
+                    <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                      <IndexerDetail
+                        personcode={selectedIndexercode}
+                        onBack={() => navigateBack(() => setSelectedIndexercode(null))}
+                        onSelectIssue={(code) => { setSelectedIndexercode(null); setSelectedIssuecode(code); }}
+                      />
+                    </div>
+                  ) : selectedIssuecode ? (
                     <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
                       <IssueDetail
                         issuecode={selectedIssuecode}

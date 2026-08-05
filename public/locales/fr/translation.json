@@ -160,7 +160,8 @@
     "next": "Suivant",
     "skip": "Passer",
     "example": "Ex : {{value}}",
-    "hide_column": "Masquer la colonne"
+    "hide_column": "Masquer la colonne",
+    "load_more": "Charger plus"
   },
   "story": {
     "not_found": "Histoire introuvable.",
@@ -632,5 +633,33 @@
   },
   "issue": {
     "indexed_by": "Indexé par"
+  },
+  "entry": {
+    "comment": "Commentaire",
+    "changes": "Modifications",
+    "minor_changes": "Modifications mineures",
+    "printed_code": "Code imprimé",
+    "unaltered_reprint": "Réimpression sans modification",
+    "mirrored": "Image inversée",
+    "sideways": "Bandes imprimées dans le sens de la hauteur",
+    "included_above": "Inclus dans l’entrée ci-dessus",
+    "missing_row": "Une bande de cases manquante",
+    "missing_panels_one": "1 case manquante",
+    "missing_panels_other": "{{count}} cases manquantes",
+    "cut_one": "1 page coupée",
+    "cut_other": "{{count}} pages coupées",
+    "cut_comment_one": "1 page coupée ({{comment}})",
+    "cut_comment_other": "{{count}} pages coupées ({{comment}})",
+    "cut_of_total_one": "1 page coupée sur les {{total}} d’origine",
+    "cut_of_total_other": "{{count}} pages coupées sur les {{total}} d’origine",
+    "cut_of_total_comment_one": "1 page coupée sur les {{total}} d’origine ({{comment}})",
+    "cut_of_total_comment_other": "{{count}} pages coupées sur les {{total}} d’origine ({{comment}})"
+  },
+  "indexer": {
+    "role": "Indexeur Inducks",
+    "issues_indexed": "Numéros indexés",
+    "countries_covered": "Pays couverts",
+    "period": "Période",
+    "indexed_issues": "Numéros indexés"
   }
 }

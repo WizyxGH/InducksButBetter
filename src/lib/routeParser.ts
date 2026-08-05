@@ -14,6 +14,7 @@ export interface ParsedRoute {
   countrycode?: string;
   publicationcode?: string;
   publisherid?: string;
+  indexercode?: string;
 }
 
 /**
@@ -49,6 +50,12 @@ export function parseRoutePath(pathPart: string): ParsedRoute {
   // Handle /character/Donald or /characters/...
   if (root === "character" || root === "characters") {
     return { tab: "characters", charactercode: parts.slice(1).join("/") };
+  }
+
+  // Handle /indexer/FGe or /indexers/... — indexers catalogue issues, so they
+  // live alongside publications rather than under authors.
+  if (root === "indexer" || root === "indexers") {
+    return { tab: "publications", indexercode: parts.slice(1).join("/") };
   }
 
   // Handle /publisher/D or /publishers/...

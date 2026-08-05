@@ -35,6 +35,9 @@ export const routes = {
   character: (code: string) => `/characters/${encode(code)}`,
   author: (code: string) => `/authors/${encode(code)}`,
   publisher: (id: string) => `/publishers/${encode(id)}`,
+  // Indexers get their own space: they catalogue issues, they do not create
+  // stories, so an author page would describe the wrong contribution.
+  indexer: (code: string) => `/indexers/${encode(code)}`,
 
   // Country hierarchy
   country: (code: string) => `/countries/${encode(code)}`,

@@ -136,3 +136,35 @@ describe('issue URL round-trip', () => {
     expect(urlToParsed('/countries/fr').countrycode).toBe('fr');
   });
 });
+
+describe('indexer route', () => {
+  it('gives indexers their own space, not the author page', () => {
+    // An indexer catalogues printings; the author page would describe the
+    // wrong kind of contribution.
+    expect(routes.indexer('FGe')).toBe('/indexers/FGe');
+    expect(routes.indexer('FGe')).not.toContain('/authors/');
+  });
+
+  it('encodes spaces in a person code as +', () => {
+    expect(routes.indexer('Eugene Voger')).toBe('/indexers/Eugene+Voger');
+  });
+
+  it('parses both the singular and plural forms', () => {
+    for (const path of ['/indexers/FGe', '/indexer/FGe']) {
+      expect(urlToParsed(path).indexercode).toBe('FGe');
+    }
+  });
+
+  it('round-trips a code containing a space', () => {
+    expect(urlToParsed(routes.indexer('Eugene Voger')).indexercode).toBe('Eugene Voger');
+  });
+
+  it('routes indexers under the publications tab', () => {
+    expect(urlToParsed('/indexers/FGe').tab).toBe('publications');
+  });
+
+  it('does not claim an author path', () => {
+    expect(urlToParsed('/authors/FGe').indexercode).toBeUndefined();
+    expect(urlToParsed('/authors/FGe').personcode).toBe('FGe');
+  });
+});

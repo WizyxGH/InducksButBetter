@@ -266,4 +266,78 @@ describe('localDb worker client', () => {
     expect(getLocalDbStats()).toBeNull();
     expect(harness.port.close).toHaveBeenCalled();
   });
+
+  describe('persistent storage', () => {
+    // Without this grant the origin sits in the best-effort bucket and browsers
+    // evict a ~1 GB database under storage pressure — the cause of the repeated
+    // re-imports users were seeing.
+    const withStorage = (impl: Partial<StorageManager>) => {
+      Object.defineProperty(navigator, 'storage', { value: impl, configurable: true });
+    };
+
+    afterEach(() => {
+      Object.defineProperty(navigator, 'storage', { value: undefined, configurable: true });
+    });
+
+    it('asks the browser to persist storage', async () => {
+      const persist = vi.fn().mockResolvedValue(true);
+      withStorage({ persist, persisted: vi.fn().mockResolvedValue(false) } as any);
+
+      const { requestPersistentStorage } = await freshModule();
+      await expect(requestPersistentStorage()).resolves.toBe(true);
+      expect(persist).toHaveBeenCalled();
+    });
+
+    it('does not ask again once already granted', async () => {
+      const persist = vi.fn();
+      withStorage({ persist, persisted: vi.fn().mockResolvedValue(true) } as any);
+
+      const { requestPersistentStorage } = await freshModule();
+      await expect(requestPersistentStorage()).resolves.toBe(true);
+      expect(persist).not.toHaveBeenCalled();
+    });
+
+    it('reports a refusal without throwing', async () => {
+      withStorage({ persist: vi.fn().mockResolvedValue(false), persisted: vi.fn().mockResolvedValue(false) } as any);
+
+      const { requestPersistentStorage } = await freshModule();
+      await expect(requestPersistentStorage()).resolves.toBe(false);
+    });
+
+    it('survives a browser without the Storage API', async () => {
+      const { requestPersistentStorage } = await freshModule();
+      await expect(requestPersistentStorage()).resolves.toBe(false);
+    });
+
+    it('swallows an error from the browser', async () => {
+      withStorage({ persist: vi.fn().mockRejectedValue(new Error('nope')), persisted: vi.fn().mockResolvedValue(false) } as any);
+
+      const { requestPersistentStorage } = await freshModule();
+      await expect(requestPersistentStorage()).resolves.toBe(false);
+    });
+
+    it('requests persistence when installing a database', async () => {
+      const persist = vi.fn().mockResolvedValue(true);
+      withStorage({ persist, persisted: vi.fn().mockResolvedValue(false) } as any);
+
+      const { installDatabase } = await freshModule();
+      void installDatabase('https://example.com/db.gz');
+      // The grant is requested without being awaited, so let its promise settle.
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(persist).toHaveBeenCalled();
+    });
+
+    it('does not delay the install request behind the grant', async () => {
+      // The grant applies to the origin, so blocking the download on it would
+      // only add latency.
+      withStorage({ persist: vi.fn(() => new Promise(() => {})), persisted: vi.fn().mockResolvedValue(false) } as any);
+
+      const { installDatabase } = await freshModule();
+      void installDatabase('https://example.com/db.gz');
+
+      expect(harness.posted).toHaveLength(1);
+    });
+  });
 });
