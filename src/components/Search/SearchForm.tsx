@@ -479,6 +479,17 @@ export function SearchForm({
               </div>
             </div>
 
+            <div className="col-span-1 md:col-span-2 flex items-center gap-2 -mt-1">
+              <Checkbox
+                id="direct-credits-only"
+                checked={filters.excludeIndirectCreators === true}
+                onCheckedChange={(checked) => updateFilters({ excludeIndirectCreators: checked === true })}
+              />
+              <label htmlFor="direct-credits-only" className="text-xs text-text-secondary cursor-pointer leading-snug">
+                {t("search.exclude_indirect_creators")}
+              </label>
+            </div>
+
             {/* ── Excluded Author & Nationality ─────────────────────────────── */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground">{t("search.not_author")}</Label>

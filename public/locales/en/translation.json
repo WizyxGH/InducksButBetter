@@ -107,7 +107,8 @@
     "export_error": "CSV export failed",
     "copy_sql": "Copy the SQL query",
     "export_csv": "Export CSV",
-    "page_indicator": "Page {{current}} of {{total}}"
+    "page_indicator": "Page {{current}} of {{total}}",
+    "exclude_indirect_creators": "Exclude items based on these creators' work but not originally intended for it"
   },
   "roles": {
     "any": "Any",

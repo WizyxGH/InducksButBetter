@@ -107,7 +107,8 @@
     "export_error": "Échec de l'exportation CSV",
     "copy_sql": "Copier la requête SQL",
     "export_csv": "Export CSV",
-    "page_indicator": "Page {{current}} sur {{total}}"
+    "page_indicator": "Page {{current}} sur {{total}}",
+    "exclude_indirect_creators": "Exclure les items dérivés du travail de ces auteurs sans avoir été conçus pour cela"
   },
   "roles": {
     "any": "N'importe",

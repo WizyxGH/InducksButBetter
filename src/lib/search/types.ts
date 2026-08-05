@@ -29,6 +29,8 @@ export interface SearchFilters {
   page?: number | string;
   indexingIncomplete?: boolean | string;
   multipleParts?: boolean | string;
+  /** Exclude items merely derived from a creator's work (Inducks 'indirect'). */
+  excludeIndirectCreators?: boolean | string;
   hasImage?: 'all' | 'yes' | 'no';
   lang?: string;
 }

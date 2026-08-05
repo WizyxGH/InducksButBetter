@@ -35,6 +35,7 @@ export const initialFilters: SearchFilters = {
   indexingIncomplete: false,
   multipleParts: false,
   hasImage: 'all',
+  excludeIndirectCreators: false,
 };
 
 export function useSearchFilters() {

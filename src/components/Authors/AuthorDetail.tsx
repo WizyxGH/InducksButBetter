@@ -76,7 +76,13 @@ const STORIES_PAGE_SQL = `
   JOIN inducks_storyversion sv ON sj.storyversioncode = sv.storyversioncode
   JOIN inducks_story s ON sv.storycode = s.storycode
   LEFT JOIN inducks_storyheader sh ON s.storyheadercode = sh.storyheadercode
+  -- Only work this person actually did. Inducks flags with indirect = 'Y' the
+  -- items merely derived from someone's art (a cover assembled from a Barks
+  -- panel), and role 'r' is a reference credit rather than authorship.
+  -- Counting those inflated Carl Barks from 2012 stories to 4521.
   WHERE sj.personcode = ?
+    AND sj.indirect = 'N'
+    AND sj.plotwritartink IN ('p', 'w', 'a', 'i')
   GROUP BY s.storycode
   ORDER BY s.firstpublicationdate DESC, s.storycode ASC
   LIMIT ? OFFSET ?
@@ -182,7 +188,9 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
               sql: `SELECT COUNT(DISTINCT sv.storycode) as total
                     FROM inducks_storyjob sj
                     JOIN inducks_storyversion sv ON sj.storyversioncode = sv.storyversioncode
-                    WHERE sj.personcode = ?`,
+                    WHERE sj.personcode = ?
+                      AND sj.indirect = 'N'
+                      AND sj.plotwritartink IN ('p', 'w', 'a', 'i')`,
               args: [personcode],
             }),
             executeQuery({ sql: STORIES_PAGE_SQL, args: [currentLang, personcode, STORIES_PER_PAGE, 0] }),

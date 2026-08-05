@@ -266,11 +266,19 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   // instance). Matching authors at the storyversion level therefore drops
   // stories whose co-authors sit on different versions, so every author filter
   // is evaluated at the story level instead — one clause per author, ANDed.
+  // Inducks flags with indirect = 'Y' the items that merely reuse someone's
+  // work without having been made for it — a cover assembled from an existing
+  // panel, say. Its advanced search offers the same opt-in exclusion, and
+  // without it Carl Barks appears on 4521 items instead of 2012.
+  const directCreditsOnly =
+    filters.excludeIndirectCreators === true || String(filters.excludeIndirectCreators) === "true";
+  const directOnlySql = directCreditsOnly ? " AND sj_p.indirect = 'N'" : "";
+
   const personRoles = (filters.personRoles ?? []).filter(pr => pr?.code && String(pr.code).trim());
   personRoles.forEach(pr => {
     const hasRole = pr.role && pr.role !== "any";
     where.push(
-      `s.storycode IN (SELECT sv_p.storycode FROM inducks_storyversion sv_p JOIN inducks_storyjob sj_p ON sv_p.storyversioncode = sj_p.storyversioncode WHERE sj_p.personcode = ?${hasRole ? " AND sj_p.plotwritartink LIKE ?" : ""})`
+      `s.storycode IN (SELECT sv_p.storycode FROM inducks_storyversion sv_p JOIN inducks_storyjob sj_p ON sv_p.storyversioncode = sj_p.storyversioncode WHERE sj_p.personcode = ?${hasRole ? " AND sj_p.plotwritartink LIKE ?" : ""}${directOnlySql})`
     );
     whereParams.push(String(pr.code).trim());
     if (hasRole) whereParams.push(`%${pr.role}%`);
