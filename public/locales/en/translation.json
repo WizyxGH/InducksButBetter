@@ -394,7 +394,7 @@
   },
   "localDb": {
     "title": "Import Inducks database",
-    "desc_1": "By default, InducksButBetter uses a remote hosting service which has usage limits. You can bypass these limits by loading your own local database!",
+    "desc_1": "InducksButBetter runs entirely in your browser: every search is executed against a database stored on your own device. Install it once, then browse offline.",
     "desc_2": "Step 1: Click Download from Cloud to install the pre-compiled database.\nStep 2: Or drag and drop your own inducks.sqlite or inducks.sqlite.gz file.",
     "instructions_title": "How to install the local database?",
     "btn_import": "Import",

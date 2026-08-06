@@ -285,8 +285,10 @@ describe('buildAdvancedSearchQuery', () => {
         pagesMax: 99,
       });
 
-      expect(result.countQuery).toContain('sv.entirepages = ?');
-      expect(result.countQuery).not.toContain('sv.entirepages >=');
+      // `entirepages` is TEXT, so the comparison must cast — see
+      // brokenFilters.test.ts.
+      expect(result.countQuery).toContain("CAST(NULLIF(sv.entirepages, '') AS REAL) = ?");
+      expect(result.countQuery).not.toContain('AS REAL) >=');
       expect(result.countParams).toEqual([12]);
     });
 

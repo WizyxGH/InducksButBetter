@@ -369,7 +369,7 @@
   },
   "localDb": {
     "title": "Importar base de dados Inducks",
-    "desc_1": "Por padrão, o InducksButBetter usa um serviço de hospedagem remoto com limites de uso. Você pode contornar esses limites carregando seu próprio banco de dados local!",
+    "desc_1": "InducksButBetter runs entirely in your browser: every search is executed against a database stored on your own device. Install it once, then browse offline.",
     "desc_2": "Passo 1: Baixe todos os arquivos ISV no link abaixo para o seu dispositivo.\nPasso 2: Clique na área de importação abaixo e selecione todos esses arquivos (com terminação .isv).",
     "instructions_title": "Como instalar a base de dados local?",
     "btn_import": "Importar",

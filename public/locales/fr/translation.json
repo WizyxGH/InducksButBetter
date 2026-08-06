@@ -394,7 +394,7 @@
   },
   "localDb": {
     "title": "Stockage local de l'application",
-    "desc_1": "Par défaut, InducksButBetter utilise un service d'hébergement distant soumis à des quotas. Vous pouvez contourner cette limite en chargeant votre propre base de données !",
+    "desc_1": "InducksButBetter fonctionne entièrement dans votre navigateur : chaque recherche est exécutée sur une base de données stockée sur votre appareil. Installez-la une fois, puis consultez-la hors ligne.",
     "desc_2": "Étape 1 : Cliquez sur Télécharger depuis le Cloud pour installer la base pré-compilée.\nÉtape 2 : Ou faites glisser votre propre fichier inducks.sqlite ou inducks.sqlite.gz.",
     "instructions_title": "Comment installer la base locale ?",
     "btn_import": "Importer",

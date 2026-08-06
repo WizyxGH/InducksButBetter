@@ -297,7 +297,10 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   }
 
   if (filters.publisherid) {
-    svWhere.push(`EXISTS (SELECT 1 FROM inducks_publishingjob pjob WHERE pjob.storyversioncode = sv.storyversioncode AND pjob.publisherid = ?)`);
+    // A publisher publishes issues, not story versions: inducks_publishingjob
+    // is keyed by issuecode and has no storyversioncode column at all, so the
+    // previous clause failed with "no such column" on every search.
+    svWhere.push(`EXISTS (SELECT 1 FROM inducks_entry e_pub JOIN inducks_publishingjob pjob ON e_pub.issuecode = pjob.issuecode WHERE e_pub.storyversioncode = sv.storyversioncode AND pjob.publisherid = ?)`);
     svWhereParams.push(filters.publisherid);
   }
 
@@ -332,12 +335,17 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     }
   }
 
+  // `entirepages` is a TEXT column, so an unconverted comparison is
+  // lexicographic: '10' >= 5 became '10' >= '5', which is false. A page range
+  // therefore matched almost nothing, silently and without any error.
+  const PAGES = "CAST(NULLIF(sv.entirepages, '') AS REAL)";
+
   if (filters.pagesExact) {
-    svWhere.push("sv.entirepages = ?");
-    svWhereParams.push(parseInt(String(filters.pagesExact), 10));
+    svWhere.push(`${PAGES} = ?`);
+    svWhereParams.push(parseFloat(String(filters.pagesExact)));
   } else {
-    if (filters.pagesMin) { svWhere.push("sv.entirepages >= ?"); svWhereParams.push(parseInt(String(filters.pagesMin), 10)); }
-    if (filters.pagesMax) { svWhere.push("sv.entirepages <= ?"); svWhereParams.push(parseInt(String(filters.pagesMax), 10)); }
+    if (filters.pagesMin) { svWhere.push(`${PAGES} >= ?`); svWhereParams.push(parseFloat(String(filters.pagesMin))); }
+    if (filters.pagesMax) { svWhere.push(`${PAGES} <= ?`); svWhereParams.push(parseFloat(String(filters.pagesMax))); }
   }
 
   // Note: no hardcoded '1920' floor here — it would drop every story with an

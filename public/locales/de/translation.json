@@ -369,7 +369,7 @@
   },
   "localDb": {
     "title": "Inducks-Datenbank importieren",
-    "desc_1": "Standardmäßig verwendet InducksButBetter eine Remote-Datenbank mit Nutzungsbeschränkungen. Du kannst diese Beschränkungen umgehen, indem Du die rohen Inducks ISV-Dateien lokal verwendest!",
+    "desc_1": "InducksButBetter runs entirely in your browser: every search is executed against a database stored on your own device. Install it once, then browse offline.",
     "desc_2": "Bitte lade das offizielle Inducks-Dump herunter, extrahiere die ZIP-Datei und wähle hier alle <1>.isv</1>-Dateien aus. Wir generieren die Datenbank im Speicher Deines Browsers.",
     "instructions_title": "Wie installiere ich die lokale Datenbank?",
     "btn_import": "DB importieren",
