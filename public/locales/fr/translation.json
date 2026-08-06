@@ -67,7 +67,6 @@
     "searching": "Recherche en cours...",
     "results": "Résultats",
     "sort_by": "Trier par",
-    "stories_found": "{{count, number}} histoires trouvées",
     "no_results_title": "Aucun résultat trouvé",
     "no_results_desc": "Nous n'avons trouvé aucune histoire correspondant à vos critères. Essayez d'alléger vos filtres.",
     "initial_title": "Prêt à chercher ?",
@@ -97,7 +96,6 @@
     "rows_per_page": "Résultats par page",
     "title_pub_label": "Titre de la publication",
     "title_pub_placeholder": "Ex : Mickey Parade, FR/MP...",
-    "publications_found": "{{count, number}} publications trouvées",
     "display": "Affichage",
     "all_stories": "Toutes les histoires",
     "with_image_only": "Avec image uniquement",
@@ -108,7 +106,11 @@
     "copy_sql": "Copier la requête SQL",
     "export_csv": "Export CSV",
     "page_indicator": "Page {{current}} sur {{total}}",
-    "exclude_indirect_creators": "Exclure les items dérivés du travail de ces auteurs sans avoir été conçus pour cela"
+    "exclude_indirect_creators": "Exclure les items dérivés du travail de ces auteurs sans avoir été conçus pour cela",
+    "stories_found_one": "{{count, number}} histoire trouvée",
+    "stories_found_other": "{{count, number}} histoires trouvées",
+    "publications_found_one": "{{count, number}} publication trouvée",
+    "publications_found_other": "{{count, number}} publications trouvées"
   },
   "roles": {
     "any": "N'importe",
@@ -462,7 +464,6 @@
     "searching": "Recherche en cours...",
     "results": "Résultats",
     "sort_by": "Trier par",
-    "authors_found": "{{count, number}} auteurs trouvés",
     "no_results_title": "Aucun auteur trouvé",
     "no_results_desc": "Nous n'avons trouvé aucun auteur correspondant à vos critères. Essayez d'alléger vos filtres.",
     "initial_title": "Prêt à chercher ?",
@@ -477,7 +478,9 @@
     "web_link": "Lien web",
     "stories": "Histoires",
     "no_description": "Aucune description disponible pour cet auteur.",
-    "load_more": "Afficher plus d'histoires"
+    "load_more": "Afficher plus d'histoires",
+    "authors_found_one": "{{count, number}} auteur trouvé",
+    "authors_found_other": "{{count, number}} auteurs trouvés"
   },
   "characters": {
     "code": "Code du personnage",
@@ -503,7 +506,6 @@
     "searching": "Recherche en cours...",
     "results": "Résultats",
     "sort_by": "Trier par",
-    "characters_found": "{{count, number}} personnages trouvés",
     "no_results_title": "Aucun personnage trouvé",
     "no_results_desc": "Nous n'avons trouvé aucun personnage correspondant à vos critères. Essayez d'alléger vos filtres.",
     "initial_title": "Prêt à chercher ?",
@@ -520,7 +522,9 @@
     "international_names": "Noms internationaux",
     "no_description": "Aucune description disponible pour ce personnage.",
     "character_code": "Code du personnage",
-    "name_or_code": "Nom ou code"
+    "name_or_code": "Nom ou code",
+    "characters_found_one": "{{count, number}} personnage trouvé",
+    "characters_found_other": "{{count, number}} personnages trouvés"
   },
   "legal": {
     "link": "Mentions légales",
@@ -661,6 +665,8 @@
     "issues_indexed": "Numéros indexés",
     "countries_covered": "Pays couverts",
     "period": "Période",
-    "indexed_issues": "Numéros indexés"
+    "indexed_issues": "Numéros indexés",
+    "not_found_title": "Indexeur introuvable",
+    "not_found_desc": "Aucun indexeur ne correspond au code {{code}}."
   }
 }

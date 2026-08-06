@@ -244,7 +244,9 @@ function App() {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0">
           <NavigationTabs 
             activeTab={activeTab} 
-            isDetailPage={!!(selectedStorycode || selectedIssuecode || selectedPersoncode || selectedCharactercode || selectedPublicationcode || selectedPublisherid || selectedCountrycode)} 
+            // Every detail view hides the search tabs; forgetting one leaves
+            // the advanced-search bar sitting on top of an unrelated page.
+            isDetailPage={!!(selectedStorycode || selectedIssuecode || selectedPersoncode || selectedCharactercode || selectedPublicationcode || selectedPublisherid || selectedCountrycode || selectedIndexercode)} 
           />
 
           {/* Content Viewport */}

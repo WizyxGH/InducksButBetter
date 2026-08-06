@@ -338,16 +338,32 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
         {/* Right Columns: Title, Index of stories */}
         <div className="md:col-span-2 space-y-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            {/* The URL is already hierarchical (/countries/fr/PM/272), so the
+                page offers the same two steps up: publication, then country. */}
+            <nav aria-label="breadcrumb" className="flex items-center gap-2 flex-wrap text-xs">
               <img
                 src={getFlagUrl(issue.countrycode)}
                 className="w-5 h-3.5 rounded-sm object-cover shrink-0"
                 alt=""
               />
-              <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+              <Link
+                to={routes.country(issue.countrycode)}
+                className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md hover:bg-primary/20 transition-colors"
+              >
                 {issue.countryname}
-              </span>
-            </div>
+              </Link>
+              {issue.publicationcode && (
+                <>
+                  <span className="text-text-secondary" aria-hidden="true">/</span>
+                  <Link
+                    to={routes.publication(issue.publicationcode)}
+                    className="font-semibold text-text-secondary hover:text-primary hover:underline"
+                  >
+                    {issue.publication_title || issue.publicationcode}
+                  </Link>
+                </>
+              )}
+            </nav>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {issue.publication_title} #{issue.issuenumber}
             </h1>

@@ -53,7 +53,6 @@
     "searching": "Searching...",
     "results": "Results",
     "sort_by": "Sort by",
-    "stories_found": "{{count, number}} stories found",
     "no_results_title": "No results found",
     "no_results_desc": "We couldn't find any stories matching your criteria. Try loosening your filters.",
     "initial_title": "Ready to search?",
@@ -83,7 +82,6 @@
     "rows_per_page": "Results per page",
     "title_pub_label": "Series or issue title",
     "title_pub_placeholder": "Ex: Four Color, US/FC...",
-    "publications_found": "{{count, number}} publications found",
     "category": "Category",
     "category_placeholder": "Ex: comic book, magazine...",
     "display": "Display",
@@ -98,7 +96,11 @@
     "copy_sql": "Copy the SQL query",
     "export_csv": "Export CSV",
     "page_indicator": "Sivu {{current}} / {{total}}",
-    "exclude_indirect_creators": "Exclude items based on these creators' work but not originally intended for it"
+    "exclude_indirect_creators": "Exclude items based on these creators' work but not originally intended for it",
+    "stories_found_one": "{{count, number}} stories found",
+    "stories_found_other": "{{count, number}} stories found",
+    "publications_found_one": "{{count, number}} publications found",
+    "publications_found_other": "{{count, number}} publications found"
   },
   "roles": {
     "any": "Any",
@@ -437,7 +439,6 @@
     "searching": "Searching...",
     "results": "Results",
     "sort_by": "Sort by",
-    "authors_found": "{{count, number}} authors found",
     "no_results_title": "No authors found",
     "no_results_desc": "We couldn't find any authors matching your criteria. Try loosening your filters.",
     "initial_title": "Ready to search?",
@@ -452,7 +453,9 @@
     "web_link": "Web link",
     "stories": "Stories",
     "no_description": "No description available for this author.",
-    "load_more": "Show more stories"
+    "load_more": "Show more stories",
+    "authors_found_one": "{{count, number}} authors found",
+    "authors_found_other": "{{count, number}} authors found"
   },
   "characters": {
     "character_code": "Character code",
@@ -479,7 +482,6 @@
     "searching": "Searching...",
     "results": "Results",
     "sort_by": "Sort by",
-    "characters_found": "{{count, number}} characters found",
     "no_results_title": "No characters found",
     "no_results_desc": "We couldn't find any characters matching your criteria. Try loosening your filters.",
     "initial_title": "Ready to search?",
@@ -495,7 +497,9 @@
     "original_name": "Original name",
     "international_names": "International names",
     "no_description": "No description available for this character.",
-    "name_or_code": "Name or code"
+    "name_or_code": "Name or code",
+    "characters_found_one": "{{count, number}} characters found",
+    "characters_found_other": "{{count, number}} characters found"
   },
   "legal": {
     "link": "Legal mentions",
@@ -661,6 +665,8 @@
     "issues_indexed": "Issues indexed",
     "countries_covered": "Countries covered",
     "period": "Period",
-    "indexed_issues": "Indexed issues"
+    "indexed_issues": "Indexed issues",
+    "not_found_title": "Indexer not found",
+    "not_found_desc": "No indexer matches the code {{code}}."
   }
 }

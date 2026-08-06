@@ -53,7 +53,6 @@
     "searching": "Buscando...",
     "results": "Resultados",
     "sort_by": "Ordenar por",
-    "stories_found": "{{count, number}} stories found",
     "no_results_title": "No se encontraron resultados",
     "no_results_desc": "No pudimos encontrar ninguna historia que coincida con sus criterios. Intente aflojar sus filtros.",
     "initial_title": "¿Listo para buscar?",
@@ -83,7 +82,6 @@
     "rows_per_page": "Resultados por página",
     "title_pub_label": "Título de la serie o edición",
     "title_pub_placeholder": "Ej: Four Color, US/FC...",
-    "publications_found": "{{count, number}} publications found",
     "category": "Categoría",
     "category_placeholder": "Ej: cómic, revista...",
     "display": "Visualización",
@@ -98,7 +96,11 @@
     "copy_sql": "Copy the SQL query",
     "export_csv": "Export CSV",
     "page_indicator": "Página {{current}} de {{total}}",
-    "exclude_indirect_creators": "Exclude items based on these creators' work but not originally intended for it"
+    "exclude_indirect_creators": "Exclude items based on these creators' work but not originally intended for it",
+    "stories_found_one": "{{count, number}} stories found",
+    "stories_found_other": "{{count, number}} stories found",
+    "publications_found_one": "{{count, number}} publications found",
+    "publications_found_other": "{{count, number}} publications found"
   },
   "roles": {
     "any": "Any",
@@ -437,7 +439,6 @@
     "searching": "Buscando...",
     "results": "Resultados",
     "sort_by": "Ordenar por",
-    "authors_found": "{{count, number}} authors found",
     "no_results_title": "No se encontraron autores",
     "no_results_desc": "No pudimos encontrar ningún autor que coincida con sus criterios. Intente aflojar sus filtros.",
     "initial_title": "¿Listo para buscar?",
@@ -452,7 +453,9 @@
     "web_link": "Enlace web",
     "stories": "Historias",
     "no_description": "No hay descripción disponible para este autor.",
-    "load_more": "Show more stories"
+    "load_more": "Show more stories",
+    "authors_found_one": "{{count, number}} authors found",
+    "authors_found_other": "{{count, number}} authors found"
   },
   "characters": {
     "character_code": "Código de personaje",
@@ -479,7 +482,6 @@
     "searching": "Buscando...",
     "results": "Resultados",
     "sort_by": "Ordenar por",
-    "characters_found": "{{count, number}} characters found",
     "no_results_title": "No se encontraron personajes",
     "no_results_desc": "No pudimos encontrar ningún personaje que coincida con sus criterios. Intente aflojar sus filtros.",
     "initial_title": "¿Listo para buscar?",
@@ -495,7 +497,9 @@
     "original_name": "Nombre original",
     "international_names": "Nombres internacionales",
     "no_description": "No hay descripción disponible para este personaje.",
-    "name_or_code": "Name or code"
+    "name_or_code": "Name or code",
+    "characters_found_one": "{{count, number}} characters found",
+    "characters_found_other": "{{count, number}} characters found"
   },
   "legal": {
     "link": "Aviso legal",
@@ -661,6 +665,8 @@
     "issues_indexed": "Issues indexed",
     "countries_covered": "Countries covered",
     "period": "Period",
-    "indexed_issues": "Indexed issues"
+    "indexed_issues": "Indexed issues",
+    "not_found_title": "Indexer not found",
+    "not_found_desc": "No indexer matches the code {{code}}."
   }
 }

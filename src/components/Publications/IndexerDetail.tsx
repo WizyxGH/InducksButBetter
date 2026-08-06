@@ -82,7 +82,9 @@ export function IndexerDetail({ personcode, onBack, onSelectIssue }: IndexerDeta
         ]);
 
         if (cancelled) return;
-        setPerson(personRes.rows[0] ?? { personcode, fullname: personcode });
+        // `null` marks "no such indexer" so the page can say so, instead of
+        // rendering the code as a name above a row of zeroes.
+        setPerson(personRes.rows[0] ?? null);
         setStats((statsRes.rows[0] as any) ?? null);
         setCountries(countriesRes.rows);
         setIssues(issuesRes.rows);
@@ -118,6 +120,23 @@ export function IndexerDetail({ personcode, onBack, onSelectIssue }: IndexerDeta
   if (loading) return <PageLoadingSkeleton />;
 
   const total = Number(stats?.issues ?? 0);
+
+  // An unknown code, or a person who never indexed anything, is not a profile.
+  if (!person || total === 0) {
+    return (
+      <div className="w-full max-w-5xl mx-auto p-8 space-y-4 text-center">
+        <UserCheck className="w-12 h-12 text-text-secondary mx-auto opacity-40" />
+        <h1 className="text-lg font-semibold text-foreground">{t("indexer.not_found_title")}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t("indexer.not_found_desc", { code: personcode })}
+        </p>
+        <Button onClick={onBack} variant="outline" size="sm" className="rounded-xl gap-1.5 h-9">
+          <ArrowLeft className="w-4 h-4" />
+          {t("common.back")}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4 lg:p-8 space-y-6">
