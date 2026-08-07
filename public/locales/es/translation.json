@@ -426,7 +426,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "This database is not being saved.",
+    "warn_volatile_desc": "Your browser refused persistent storage (OPFS), so the database only lives in memory and will be lost as soon as you close this tab. Try another browser, or a normal (non-private) window.",
+    "warn_not_persisted": "Storage is not protected from eviction.",
+    "warn_not_persisted_desc": "The database is saved on your device, but the browser did not grant persistent storage: it may be deleted automatically when disk space runs low. Adding the site to your bookmarks or installing the PWA usually grants it."
   },
   "authors": {
     "biography": "Biography",
@@ -570,7 +574,11 @@
     "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "This publication does not exist.",
+    "not_found_desc": "No publication with this code was found in the local database.",
+    "show_more_sections": "Show more sections",
+    "circulation": "Circulation"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
