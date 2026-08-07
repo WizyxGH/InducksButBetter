@@ -401,7 +401,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "Tätä tietokantaa ei tallenneta.",
+    "warn_volatile_desc": "Selaimesi hylkäsi pysyvän tallennustilan (OPFS), joten tietokanta on vain muistissa ja katoaa heti kun suljet tämän välilehden. Kokeile toista selainta tai tavallista ikkunaa (ei yksityistä).",
+    "warn_not_persisted": "Tallennustila ei ole suojattu poistamiselta.",
+    "warn_not_persisted_desc": "Tietokanta on tallennettu laitteellesi, mutta selain ei myöntänyt pysyvää tallennustilaa: se voidaan poistaa automaattisesti, jos levytila loppuu. Sivuston lisääminen kirjanmerkkeihin tai PWA:n asentaminen yleensä riittää."
   },
   "authors": {
     "biography": "Biography",
@@ -545,7 +549,11 @@
     "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "Tätä julkaisua ei ole olemassa.",
+    "not_found_desc": "Paikallisesta tietokannasta ei löytynyt julkaisua tällä koodilla.",
+    "show_more_sections": "Näytä lisää osioita",
+    "circulation": "Levikki"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",

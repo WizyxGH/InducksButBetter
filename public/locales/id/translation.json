@@ -401,7 +401,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "Basis data ini tidak sedang disimpan.",
+    "warn_volatile_desc": "Peramban Anda menolak penyimpanan permanen (OPFS), sehingga basis data hanya berada di memori dan akan hilang begitu Anda menutup tab ini. Coba peramban lain, atau jendela biasa (bukan mode pribadi).",
+    "warn_not_persisted": "Penyimpanan tidak terlindung dari penghapusan.",
+    "warn_not_persisted_desc": "Basis data tersimpan di perangkat Anda, tetapi peramban tidak memberikan penyimpanan permanen: data bisa terhapus otomatis saat ruang disk menipis. Menambahkan situs ke markah atau memasang PWA biasanya sudah cukup."
   },
   "authors": {
     "biography": "Biography",
@@ -545,7 +549,11 @@
     "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "Publikasi ini tidak ada.",
+    "not_found_desc": "Tidak ada publikasi dengan kode ini di basis data lokal.",
+    "show_more_sections": "Tampilkan lebih banyak bagian",
+    "circulation": "Oplah"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",

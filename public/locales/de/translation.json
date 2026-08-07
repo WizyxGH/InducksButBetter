@@ -401,7 +401,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "Diese Datenbank wird nicht gespeichert.",
+    "warn_volatile_desc": "Ihr Browser hat den dauerhaften Speicher (OPFS) verweigert. Die Datenbank liegt daher nur im Arbeitsspeicher und geht verloren, sobald Sie diesen Tab schließen. Versuchen Sie einen anderen Browser oder ein normales Fenster (kein privater Modus).",
+    "warn_not_persisted": "Der Speicher ist nicht vor Löschung geschützt.",
+    "warn_not_persisted_desc": "Die Datenbank liegt auf Ihrem Gerät, aber der Browser hat keinen dauerhaften Speicher gewährt: Sie kann bei Speichermangel automatisch gelöscht werden. Die Seite zu den Lesezeichen hinzuzufügen oder die PWA zu installieren genügt meist."
   },
   "authors": {
     "biography": "Biografie",
@@ -545,7 +549,11 @@
     "issues_plural": "Ausgaben",
     "error_load": "Details der Ausgabe konnten nicht geladen werden.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "Diese Publikation existiert nicht.",
+    "not_found_desc": "In der lokalen Datenbank wurde keine Publikation mit diesem Code gefunden.",
+    "show_more_sections": "Mehr Abschnitte anzeigen",
+    "circulation": "Auflage"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",

@@ -5,8 +5,9 @@ import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
+import { cn, getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
 import { useMetadata } from "@/hooks/useMetadata";
+import { buildIssueSections, issueDisplayNumber, type IssueRange } from "@/lib/publications";
 
 interface PublicationDetailData {
   publicationcode: string;
@@ -31,29 +32,30 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   const { meta } = useMetadata();
   const [publication, setPublication] = useState<PublicationDetailData | null>(null);
   const [issues, setIssues] = useState<any[]>([]);
+  const [ranges, setRanges] = useState<IssueRange[]>([]);
   const [loading, setLoading] = useState(true);
-  const [visibleYears, setVisibleYears] = useState(5);
+  const [notFound, setNotFound] = useState(false);
+  const [visibleSections, setVisibleSections] = useState(5);
 
-  const groupedIssues = useMemo(() => {
-    return Object.entries(
-      issues.reduce((acc: Record<string, any[]>, issue) => {
-        let year = t("story.unknown_date");
-        if (issue.oldestdate && issue.oldestdate !== "0000-00-00" && issue.oldestdate !== "9999-99-99" && issue.oldestdate.length >= 4) {
-          year = issue.oldestdate.substring(0, 4);
-        }
-        if (!acc[year]) acc[year] = [];
-        acc[year].push(issue);
-        return acc;
-      }, {})
-    );
-  }, [issues]);
+  // Publications Inducks splits into `h2` issue ranges (fr/SPGHS and friends)
+  // are shown range by range, like the reference site; the others keep the
+  // year grouping.
+  const sections = useMemo(
+    () => buildIssueSections(issues, ranges, t("story.unknown_date")),
+    [issues, ranges, t]
+  );
+  const groupedByRange = ranges.length > 0 && issues.some((i) => !!i.issuerangecode);
 
-  const displayedYears = useMemo(() => {
-    return groupedIssues.slice(0, visibleYears);
-  }, [groupedIssues, visibleYears]);
+  const displayedSections = useMemo(
+    () => sections.slice(0, visibleSections),
+    [sections, visibleSections]
+  );
 
   useEffect(() => {
-    setVisibleYears(5);
+    setVisibleSections(5);
+    // Dropped eagerly so a new publication never renders against the previous
+    // one's ranges.
+    setRanges([]);
   }, [publicationcode]);
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
       try {
         // Fetch publication details and publisher
         let pubData = null;
+        let hasPublicationRow = false;
         try {
           const pubResult = await executeQuery({
             sql: `
@@ -86,7 +89,8 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
           });
           if (pubResult.rows.length > 0) {
             pubData = pubResult.rows[0] as PublicationDetailData;
-            
+            hasPublicationRow = true;
+
             try {
               const publishersResult = await executeQuery({
                 sql: `
@@ -112,7 +116,10 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
           console.warn("Could not fetch publication details (missing table?):", e);
         }
 
-        // If no publication data found, create a fallback
+        // A publication row may legitimately be missing while its issues are
+        // present (an older dump, a broken `inducks_publication` table), so
+        // the fallback identity is only built once issues have been found —
+        // otherwise the code simply does not exist and must say so.
         if (!pubData) {
           const fallbackCountry = publicationcode.split('/')[0] || 'xx';
           pubData = {
@@ -122,49 +129,81 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
             languagecode: fallbackCountry,
           };
         }
-        
-        setPublication(pubData);
 
-        // Fetch all issues of this publication
+        // Fetch all issues of this publication.
+        // Ordered by issue code, like the reference Inducks page: issue codes
+        // are zero/space padded, so this is both chronological and the order
+        // the `h2` ranges are declared in.
+        let issueRows: any[] = [];
         try {
           // Try with full join
           const issuesResult = await executeQuery({
             sql: `
-              SELECT i.issuecode, i.issuenumber, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
+              SELECT i.issuecode, i.issuenumber, i.issuerangecode, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
                      p.title as series_title, p.countrycode, p.publicationcode,
                      (SELECT pub.publishername FROM inducks_publishingjob pj JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid WHERE pj.issuecode = i.issuecode LIMIT 1) as publishername,
-                     (SELECT eu.sitecode || '|' || eu.url 
-                      FROM inducks_entry e 
-                      JOIN inducks_entryurl eu ON e.entrycode = eu.entrycode 
-                      WHERE e.issuecode = i.issuecode 
+                     (SELECT eu.sitecode || '|' || eu.url
+                      FROM inducks_entry e
+                      JOIN inducks_entryurl eu ON e.entrycode = eu.entrycode
+                      WHERE e.issuecode = i.issuecode
                       LIMIT 1) as issue_thumb
               FROM inducks_issue i
               JOIN inducks_publication p ON i.publicationcode = p.publicationcode
               WHERE i.publicationcode = ?
-              ORDER BY i.oldestdate ASC, i.issuenumber ASC
+              ORDER BY i.issuecode ASC
             `,
             args: [publicationcode]
           });
-          setIssues(issuesResult.rows);
+          issueRows = issuesResult.rows;
         } catch (e) {
           console.warn("Could not fetch issues with JOIN (missing table?). Trying fallback:", e);
           // Fallback without joining inducks_publication
           const fallbackResult = await executeQuery({
             sql: `
-              SELECT i.issuecode, i.issuenumber, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
+              SELECT i.issuecode, i.issuenumber, i.issuerangecode, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
                      ? as series_title, ? as countrycode, ? as publicationcode,
-                     (SELECT eu.sitecode || '|' || eu.url 
-                      FROM inducks_entry e 
-                      JOIN inducks_entryurl eu ON e.entrycode = eu.entrycode 
-                      WHERE e.issuecode = i.issuecode 
+                     (SELECT eu.sitecode || '|' || eu.url
+                      FROM inducks_entry e
+                      JOIN inducks_entryurl eu ON e.entrycode = eu.entrycode
+                      WHERE e.issuecode = i.issuecode
                       LIMIT 1) as issue_thumb
               FROM inducks_issue i
               WHERE i.publicationcode = ? OR i.issuecode LIKE ? || ' %'
-              ORDER BY i.oldestdate ASC, i.issuenumber ASC
+              ORDER BY i.issuecode ASC
             `,
             args: [pubData.title, pubData.countrycode, pubData.publicationcode, publicationcode, publicationcode]
           });
-          setIssues(fallbackResult.rows);
+          issueRows = fallbackResult.rows;
+        }
+
+        if (!hasPublicationRow && issueRows.length === 0) {
+          setNotFound(true);
+          setPublication(null);
+          setIssues([]);
+          setRanges([]);
+          return;
+        }
+
+        setNotFound(false);
+        setPublication(pubData);
+        setIssues(issueRows);
+
+        // The `h2` headers of the Inducks source files.
+        try {
+          const rangeResult = await executeQuery({
+            sql: `
+              SELECT issuerangecode, title, issuerangecomment, circulation
+              FROM inducks_issuerange
+              WHERE publicationcode = ?
+              ORDER BY issuerangecode ASC
+            `,
+            args: [publicationcode]
+          });
+          setRanges(rangeResult.rows as IssueRange[]);
+        } catch (e) {
+          // Older dumps may not ship the table; year grouping still works.
+          console.warn("Could not fetch issue ranges (missing table?):", e);
+          setRanges([]);
         }
       } catch (err) {
         console.error("Error fetching publication detail:", err);
@@ -183,10 +222,22 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
     );
   }
 
-  if (!publication) {
+  if (notFound || !publication) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
-        <p>{t("publication.empty")}</p>
+      <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onBack}
+          className="h-9 w-9 rounded-xl border border-border-subtle hover:bg-surface-2"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <div className="rounded-2xl border border-border-subtle bg-surface/50 p-8 text-center space-y-2">
+          <p className="font-semibold text-foreground">{t("publication.not_found")}</p>
+          <p className="text-xs text-muted-foreground font-mono">{publicationcode}</p>
+          <p className="text-sm text-muted-foreground">{t("publication.not_found_desc")}</p>
+        </div>
       </div>
     );
   }
@@ -318,17 +369,34 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                 </div>
               ) : (
                 <div className="space-y-8 pb-4 pr-2">
-                  {displayedYears.map(([year, yearIssues]) => (
-                    <div key={year} className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-bold text-foreground text-base tracking-tight">{year}</h3>
-                        <div className="h-px bg-border-subtle flex-1" />
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                          {(yearIssues as any[]).length} {(yearIssues as any[]).length > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
-                        </span>
-                      </div>
+                  {displayedSections.map((section) => (
+                    <div key={section.key || "__unranged"} className="space-y-3">
+                      {section.title !== null && (
+                        <div className="flex items-center gap-3">
+                          <h3
+                            className={cn(
+                              "font-bold text-foreground text-base tracking-tight",
+                              section.titleIsCode && "italic font-mono text-sm"
+                            )}
+                          >
+                            {section.title}
+                          </h3>
+                          <div className="h-px bg-border-subtle flex-1" />
+                          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                            {section.issues.length}{" "}
+                            {section.issues.length > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
+                          </span>
+                        </div>
+                      )}
+                      {(section.circulation || section.comment) && (
+                        <p className="text-[11px] text-muted-foreground italic -mt-1">
+                          {section.circulation && `${t("publication.circulation")}: ${section.circulation}`}
+                          {section.circulation && section.comment && " — "}
+                          {section.comment && cleanComment(section.comment)}
+                        </p>
+                      )}
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-                        {(yearIssues as any[]).map((issue) => {
+                        {section.issues.map((issue: any) => {
                           let preciseDate = "";
                           if (issue.oldestdate && issue.oldestdate.length >= 10 && issue.oldestdate !== "0000-00-00" && issue.oldestdate !== "9999-99-99") {
                             const parts = issue.oldestdate.split("-");
@@ -336,15 +404,18 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                               preciseDate = `${parts[2] !== "00" ? parts[2] + "/" : ""}${parts[1]}`;
                             }
                           }
+                          // Inside a range the ISV files keep the range prefix
+                          // in `issuenumber`; Inducks strips it before display.
+                          const label = issueDisplayNumber(issue.issuecode, issue.issuerangecode, issue.issuenumber);
                           return (
                             <button
                               key={issue.issuecode}
                               onClick={() => onSelectIssue(issue.issuecode)}
                               className="p-2 border border-border-subtle rounded-xl bg-surface hover:bg-surface-2 hover:border-primary/50 transition-colors flex flex-col items-center justify-center text-center gap-1 group"
-                              title={issue.issue_title ? `${issue.issuenumber} - ${issue.issue_title}` : issue.issuenumber}
+                              title={issue.issue_title ? `${label} - ${issue.issue_title}` : label}
                             >
                               <span className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                                {issue.issuenumber}
+                                {label}
                               </span>
                               {preciseDate && (
                                 <span className="text-[10px] text-muted-foreground">{preciseDate}</span>
@@ -356,14 +427,14 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                     </div>
                   ))}
 
-                  {groupedIssues.length > visibleYears && (
+                  {sections.length > visibleSections && (
                     <div className="flex justify-center pt-4">
                       <Button
-                        onClick={() => setVisibleYears(prev => prev + 5)}
+                        onClick={() => setVisibleSections(prev => prev + 5)}
                         variant="outline"
                         className="rounded-xl border-border-subtle hover:bg-surface-2 font-medium px-6"
                       >
-                        {t("publication.show_more_years")}
+                        {groupedByRange ? t("publication.show_more_sections") : t("publication.show_more_years")}
                       </Button>
                     </div>
                   )}

@@ -401,7 +401,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "Deze database wordt niet opgeslagen.",
+    "warn_volatile_desc": "Je browser heeft permanente opslag (OPFS) geweigerd, dus de database staat alleen in het geheugen en gaat verloren zodra je dit tabblad sluit. Probeer een andere browser of een gewoon venster (geen privémodus).",
+    "warn_not_persisted": "De opslag is niet beschermd tegen verwijdering.",
+    "warn_not_persisted_desc": "De database staat op je apparaat, maar de browser heeft geen permanente opslag toegekend: hij kan automatisch worden gewist als er weinig schijfruimte is. De site aan je bladwijzers toevoegen of de PWA installeren volstaat meestal."
   },
   "authors": {
     "biography": "Biography",
@@ -545,7 +549,11 @@
     "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "Deze publicatie bestaat niet.",
+    "not_found_desc": "Er is geen publicatie met deze code gevonden in de lokale database.",
+    "show_more_sections": "Meer secties tonen",
+    "circulation": "Oplage"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",

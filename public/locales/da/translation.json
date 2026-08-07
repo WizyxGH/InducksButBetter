@@ -401,7 +401,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "Denne database bliver ikke gemt.",
+    "warn_volatile_desc": "Din browser afviste vedvarende lagring (OPFS), så databasen findes kun i hukommelsen og går tabt, så snart du lukker denne fane. Prøv en anden browser eller et normalt vindue (ikke privat).",
+    "warn_not_persisted": "Lagringen er ikke beskyttet mod sletning.",
+    "warn_not_persisted_desc": "Databasen er gemt på din enhed, men browseren gav ikke vedvarende lagring: den kan blive slettet automatisk, hvis der mangler diskplads. Det er som regel nok at tilføje siden til bogmærker eller installere PWA-appen."
   },
   "authors": {
     "biography": "Biography",
@@ -545,7 +549,11 @@
     "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "Denne udgivelse findes ikke.",
+    "not_found_desc": "Der blev ikke fundet nogen udgivelse med denne kode i den lokale database.",
+    "show_more_sections": "Vis flere afsnit",
+    "circulation": "Oplag"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",

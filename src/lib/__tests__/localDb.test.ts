@@ -93,11 +93,15 @@ describe('localDb worker client', () => {
     const { installDatabase, hasLocalDb, getLocalDbStats } = await freshModule();
 
     const promise = installDatabase('https://example.com/db.gz');
-    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 42, size: 1024 } });
+    harness.reply({
+      id: harness.posted[0].id,
+      type: 'success',
+      stats: { count: 42, size: 1024, storage: 'sah', persistent: true },
+    });
     await promise;
 
     expect(hasLocalDb()).toBe(true);
-    expect(getLocalDbStats()).toEqual({ count: 42, size: 1024 });
+    expect(getLocalDbStats()).toMatchObject({ count: 42, size: 1024, storage: 'sah', persistent: true });
   });
 
   it('rejects an install the worker could not complete', async () => {
@@ -338,6 +342,108 @@ describe('localDb worker client', () => {
       void installDatabase('https://example.com/db.gz');
 
       expect(harness.posted).toHaveLength(1);
+    });
+
+    it('re-asserts the grant when a cached database is picked up', async () => {
+      const persist = vi.fn().mockResolvedValue(true);
+      withStorage({ persist, persisted: vi.fn().mockResolvedValue(false) } as any);
+
+      const { loadCachedDb } = await freshModule();
+      const promise = loadCachedDb();
+      harness.reply({
+        id: harness.posted[0].id,
+        type: 'success',
+        stats: { count: 5, size: 10, storage: 'sah', persistent: true },
+      });
+      await promise;
+
+      expect(persist).toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * Regression guards for the failure users actually hit: an import that
+   * reports success and is gone on the next visit. Two independent causes —
+   * the worker silently falling back to the in-memory VFS, and the browser
+   * refusing the persistence grant so a ~1 GB store gets evicted — must both
+   * be visible to the UI.
+   */
+  describe('durability of an installed database', () => {
+    const withStorage = (impl: Partial<StorageManager>) => {
+      Object.defineProperty(navigator, 'storage', { value: impl, configurable: true });
+    };
+    const granted = () =>
+      withStorage({ persist: vi.fn().mockResolvedValue(true), persisted: vi.fn().mockResolvedValue(true) } as any);
+
+    afterEach(() => {
+      Object.defineProperty(navigator, 'storage', { value: undefined, configurable: true });
+    });
+
+    /** Installs a database, letting the worker describe its storage backend. */
+    async function install(stats: Record<string, unknown>) {
+      const mod = await freshModule();
+      const promise = mod.installDatabase('https://example.com/db.gz');
+      harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1, ...stats } });
+      await promise;
+      return mod;
+    }
+
+    it('treats an OPFS-backed database as durable', async () => {
+      granted();
+      const { isLocalDbPersistent, getLocalDbStats } = await install({ storage: 'sah', persistent: true });
+
+      expect(getLocalDbStats()?.storage).toBe('sah');
+      expect(isLocalDbPersistent()).toBe(true);
+    });
+
+    it('flags a database that only lives in memory', async () => {
+      granted();
+      const { isLocalDbPersistent, getLocalDbStats } = await install({
+        storage: 'memory',
+        persistent: false,
+        storageError: 'SAH pool unavailable',
+      });
+
+      expect(isLocalDbPersistent()).toBe(false);
+      expect(getLocalDbStats()?.storageError).toBe('SAH pool unavailable');
+    });
+
+    it('flags a persistent backend the browser refuses to protect', async () => {
+      withStorage({ persist: vi.fn().mockResolvedValue(false), persisted: vi.fn().mockResolvedValue(false) } as any);
+      const { isLocalDbPersistent, getLocalDbStats } = await install({ storage: 'sah', persistent: true });
+
+      expect(getLocalDbStats()?.persistGranted).toBe(false);
+      expect(isLocalDbPersistent()).toBe(false);
+    });
+
+    it('does not claim durability before anything is installed', async () => {
+      const { isLocalDbPersistent } = await freshModule();
+      expect(isLocalDbPersistent()).toBe(false);
+    });
+
+    it('assumes the worst from a worker that reports no storage backend', async () => {
+      // An older worker bundle cached by the service worker sends bare stats.
+      granted();
+      const { isLocalDbPersistent, getLocalDbStats } = await install({});
+
+      expect(getLocalDbStats()?.storage).toBe('memory');
+      expect(isLocalDbPersistent()).toBe(false);
+    });
+
+    it('keeps the backend reported for a database restored from cache', async () => {
+      granted();
+      const { loadCachedDb, getLocalDbStats, isLocalDbPersistent } = await freshModule();
+
+      const promise = loadCachedDb();
+      harness.reply({
+        id: harness.posted[0].id,
+        type: 'success',
+        stats: { count: 90, size: 1_133_518_848, storage: 'sah', persistent: true },
+      });
+      await expect(promise).resolves.toBe(true);
+
+      expect(getLocalDbStats()).toMatchObject({ storage: 'sah', persistent: true, persistGranted: true });
+      expect(isLocalDbPersistent()).toBe(true);
     });
   });
 });

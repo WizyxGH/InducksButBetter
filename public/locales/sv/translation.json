@@ -401,7 +401,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "Den här databasen sparas inte.",
+    "warn_volatile_desc": "Din webbläsare nekade permanent lagring (OPFS), så databasen finns bara i minnet och försvinner så snart du stänger den här fliken. Prova en annan webbläsare eller ett vanligt fönster (inte privat läge).",
+    "warn_not_persisted": "Lagringen är inte skyddad mot radering.",
+    "warn_not_persisted_desc": "Databasen är sparad på din enhet, men webbläsaren beviljade inte permanent lagring: den kan raderas automatiskt om diskutrymmet tar slut. Att lägga till webbplatsen bland bokmärkena eller installera PWA:n brukar räcka."
   },
   "authors": {
     "biography": "Biography",
@@ -545,7 +549,11 @@
     "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "Den här publikationen finns inte.",
+    "not_found_desc": "Ingen publikation med den här koden hittades i den lokala databasen.",
+    "show_more_sections": "Visa fler avsnitt",
+    "circulation": "Upplaga"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",

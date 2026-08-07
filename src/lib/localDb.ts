@@ -142,14 +142,51 @@ function request(payload: Record<string, any>, onRow?: (row: any) => void): Prom
   });
 }
 
-let localDbStats: { count: number; size: number } | null = null;
+export interface LocalDbStats {
+  count: number;
+  size: number;
+  /** Backend the database lives on: only `opfs`/`sah` survive a reload. */
+  storage: 'opfs' | 'sah' | 'memory';
+  /** False when the database is held in memory and will die with the tab. */
+  persistent: boolean;
+  /** Why the persistent backend was unavailable, when it was. */
+  storageError?: string;
+  /** Result of `navigator.storage.persist()`; null while unknown. */
+  persistGranted: boolean | null;
+}
+
+let localDbStats: LocalDbStats | null = null;
+
+/** Normalises a worker stats payload, tolerating older workers. */
+function toStats(raw: any, persistGranted: boolean | null): LocalDbStats {
+  return {
+    count: raw.count ?? 0,
+    size: raw.size ?? 0,
+    storage: raw.storage ?? 'memory',
+    persistent: raw.persistent ?? false,
+    storageError: raw.storageError,
+    persistGranted,
+  };
+}
 
 export function hasLocalDb(): boolean {
   return channel !== null && localDbStats !== null;
 }
 
-export function getLocalDbStats() {
+export function getLocalDbStats(): LocalDbStats | null {
   return localDbStats;
+}
+
+/**
+ * Whether the installed database can be expected to still be there next time.
+ *
+ * Two independent things have to hold: the database must sit on a persistent
+ * backend at all, and the origin must have been granted persistent storage —
+ * without the grant a ~1 GB store is the first thing browsers evict, which is
+ * what made imports "disappear".
+ */
+export function isLocalDbPersistent(): boolean {
+  return !!localDbStats?.persistent && localDbStats.persistGranted !== false;
 }
 
 /**
@@ -173,6 +210,16 @@ export async function requestPersistentStorage(): Promise<boolean> {
   }
 }
 
+/**
+ * Requests the grant and records it on the current stats, so the UI can warn
+ * about an install that is not safe from eviction.
+ */
+async function refreshPersistGrant(): Promise<boolean> {
+  const granted = await requestPersistentStorage();
+  if (localDbStats) localDbStats = { ...localDbStats, persistGranted: granted };
+  return granted;
+}
+
 export async function installDatabase(
   source: string | string[] | File,
   onProgress?: (progress: InstallProgressEvent) => void
@@ -180,16 +227,18 @@ export async function installDatabase(
   onProgressCallback = onProgress ?? null;
 
   // A ~1 GB database is exactly the kind of payload eviction targets first.
-  // Not awaited: the grant applies to the origin, so it need not precede the
-  // write, and blocking on it would delay the download for no benefit.
-  void requestPersistentStorage();
+  // Not awaited here: the grant applies to the origin, so it need not precede
+  // the write, and blocking on it would delay the download for no benefit.
+  // Its verdict is folded into the stats once the install lands.
+  const grant = requestPersistentStorage();
 
   const payload = source instanceof File ? { file: source } : { url: source };
 
   try {
     const data = await request({ action: 'installDb', payload });
     if (!data?.stats) throw new Error('error_validation|Database installation failed.');
-    localDbStats = { count: data.stats.count, size: data.stats.size };
+    localDbStats = toStats(data.stats, null);
+    localDbStats = { ...localDbStats, persistGranted: await grant };
   } finally {
     onProgressCallback = null;
   }
@@ -215,9 +264,12 @@ export function loadCachedDb(): Promise<boolean> {
     action: 'loadCachedDb',
     payload: { baseUrl: import.meta.env.BASE_URL },
   })
-    .then((data) => {
+    .then(async (data) => {
       if (!data?.stats) return false;
-      localDbStats = { count: data.stats.count, size: data.stats.size };
+      localDbStats = toStats(data.stats, null);
+      // Re-assert the grant on every boot: it can be revoked when the user
+      // clears site data, and a store that is not persisted gets evicted.
+      await refreshPersistGrant();
       return true;
     })
     .catch(() => false);

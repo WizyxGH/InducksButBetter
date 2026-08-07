@@ -41,11 +41,16 @@ export function LocalDatabaseCard() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoadingDb, setIsLoadingDb] = useState(false)
   const [isActiveDb, setIsActiveDb] = useState(hasLocalDb())
-  const dbStats = getLocalDbStats()
+  // Bumped after every install/load so the stats snapshot below is re-read.
+  const [statsRevision, setStatsRevision] = useState(0)
+  const dbStats = React.useMemo(() => getLocalDbStats(), [isActiveDb, statsRevision])
 
   // Listen to db load events to update UI
   React.useEffect(() => {
-    const handleDbLoaded = () => setIsActiveDb(true);
+    const handleDbLoaded = () => {
+      setIsActiveDb(true);
+      setStatsRevision((n) => n + 1);
+    };
     window.addEventListener("db-local-loaded", handleDbLoaded);
     return () => window.removeEventListener("db-local-loaded", handleDbLoaded);
   }, []);
@@ -164,15 +169,35 @@ export function LocalDatabaseCard() {
               </p>
             )}
             <div className="mt-3 flex justify-end">
-              <Button 
-                variant="destructive" 
-                size="sm" 
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={handleClearCache}
                 className="h-8 text-xs bg-red-500 hover:bg-red-600 text-white border-0"
               >
                 {t("localDb.clear_cache")}
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* An install the browser will not keep is the single most confusing
+            failure of this page: everything says "success", then the database
+            is gone on the next visit. Say so up front. */}
+        {isActiveDb && dbStats && !dbStats.persistent && (
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs">
+            <p className="font-semibold">{t("localDb.warn_volatile")}</p>
+            <p className="mt-1 opacity-90">{t("localDb.warn_volatile_desc")}</p>
+            {dbStats.storageError && (
+              <p className="mt-1 opacity-75 font-mono break-words">{dbStats.storageError}</p>
+            )}
+          </div>
+        )}
+
+        {isActiveDb && dbStats?.persistent && dbStats.persistGranted === false && (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
+            <p className="font-semibold">{t("localDb.warn_not_persisted")}</p>
+            <p className="mt-1 opacity-90">{t("localDb.warn_not_persisted_desc")}</p>
           </div>
         )}
 

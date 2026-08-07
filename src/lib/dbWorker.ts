@@ -6,6 +6,20 @@ let db: any = null;
 let sqlite3: any = null;
 let poolUtil: any = null;
 
+/**
+ * Which backend the active database lives on.
+ *
+ * Only `opfs` and `sah` survive a reload. `memory` is a last-resort fallback
+ * (no OPFS at all, or the sync access handles are already held by another
+ * client) and is reported to the UI so a ~1 GB import that will vanish with
+ * the tab is never presented as installed for good.
+ */
+type StorageType = "opfs" | "sah" | "memory";
+
+let storageType: StorageType = "memory";
+
+/** The last reason the SAH pool could not be installed, for diagnostics. */
+let storageError = "";
 
 async function initSqlite() {
   if (!sqlite3) {
@@ -15,9 +29,10 @@ async function initSqlite() {
 }
 
 
-async function getStorageType(s3: any) {
+async function getStorageType(s3: any): Promise<StorageType> {
   if (s3.capi && s3.capi.sqlite3_vfs_find("opfs")) {
-    return "opfs";
+    storageType = "opfs";
+    return storageType;
   }
 
   try {
@@ -27,13 +42,65 @@ async function getStorageType(s3: any) {
           clearOnInit: false
         });
       }
-      return "sah";
+      storageError = "";
+      storageType = "sah";
+      return storageType;
     }
-  } catch (e) {
+    storageError = "OPFS SAH pool unavailable in this browser";
+  } catch (e: any) {
+    // Not cached as a permanent verdict: the handles may simply be held by a
+    // client that is going away, so the next call retries instead of pinning
+    // the whole session to the volatile in-memory VFS.
+    storageError = e?.message || String(e);
     console.warn("OPFS SAH Pool not supported:", e);
   }
 
-  return "memory";
+  storageType = "memory";
+  return storageType;
+}
+
+/** Read-only tuning; re-applied on every open, not only after an import. */
+function applyReadOnlyPragmas() {
+  db.exec("PRAGMA journal_mode = OFF;");
+  db.exec("PRAGMA synchronous = OFF;");
+  db.exec("PRAGMA temp_store = MEMORY;");
+}
+
+/**
+ * Stats sent back to the UI.
+ *
+ * `persistent` is the one the UI acts on: a database installed on the memory
+ * VFS works for the session but is gone on the next load, and users were
+ * left to rediscover that by re-importing a gigabyte.
+ */
+function collectStats() {
+  let count = 0;
+  let dbSize = 0;
+  try {
+    const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
+    while (tablesQuery.step()) { count++; }
+    tablesQuery.finalize();
+
+    let pageSize = 4096;
+    let pageCount = 0;
+    const stmtPageSize = db.prepare("PRAGMA page_size");
+    if (stmtPageSize.step()) pageSize = stmtPageSize.get({}).page_size;
+    stmtPageSize.finalize();
+
+    const stmtPageCount = db.prepare("PRAGMA page_count");
+    if (stmtPageCount.step()) pageCount = stmtPageCount.get({}).page_count;
+    stmtPageCount.finalize();
+
+    dbSize = pageSize * pageCount;
+  } catch (e) {}
+
+  return {
+    size: dbSize || 1100000000,
+    count,
+    storage: storageType,
+    persistent: storageType !== "memory",
+    storageError: storageError || undefined,
+  };
 }
 
 function closeActiveDb() {
@@ -297,60 +364,31 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         }
 
         // Optimizations for read-only usage
-        db.exec("PRAGMA journal_mode = OFF;");
-        db.exec("PRAGMA synchronous = OFF;");
-        db.exec("PRAGMA temp_store = MEMORY;");
+        applyReadOnlyPragmas();
 
-        // Success! Get stats
-        let tableCount = 0;
-        let dbSize = 0;
-        try {
-          const stmt = db.prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table'");
-          if (stmt.step()) tableCount = stmt.get({}).count;
-          stmt.finalize();
-          
-          let pageSize = 4096;
-          let pageCount = 0;
-          const stmtPageSize = db.prepare("PRAGMA page_size");
-          if (stmtPageSize.step()) pageSize = stmtPageSize.get({}).page_size;
-          stmtPageSize.finalize();
-          
-          const stmtPageCount = db.prepare("PRAGMA page_count");
-          if (stmtPageCount.step()) pageCount = stmtPageCount.get({}).page_count;
-          stmtPageCount.finalize();
-          
-          dbSize = pageSize * pageCount;
-        } catch (e) {}
+        // The import is only worth anything if the bytes actually landed in a
+        // store that outlives the tab. Confirm it here rather than letting the
+        // user discover on the next reload that nothing was kept.
+        if (type === "sah" && !poolUtil.getFileNames().includes(DB_FILENAME)) {
+          throw new Error("error_validation|Database was not persisted to OPFS.");
+        }
+        if (type === "opfs") {
+          const root = await navigator.storage.getDirectory();
+          await root.getFileHandle("inducks.sqlite3", { create: false });
+        }
 
-        port.postMessage({ id, type: "success", stats: { size: dbSize || 1100000000, count: tableCount } });
+        port.postMessage({ id, type: "success", stats: collectStats() });
         break;
       }
       
       case "loadCachedDb": {
+        // A SharedWorker outlives the page, so a reload usually finds the
+        // database still open — reuse it rather than reopening the handles.
         if (db) {
-          let count = 0;
-          let dbSize = 0;
-          try {
-             const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
-             while(tablesQuery.step()) { count++; }
-             tablesQuery.finalize();
-
-             let pageSize = 4096;
-             let pageCount = 0;
-             const stmtPageSize = db.prepare("PRAGMA page_size");
-             if (stmtPageSize.step()) pageSize = stmtPageSize.get({}).page_size;
-             stmtPageSize.finalize();
-             
-             const stmtPageCount = db.prepare("PRAGMA page_count");
-             if (stmtPageCount.step()) pageCount = stmtPageCount.get({}).page_count;
-             stmtPageCount.finalize();
-             
-             dbSize = pageSize * pageCount;
-          } catch(e) {}
-          port.postMessage({ id, type: "success", stats: { size: dbSize || 1100000000, count } });
+          port.postMessage({ id, type: "success", stats: collectStats() });
           break;
         }
-        
+
         const type = await getStorageType(s3);
         let found = false;
 
@@ -367,33 +405,17 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
             db = new s3.oo1.DB("/inducks.sqlite3", "c", "opfs");
           } catch (e) {}
         }
-        
+
         if (!found) {
           port.postMessage({ id, type: "not_found" });
           break;
         }
-        
-        let count = 0;
-        let dbSize = 0;
-        try {
-           const tablesQuery = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
-           while(tablesQuery.step()) { count++; }
-           tablesQuery.finalize();
 
-           let pageSize = 4096;
-           let pageCount = 0;
-           const stmtPageSize = db.prepare("PRAGMA page_size");
-           if (stmtPageSize.step()) pageSize = stmtPageSize.get({}).page_size;
-           stmtPageSize.finalize();
-           
-           const stmtPageCount = db.prepare("PRAGMA page_count");
-           if (stmtPageCount.step()) pageCount = stmtPageCount.get({}).page_count;
-           stmtPageCount.finalize();
-           
-           dbSize = pageSize * pageCount;
-        } catch(e) {}
-        
-        port.postMessage({ id, type: "success", stats: { size: dbSize || 1100000000, count } });
+        // The install path tunes the connection for read-only use; a database
+        // reopened from storage needs the same treatment.
+        applyReadOnlyPragmas();
+
+        port.postMessage({ id, type: "success", stats: collectStats() });
         break;
       }
       

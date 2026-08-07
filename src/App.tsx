@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Toaster } from "sonner"
 import { useRouteMetadata } from "@/hooks/useRouteMetadata"
 import { incrementHistoryCount, navigateBack } from "@/lib/utils"
-import { loadCachedDb, hasLocalDb, requestPersistentStorage } from "@/lib/localDb"
+import { loadCachedDb, hasLocalDb } from "@/lib/localDb"
 import { OnboardingModal } from "@/components/OnboardingModal"
 
 // Lazy load heavy components to code-split the application
@@ -74,14 +74,12 @@ function App() {
 
   useEffect(() => {
     if (!hasLocalDb()) {
+      // `loadCachedDb` re-asserts the persistence grant itself: it can be
+      // revoked when the user clears site data, and a database that is not
+      // persisted is evicted under storage pressure — the cause of spurious
+      // re-imports.
       loadCachedDb().then(loaded => {
-        if (loaded) {
-          // Re-assert persistence on every boot: the grant can be revoked when
-          // the user clears site data, and a database that is not persisted is
-          // evicted under storage pressure — the cause of spurious re-imports.
-          requestPersistentStorage();
-          window.dispatchEvent(new Event("db-local-loaded"));
-        }
+        if (loaded) window.dispatchEvent(new Event("db-local-loaded"));
       });
     }
   }, []);

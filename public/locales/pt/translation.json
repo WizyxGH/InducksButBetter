@@ -401,7 +401,11 @@
     "error_no_url": "No database URL or file provided.",
     "error_empty": "Empty database stream.",
     "error_deserialize": "Failed to deserialize database (code {{code}}).",
-    "error_not_loaded": "Database not loaded."
+    "error_not_loaded": "Database not loaded.",
+    "warn_volatile": "Esta base de dados não está a ser guardada.",
+    "warn_volatile_desc": "O seu navegador recusou o armazenamento persistente (OPFS), por isso a base de dados só existe em memória e será perdida assim que fechar este separador. Experimente outro navegador ou uma janela normal (não privada).",
+    "warn_not_persisted": "O armazenamento não está protegido contra eliminação.",
+    "warn_not_persisted_desc": "A base de dados está guardada no seu dispositivo, mas o navegador não concedeu armazenamento persistente: pode ser apagada automaticamente se faltar espaço em disco. Adicionar o site aos favoritos ou instalar a PWA costuma ser suficiente."
   },
   "authors": {
     "biography": "Biografia",
@@ -545,7 +549,11 @@
     "issues_plural": "edições",
     "error_load": "Impossível carregar os detalhes da edição.",
     "show_more_years": "Show more years",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "not_found": "Esta publicação não existe.",
+    "not_found_desc": "Não foi encontrada nenhuma publicação com este código na base de dados local.",
+    "show_more_sections": "Mostrar mais secções",
+    "circulation": "Tiragem"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",

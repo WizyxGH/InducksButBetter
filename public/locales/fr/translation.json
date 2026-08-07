@@ -426,7 +426,11 @@
     "error_no_url": "Aucune URL ni fichier fourni.",
     "error_empty": "Le flux de la base de données est vide.",
     "error_deserialize": "Échec de la désérialisation de la base de données (code {{code}}).",
-    "error_not_loaded": "Base de données non chargée."
+    "error_not_loaded": "Base de données non chargée.",
+    "warn_volatile": "Cette base n'est pas enregistrée.",
+    "warn_volatile_desc": "Votre navigateur a refusé le stockage persistant (OPFS) : la base ne vit qu'en mémoire et sera perdue dès la fermeture de cet onglet. Essayez un autre navigateur, ou une fenêtre normale (pas en navigation privée).",
+    "warn_not_persisted": "Le stockage n'est pas protégé contre l'effacement.",
+    "warn_not_persisted_desc": "La base est bien enregistrée sur votre appareil, mais le navigateur n'a pas accordé le stockage persistant : elle peut être supprimée automatiquement si l'espace disque vient à manquer. Ajouter le site aux favoris ou installer la PWA suffit généralement à l'obtenir."
   },
   "authors": {
     "biography": "Biographie",
@@ -570,7 +574,11 @@
     "issues_plural": "numéros",
     "error_load": "Impossible de charger les détails du numéro.",
     "show_more_years": "Afficher plus d'années",
-    "untitled": "Sans titre"
+    "untitled": "Sans titre",
+    "not_found": "Cette publication n'existe pas.",
+    "not_found_desc": "Aucune publication portant ce code n'a été trouvée dans la base locale.",
+    "show_more_sections": "Afficher plus de sections",
+    "circulation": "Tirage"
   },
   "publisher": {
     "title": "Éditeur : {{publisher}}",
