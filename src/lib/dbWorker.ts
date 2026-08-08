@@ -562,7 +562,10 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         }
 
         if (!found) {
-          port.postMessage({ id, type: "not_found" });
+          // The storage verdict travels with the reply: on the memory VFS the
+          // persistent backend never opened, so the client must retry rather
+          // than conclude that nothing was ever installed.
+          port.postMessage({ id, type: "not_found", storage: storageType, storageError });
           break;
         }
 

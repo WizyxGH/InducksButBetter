@@ -124,6 +124,89 @@ describe('localDb worker client', () => {
     expect(hasLocalDb()).toBe(false);
   });
 
+  /**
+   * Editing the address bar reloads the page while the outgoing document is
+   * still holding the OPFS exclusive access handles. The new worker then falls
+   * back to the memory VFS and reports "not found" for a database that is very
+   * much installed — which used to be cached as a permanent verdict, so the app
+   * asked the user to re-import a gigabyte.
+   */
+  describe('when the persistent backend is momentarily unavailable', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('retries and picks the database up once the handles are released', async () => {
+      const { loadCachedDb, hasLocalDb } = await freshModule();
+
+      const promise = loadCachedDb();
+      harness.reply({
+        id: harness.posted[0].id,
+        type: 'not_found',
+        storage: 'memory',
+        storageError: 'access handle held by another client',
+      });
+
+      await vi.advanceTimersByTimeAsync(150);
+      expect(harness.posted).toHaveLength(2);
+
+      harness.reply({ id: harness.posted[1].id, type: 'success', stats: { count: 7, size: 32 } });
+      await expect(promise).resolves.toBe(true);
+      expect(hasLocalDb()).toBe(true);
+    });
+
+    it('gives up after the backoff is exhausted', async () => {
+      const { loadCachedDb } = await freshModule();
+
+      const promise = loadCachedDb();
+      for (let i = 0; i < 4; i++) {
+        harness.reply({ id: harness.posted[i].id, type: 'not_found', storage: 'memory' });
+        await vi.advanceTimersByTimeAsync(1000);
+      }
+
+      await expect(promise).resolves.toBe(false);
+      expect(harness.posted).toHaveLength(4);
+    });
+
+    it('does not retry a database that genuinely was never installed', async () => {
+      const { loadCachedDb } = await freshModule();
+
+      const promise = loadCachedDb();
+      harness.reply({ id: harness.posted[0].id, type: 'not_found', storage: 'sah' });
+
+      await expect(promise).resolves.toBe(false);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(harness.posted).toHaveLength(1);
+    });
+  });
+
+  it('does not cache a failed load, so a later call tries again', async () => {
+    const { loadCachedDb } = await freshModule();
+
+    const first = loadCachedDb();
+    harness.reply({ id: harness.posted[0].id, type: 'not_found', storage: 'sah' });
+    await expect(first).resolves.toBe(false);
+
+    const second = loadCachedDb();
+    expect(second).not.toBe(first);
+    expect(harness.posted).toHaveLength(2);
+
+    harness.reply({ id: harness.posted[1].id, type: 'success', stats: { count: 1, size: 1 } });
+    await expect(second).resolves.toBe(true);
+  });
+
+  it('announces a successful load so the gated UI refreshes', async () => {
+    const { loadCachedDb } = await freshModule();
+    const listener = vi.fn();
+    window.addEventListener('db-local-loaded', listener);
+
+    const promise = loadCachedDb();
+    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1 } });
+    await promise;
+
+    expect(listener).toHaveBeenCalled();
+    window.removeEventListener('db-local-loaded', listener);
+  });
+
   it('reuses a single in-flight loadCachedDb promise', async () => {
     const { loadCachedDb } = await freshModule();
 
@@ -134,9 +217,29 @@ describe('localDb worker client', () => {
     expect(harness.posted).toHaveLength(1);
   });
 
-  it('refuses to execute a query while no database is loaded', async () => {
+  it('refuses to execute a query once the worker confirms there is no database', async () => {
     const { executeLocal } = await freshModule();
-    await expect(executeLocal('SELECT 1')).rejects.toThrow('error_not_loaded');
+
+    // A query that beats the boot-time load opens the cached database itself,
+    // so a component mounting straight onto a deep link is not left empty.
+    const query = executeLocal('SELECT 1');
+    expect(harness.posted[0]).toMatchObject({ action: 'loadCachedDb' });
+
+    harness.reply({ id: harness.posted[0].id, type: 'not_found', storage: 'sah' });
+    await expect(query).rejects.toThrow('error_not_loaded');
+  });
+
+  it('runs a query issued before the database finished loading', async () => {
+    const { executeLocal } = await freshModule();
+
+    const query = executeLocal('SELECT 1');
+    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1 } });
+    await vi.waitFor(() => expect(harness.posted).toHaveLength(2));
+
+    const request = harness.posted[1];
+    expect(request).toMatchObject({ action: 'execute', payload: { sql: 'SELECT 1' } });
+    harness.reply({ id: request.id, type: 'success', rows: [{ a: 1 }], columns: ['a'] });
+    await expect(query).resolves.toEqual({ rows: [{ a: 1 }], columns: ['a'] });
   });
 
   it('executes a query once a database is available', async () => {

@@ -82,15 +82,11 @@ function App() {
   });
 
   useEffect(() => {
-    if (!hasLocalDb()) {
-      // `loadCachedDb` re-asserts the persistence grant itself: it can be
-      // revoked when the user clears site data, and a database that is not
-      // persisted is evicted under storage pressure — the cause of spurious
-      // re-imports.
-      loadCachedDb().then(loaded => {
-        if (loaded) window.dispatchEvent(new Event("db-local-loaded"));
-      });
-    }
+    // `loadCachedDb` is self-guarding, re-asserts the persistence grant (it can
+    // be revoked when the user clears site data, and a database that is not
+    // persisted is evicted under storage pressure — the cause of spurious
+    // re-imports) and announces `db-local-loaded` itself.
+    if (!hasLocalDb()) void loadCachedDb();
   }, []);
 
   useEffect(() => {

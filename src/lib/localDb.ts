@@ -68,7 +68,10 @@ function handleMessage(e: MessageEvent) {
         : { rows: [], columns: e.data.columns, count, stats: e.data.stats }
     );
   } else if (type === 'not_found') {
-    pending.resolve(null);
+    // Carries the worker's storage verdict: "no database" and "the persistent
+    // backend would not open" arrive through the same message, and only the
+    // second one is worth retrying.
+    pending.resolve({ notFound: true, storage: e.data.storage, storageError: e.data.storageError });
   }
   pendingQueries.delete(id);
 }
@@ -255,24 +258,68 @@ export function unloadLocalDb() {
 
 let dbLoadPromise: Promise<boolean> | null = null;
 
+/**
+ * Backoff between attempts to reopen the cached database.
+ *
+ * The OPFS SAH pool takes *exclusive* access handles. When the address bar is
+ * edited, the browser starts the new document while the outgoing one is still
+ * alive, so the new worker can find the handles held by a client that is about
+ * to disappear. That window is short — retrying a few times covers it, whereas
+ * giving up made an installed database look uninstalled.
+ */
+const CACHED_DB_RETRY_DELAYS_MS = [150, 400, 1000];
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function openCachedDb(): Promise<boolean> {
+  for (let attempt = 0; ; attempt++) {
+    let retryable = false;
+
+    try {
+      const data = await request({
+        action: 'loadCachedDb',
+        payload: { baseUrl: import.meta.env.BASE_URL },
+      });
+
+      if (data?.stats) {
+        localDbStats = toStats(data.stats, null);
+        // Re-assert the grant on every boot: it can be revoked when the user
+        // clears site data, and a store that is not persisted gets evicted.
+        await refreshPersistGrant();
+        return true;
+      }
+
+      // Falling back to the memory VFS means the persistent backend never
+      // opened, so "not found" says nothing about whether a database exists.
+      // A genuine first visit reports `sah`/`opfs` and is not retried.
+      retryable = data?.storage === 'memory';
+    } catch {
+      // The channel died mid-request; the replacement worker deserves a go.
+      retryable = true;
+    }
+
+    if (!retryable || attempt >= CACHED_DB_RETRY_DELAYS_MS.length) return false;
+    await delay(CACHED_DB_RETRY_DELAYS_MS[attempt]);
+  }
+}
+
 // Not `async`: callers (and `executeLocal`) rely on getting the very same
 // promise back, so a concurrent page load only ever asks the worker once.
 export function loadCachedDb(): Promise<boolean> {
   if (dbLoadPromise) return dbLoadPromise;
 
-  dbLoadPromise = request({
-    action: 'loadCachedDb',
-    payload: { baseUrl: import.meta.env.BASE_URL },
-  })
-    .then(async (data) => {
-      if (!data?.stats) return false;
-      localDbStats = toStats(data.stats, null);
-      // Re-assert the grant on every boot: it can be revoked when the user
-      // clears site data, and a store that is not persisted gets evicted.
-      await refreshPersistGrant();
-      return true;
-    })
-    .catch(() => false);
+  dbLoadPromise = openCachedDb().then((loaded) => {
+    if (loaded) {
+      // Fired here rather than by the caller so every entry point — boot, or a
+      // query that had to open the database itself — refreshes the UI.
+      window.dispatchEvent(new Event('db-local-loaded'));
+    } else {
+      // A failure is never memoised: the handles may free up a moment later,
+      // and the next query has to be able to try again.
+      dbLoadPromise = null;
+    }
+    return loaded;
+  });
 
   return dbLoadPromise;
 }
@@ -286,9 +333,10 @@ export async function executeLocal(
   query: { sql: string; args?: any[] } | string,
   onRow?: (row: any) => void
 ) {
-  // A page load kicks off `loadCachedDb()`; queries fired by components that
-  // mount at the same time must wait for it instead of failing outright.
-  if (dbLoadPromise) await dbLoadPromise;
+  // Queries must wait for the boot-time load instead of failing outright — and
+  // start one themselves when they beat it, which is what a component mounting
+  // straight onto a deep link does.
+  if (!hasLocalDb()) await loadCachedDb();
 
   if (!hasLocalDb()) throw new Error('error_not_loaded');
 
