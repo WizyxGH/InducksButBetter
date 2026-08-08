@@ -107,8 +107,8 @@
     "export_csv": "Export CSV",
     "page_indicator": "Page {{current}} of {{total}}",
     "exclude_indirect_creators": "Exclude items based on these creators' work but not originally intended for it",
-    "stories_found_one": "{{count, number}} story found",
-    "stories_found_other": "{{count, number}} stories found",
+    "results_found_one": "{{count, number}} result found",
+    "results_found_other": "{{count, number}} results found",
     "publications_found_one": "{{count, number}} publication found",
     "publications_found_other": "{{count, number}} publications found"
   },
@@ -408,7 +408,7 @@
     "tooltip_active": "Using local database",
     "tooltip_upload": "Upload local database",
     "progress_start": "Starting installation...",
-    "step_download": "Downloading database: {{percent}}%",
+    "step_download": "Downloading database...",
     "step_decompress": "Decompressing database...",
     "step_validate": "Verifying database integrity...",
     "step_install": "Installing database in local storage...",
@@ -607,10 +607,13 @@
   "pwa": {
     "installed_title": "App installed",
     "installed_desc": "You are already using InducksButBetter as an installed app.",
-    "install_title": "Install the app",
+    "install_title": "Install the app?",
     "install_desc": "Install InducksButBetter on your device for quick access, full-screen mode, and a better experience.",
     "install_button": "Install",
-    "install_manual": "On iOS, tap Safari's share button then \"Add to Home Screen\". On Android, use the browser menu."
+    "install_manual": "On iOS, tap Safari's share button then \"Add to Home Screen\". On Android, use the browser menu.",
+    "install_description": "Add InducksButBetter to your home screen for faster, offline access.",
+    "install_action": "Install",
+    "install_dismiss": "Not now"
   },
   "csv": {
     "storyCode": "Story code",
