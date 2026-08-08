@@ -15,7 +15,7 @@
     "inducks_code": "Inducks code",
     "inducks_code_placeholder": "Search for a story...",
     "keywords": "Title / keywords",
-    "keywords_placeholder": "E.g.: christmas, time travel",
+    "keywords_placeholder": "E.g.: treasure",
     "include_comments": "Search in comments as well",
     "multiple_parts": "Multi-part stories",
     "content_type": "Content Type",
@@ -180,9 +180,6 @@
     "read_more": "Read more",
     "read_less": "Less",
     "none": "None",
-    "strip": "strip",
-    "strips": "strips",
-    "per_page": "/ page",
     "description": "Description",
     "issue_label": "Issue",
     "issue_symbol": "#",
@@ -199,7 +196,9 @@
     "pages_short": "p.",
     "code_copied": "Code copied!",
     "page": "page",
-    "refers_to_creator": "Refers to creator"
+    "refers_to_creator": "Refers to creator",
+    "strips_per_page_one": "{{count}} strip per page",
+    "strips_per_page_other": "{{count}} strips per page"
   },
   "kinds": {
     "c": "Cover",
@@ -498,7 +497,6 @@
     "aliases": "Aliases",
     "creators": "Main Creators",
     "co_characters": "Frequent Companions",
-    "stories_featuring": "Stories featuring {{name}}",
     "title": "Search parameters",
     "code": "Character code",
     "code_placeholder": "Ex: DD, MM...",
@@ -547,8 +545,8 @@
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
     "desc": "Select a country to explore its Disney publications.",
-    "publications_singular": "publication",
-    "publications_plural": "publications"
+    "publication_count_one": "{{count}} publication",
+    "publication_count_other": "{{count}} publications"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -574,15 +572,15 @@
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries",
-    "issue_singular": "issue",
-    "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
     "untitled": "Untitled",
     "not_found": "This publication does not exist.",
     "not_found_desc": "No publication with this code was found in the local database.",
     "show_more_sections": "Show more sections",
-    "circulation": "Circulation"
+    "circulation": "Circulation",
+    "issue_count_one": "{{count}} issue",
+    "issue_count_other": "{{count}} issues"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -627,24 +625,12 @@
   "suggestions": {
     "title": "Send us your suggestions",
     "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
-    "label_name": "Name or nickname (optional)",
-    "placeholder_name": "What's your name?",
-    "label_type": "Suggestion type",
-    "type_idea": "Idea",
-    "type_bug": "Bug",
-    "type_db": "Data",
-    "type_other": "Other",
     "label_message": "Your message",
     "placeholder_message": "Describe your idea or the problem you ran into...",
-    "sending": "Sending...",
-    "sent": "Sent successfully!",
     "submit": "Send the suggestion",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent.",
-    "submit_github": "Send via GitHub",
-    "btn_discord": "Or reach us on Discord",
-    "finish_on_github": "Finish posting your suggestion in the GitHub tab that just opened.",
-    "github_hint": "Sending opens a prefilled GitHub issue in a new tab — a free GitHub account is required to post it."
+    "finish_in_mail": "Finish sending the message from your mail app.",
+    "mail_hint": "Sending opens your mail app with the message prefilled."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -689,6 +675,28 @@
     "not_found": "Subseries not found.",
     "stories": "Stories in this subseries",
     "no_stories": "No story found.",
-    "maybe_error": "This subseries may be an error."
+    "maybe_error": "This subseries may be an error.",
+    "other_names": "Names in other languages",
+    "list_title": "Subseries",
+    "list_subtitle": "Every story series catalogued by Inducks.",
+    "list_search": "Search a subseries in any language...",
+    "uncategorized": "Uncategorized",
+    "count_one": "{{count}} subseries",
+    "count_other": "{{count}} subseries",
+    "story_count_one": "{{count}} story",
+    "story_count_other": "{{count}} stories"
+  },
+  "universes": {
+    "list_title": "Universes",
+    "list_subtitle": "Every character universe defined by Inducks.",
+    "list_search": "Search a universe in any language...",
+    "characters": "Characters",
+    "no_characters": "No character listed in this universe.",
+    "not_found": "This universe does not exist.",
+    "other_names": "Names in other languages",
+    "count_one": "{{count}} universe",
+    "count_other": "{{count}} universes",
+    "character_count_one": "{{count}} character",
+    "character_count_other": "{{count}} characters"
   }
 }
