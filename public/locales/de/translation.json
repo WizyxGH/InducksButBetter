@@ -242,7 +242,9 @@
     "activate_title": "Lokale KI aktivieren",
     "activate_desc": "Um offline und kostenlos zu arbeiten, muss die KI {{size}} einmalig heruntergeladen werden. Sie verwendet die Leistung Deines Browsers.",
     "activate_btn": "Herunterladen und aktivieren",
-    "preparation": "Vorbereitung..."
+    "preparation": "Vorbereitung...",
+    "invalid": "Ich konnte keine gültige Abfrage erzeugen:",
+    "ready": "Abfrage bereit."
   },
   "sql": {
     "title": "SQL-Editor",
@@ -255,7 +257,11 @@
     "results_count_one": "1 Ergebnis gefunden",
     "results_count_other": "{{count}} Ergebnisse gefunden",
     "query_success": "Abfrage erfolgreich ausgeführt.",
-    "docs_title": "Inducks-Datenbankdokumentation"
+    "docs_title": "Inducks-Datenbankdokumentation",
+    "empty_columns_hidden_one": "{{count}} leere Spalte ausgeblendet",
+    "empty_columns_hidden_other": "{{count}} leere Spalten ausgeblendet",
+    "empty_columns_show": "Anzeigen",
+    "empty_columns_fold": "Ausblenden"
   },
   "continents": {
     "europe": "Europa",

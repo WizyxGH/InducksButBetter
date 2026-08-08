@@ -242,7 +242,9 @@
     "activate_title": "Activate Local AI",
     "activate_desc": "To work offline and for free, the AI {{size}}must be downloaded once. It will use your browser's power.",
     "activate_btn": "Download and Activate",
-    "preparation": "Preparation..."
+    "preparation": "Preparation...",
+    "invalid": "Jeg kunne ikke lave en gyldig forespørgsel:",
+    "ready": "Forespørgsel klar."
   },
   "sql": {
     "title": "SQL Editor",
@@ -255,7 +257,11 @@
     "results_count_one": "1 result found",
     "results_count_other": "{{count}} results found",
     "query_success": "Query executed successfully.",
-    "docs_title": "Inducks-databasedokumentation"
+    "docs_title": "Inducks-databasedokumentation",
+    "empty_columns_hidden_one": "{{count}} tom kolonne skjult",
+    "empty_columns_hidden_other": "{{count}} tomme kolonner skjult",
+    "empty_columns_show": "Vis",
+    "empty_columns_fold": "Skjul"
   },
   "continents": {
     "europe": "Europe",

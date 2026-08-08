@@ -242,7 +242,9 @@
     "activate_title": "Ativar IA local",
     "activate_desc": "Para trabalhar offline e gratuitamente, a IA {{size}} deve ser baixada uma vez. Usará a capacidade do seu navegador.",
     "activate_btn": "Baixar e ativar",
-    "preparation": "Preparação..."
+    "preparation": "Preparação...",
+    "invalid": "Não consegui produzir uma consulta válida:",
+    "ready": "Consulta pronta."
   },
   "sql": {
     "title": "Editor SQL",
@@ -255,7 +257,11 @@
     "results_count_one": "1 resultado encontrado",
     "results_count_other": "{{count}} results found",
     "query_success": "Consulta executada com sucesso.",
-    "docs_title": "Documentação da base de dados Inducks"
+    "docs_title": "Documentação da base de dados Inducks",
+    "empty_columns_hidden_one": "{{count}} coluna vazia oculta",
+    "empty_columns_hidden_other": "{{count}} colunas vazias ocultas",
+    "empty_columns_show": "Mostrar",
+    "empty_columns_fold": "Ocultar"
   },
   "continents": {
     "europe": "Europa",

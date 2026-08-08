@@ -5,6 +5,15 @@ import { CreateWebWorkerMLCEngine, InitProgressCallback, MLCEngineInterface, Cha
 // and causes a complete WebGPU crash at the browser level!
 export const DEFAULT_MODEL = 'Llama-3.2-1B-Instruct-q4f32_1-MLC';
 
+export interface GenerateOptions {
+  /** Defaults to 0: deterministic, which is what SQL generation wants. */
+  temperature?: number;
+  /** Caps generation. A SELECT is short; without this the model rambles on. */
+  maxTokens?: number;
+  /** Sequences that end generation early — the main latency win. */
+  stop?: string[];
+}
+
 export function useWebLLM() {
   const [engine, setEngine] = useState<MLCEngineInterface | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,23 +53,31 @@ export function useWebLLM() {
   }, [engine]);
 
   const generate = useCallback(async (
-    messages: ChatCompletionMessageParam[], 
+    messages: ChatCompletionMessageParam[],
     systemPrompt?: string,
-    onUpdate?: (currentText: string) => void
+    onUpdate?: (currentText: string) => void,
+    options?: GenerateOptions
   ) => {
     if (!engine) throw new Error("L'IA n'est pas encore initialisée.");
-    
+
     const fullMessages: ChatCompletionMessageParam[] = [];
     if (systemPrompt) {
       fullMessages.push({ role: 'system', content: systemPrompt });
     }
     fullMessages.push(...messages);
 
+    // Greedy by default. For SQL there is one right answer, and sampling only
+    // buys invented column names.
+    const temperature = options?.temperature ?? 0;
+    const max_tokens = options?.maxTokens;
+    const stop = options?.stop;
+
     if (onUpdate) {
       const asyncChunkGenerator = await engine.chat.completions.create({
         messages: fullMessages,
-        temperature: 0.1,
-        frequency_penalty: 1.0,
+        temperature,
+        max_tokens,
+        stop,
         stream: true,
       });
 
@@ -75,7 +92,9 @@ export function useWebLLM() {
     } else {
       const reply = await engine.chat.completions.create({
         messages: fullMessages,
-        temperature: 0.1,
+        temperature,
+        max_tokens,
+        stop,
       });
       return reply.choices[0].message.content as string;
     }

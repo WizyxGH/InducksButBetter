@@ -242,7 +242,9 @@
     "activate_title": "Activate Local AI",
     "activate_desc": "To work offline and for free, the AI {{size}}must be downloaded once. It will use your browser's power.",
     "activate_btn": "Download and Activate",
-    "preparation": "Preparation..."
+    "preparation": "Preparation...",
+    "invalid": "En pystynyt luomaan kelvollista kyselyä:",
+    "ready": "Kysely valmis."
   },
   "sql": {
     "title": "SQL Editor",
@@ -255,7 +257,11 @@
     "results_count_one": "1 result found",
     "results_count_other": "{{count}} results found",
     "query_success": "Query executed successfully.",
-    "docs_title": "Inducks-tietokannan dokumentaatio"
+    "docs_title": "Inducks-tietokannan dokumentaatio",
+    "empty_columns_hidden_one": "{{count}} tyhjä sarake piilotettu",
+    "empty_columns_hidden_other": "{{count}} tyhjää saraketta piilotettu",
+    "empty_columns_show": "Näytä",
+    "empty_columns_fold": "Piilota"
   },
   "continents": {
     "europe": "Europe",

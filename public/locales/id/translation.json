@@ -242,7 +242,9 @@
     "activate_title": "Activate Local AI",
     "activate_desc": "To work offline and for free, the AI {{size}}must be downloaded once. It will use your browser's power.",
     "activate_btn": "Download and Activate",
-    "preparation": "Preparation..."
+    "preparation": "Preparation...",
+    "invalid": "Saya tidak dapat membuat kueri yang valid:",
+    "ready": "Kueri siap."
   },
   "sql": {
     "title": "SQL Editor",
@@ -255,7 +257,11 @@
     "results_count_one": "1 result found",
     "results_count_other": "{{count}} results found",
     "query_success": "Query executed successfully.",
-    "docs_title": "Dokumentasi basis data Inducks"
+    "docs_title": "Dokumentasi basis data Inducks",
+    "empty_columns_hidden_one": "{{count}} kolom kosong disembunyikan",
+    "empty_columns_hidden_other": "{{count}} kolom kosong disembunyikan",
+    "empty_columns_show": "Tampilkan",
+    "empty_columns_fold": "Sembunyikan"
   },
   "continents": {
     "europe": "Europe",

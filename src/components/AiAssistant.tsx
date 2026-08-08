@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { DEFAULT_DB_SCHEMA } from "@/lib/defaultSchema"
 import { useWebLLM, DEFAULT_MODEL } from "@/lib/useWebLLM"
+import { buildSystemPrompt, buildUserPrompt, buildRepairPrompt } from "@/lib/sqlAssistant/prompt"
+import { guardSql, type GuardResult } from "@/lib/sqlAssistant/sqlGuard"
 import { ChatBubble } from "@/components/ChatBubble"
 import { SqlCodeBlock } from "@/components/SqlCodeBlock"
 import { TypingIndicator } from "@/components/TypingIndicator"
@@ -94,6 +95,25 @@ export function AiAssistant({ onCopyToEditor }: AiAssistantProps) {
     window.speechSynthesis.speak(utterance)
   }
 
+  /**
+   * One generation, capped and stopped early, run through the guard.
+   *
+   * `stop` matters as much for speed as for cleanliness: the model would
+   * otherwise carry on explaining the query it has already finished writing.
+   */
+  const askForSql = async (
+    turns: Array<{ role: "user" | "assistant"; content: string }>,
+    systemPrompt: string,
+    onStream: (text: string) => void
+  ): Promise<GuardResult> => {
+    const raw = await generate(turns, systemPrompt, onStream, {
+      temperature: 0,
+      maxTokens: 260,
+      stop: ["\n\n", "```", "Question:", "Explanation:"],
+    })
+    return guardSql(raw)
+  }
+
   const handleSend = async () => {
     if (isRecording) {
       toggleRecording()
@@ -107,67 +127,54 @@ export function AiAssistant({ onCopyToEditor }: AiAssistantProps) {
     setIsGenerating(true)
 
     try {
-      // Only send core tables to avoid confusing the small AI model
-      const coreTables = ['inducks_story', 'inducks_storyversion', 'inducks_character', 'inducks_person', 'inducks_publication', 'inducks_issue', 'inducks_storyjob', 'inducks_appearance'];
-      const schemaString = Object.entries(DEFAULT_DB_SCHEMA)
-        .filter(([name]) => coreTables.includes(name))
-        .map(([name, columns]) => `${name}(${columns.join(",")})`)
-        .join("; ");
+      const question = userMessage.content
+      const systemPrompt = buildSystemPrompt(question)
 
-      const systemPrompt = `Tu es un expert SQL pour la base de données Inducks (Disney comics).
-Schéma (simplifié) :
-${schemaString}
-
-Relations clés :
-- inducks_story.storycode = inducks_storyversion.storycode
-- inducks_storyjob.storyversioncode = inducks_storyversion.storyversioncode
-- inducks_storyjob.personcode = inducks_person.personcode
-- inducks_appearance.storyversioncode = inducks_storyversion.storyversioncode
-- inducks_appearance.charactercode = inducks_character.charactercode
-
-Exemples de requêtes :
-Q: "Histoires écrites par Carl Barks"
-R: \`\`\`sql
-SELECT s.title, p.fullname FROM inducks_story s 
-JOIN inducks_storyversion sv ON s.storycode = sv.storycode 
-JOIN inducks_storyjob sj ON sv.storyversioncode = sj.storyversioncode 
-JOIN inducks_person p ON sj.personcode = p.personcode 
-WHERE p.fullname LIKE '%Barks%' LIMIT 10;
-\`\`\`
-Q: "Histoires avec Picsou"
-R: \`\`\`sql
-SELECT s.title FROM inducks_story s 
-JOIN inducks_storyversion sv ON s.storycode = sv.storycode 
-JOIN inducks_appearance a ON sv.storyversioncode = a.storyversioncode 
-JOIN inducks_character c ON a.charactercode = c.charactercode 
-WHERE c.charactername LIKE '%Scrooge%' LIMIT 10;
-\`\`\`
-
-RÈGLES ABSOLUES :
-1. Comprends la demande PEU IMPORTE LA LANGUE (français, anglais, etc.).
-2. Tu ne dois générer QUE du code SQL SQLite valide.
-3. PAS d'explications ni de texte. TOUJOURS un bloc \`\`\`sql ... \`\`\`.`
-
-      // Prepare an empty bubble for the assistant's response
       setMessages((prev) => [...prev, { role: "assistant", content: "" }])
 
-      // Intercept messages to inject the strict instruction into the final user message
-      const messagesToWebLLM = [...messages]
-      messagesToWebLLM.push({ 
-        role: "user", 
-        content: `Requête utilisateur : ${input}\n\n-> IMPORTANT: Réponds UNIQUEMENT par la requête SQL dans un bloc \`\`\`sql. AUCUN AUTRE TEXTE.` 
-      })
-
-      const responseText = await generate(messagesToWebLLM, systemPrompt, (currentText) => {
+      const streamInto = (text: string) => {
         setMessages((prev) => {
-          const newMessages = [...prev]
-          const lastIndex = newMessages.length - 1
-          newMessages[lastIndex] = { ...newMessages[lastIndex], content: currentText }
-          return newMessages
+          const next = [...prev]
+          next[next.length - 1] = { ...next[next.length - 1], content: `\`\`\`sql\n${text}` }
+          return next
         })
+      }
+
+      // The chat history is deliberately not sent. A 1B model drifts back into
+      // conversation when it sees its own prose, and a longer prompt is a
+      // slower one — each question is answered on its own.
+      let result = await askForSql(
+        [{ role: "user", content: buildUserPrompt(question) }],
+        systemPrompt,
+        streamInto
+      )
+
+      // One repair round, naming the exact fault. Beyond that the model tends
+      // to loop, and the wait stops being worth it.
+      if (!result.ok) {
+        result = await askForSql(
+          [
+            { role: "user", content: buildUserPrompt(question) },
+            { role: "assistant", content: result.sql },
+            { role: "user", content: buildRepairPrompt(result.sql, result) },
+          ],
+          systemPrompt,
+          streamInto
+        )
+      }
+
+      setMessages((prev) => {
+        const next = [...prev]
+        next[next.length - 1] = {
+          role: "assistant",
+          content: result.ok
+            ? `\`\`\`sql\n${result.sql}\n\`\`\``
+            : `${t("ai.invalid")}\n\n${result.problems.map((p) => `- ${p.message}`).join("\n")}`,
+        }
+        return next
       })
 
-      speak(responseText)
+      if (result.ok) speak(t("ai.ready"))
     } catch (e) {
       console.error(e)
       setMessages((prev) => [...prev, { role: "assistant", content: t("ai.error") }])
