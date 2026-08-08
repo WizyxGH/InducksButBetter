@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useTranslation } from "react-i18next"
-import { MessageSquarePlus, Send } from "lucide-react"
+import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { buildSuggestionMailto } from "@/lib/suggestionIssue"
@@ -35,12 +35,9 @@ export function SuggestionForm() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background/50 flex flex-col items-center">
-      <section className="relative px-4 lg:px-12 py-12 flex flex-col items-center justify-center text-center gap-6 border-b border-border-subtle bg-gradient-to-b from-surface/30 to-background/10 w-full">
-        <div className="space-y-3">
-          <div className="w-16 h-16 mx-auto bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4">
-            <MessageSquarePlus className="w-8 h-8" />
-          </div>
+    <div className="h-full overflow-y-auto bg-background/50">
+      <main className="w-full max-w-2xl mx-auto px-4 py-10 space-y-6">
+        <div className="space-y-3 text-center">
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
             {t("suggestions.title")}
           </h2>
@@ -48,10 +45,10 @@ export function SuggestionForm() {
             {t("suggestions.subtitle")}
           </p>
         </div>
-      </section>
 
-      <main className="px-4 py-10 w-full max-w-2xl mx-auto space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4 bg-surface p-6 sm:p-8 rounded-2xl border border-border-subtle shadow-sm">
+        {/* No card around the form: the textarea already carries its own
+            border, and nesting it in a panel only added a grey frame. */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="message" className="text-sm font-semibold text-foreground">
               {t("suggestions.label_message")}

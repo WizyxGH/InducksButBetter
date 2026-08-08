@@ -13,6 +13,7 @@ import { routes } from "@/lib/routes"
 import { isModifiedClick, navigate } from "@/lib/navigation"
 import { getEntryAnnotations, hasEntryAnnotations } from "@/lib/entryNotes"
 import { thumbUrl } from "@/components/ResultCard/thumbUrl"
+import { formatStoryPages } from "@/lib/storyPages"
 import { parseCredits } from "@/lib/credits"
 
 interface IssueDetailProps {
@@ -407,9 +408,9 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                                   : title;
                               })()}
                             </p>
-                            {story.entirepages && (
+                            {formatStoryPages(story) && (
                               <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono shrink-0">
-                                {story.entirepages} {t("story.pages_short")}
+                                {formatStoryPages(story)!.label} {t("story.pages_short")}
                               </span>
                             )}
                           </div>

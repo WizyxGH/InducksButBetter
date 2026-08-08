@@ -15,7 +15,7 @@ const load = (locale: string) =>
 const COUNTED = [
   ['authors', 'authors_found'],
   ['characters', 'characters_found'],
-  ['search', 'stories_found'],
+  ['search', 'results_found'],
   ['search', 'publications_found'],
 ] as const;
 
@@ -47,12 +47,12 @@ describe('pluralised result labels', () => {
   it('uses a genuine singular in French', () => {
     const fr = load('fr');
     expect(fr.authors.authors_found_one).toBe('{{count, number}} auteur trouvé');
-    expect(fr.search.stories_found_one).toBe('{{count, number}} histoire trouvée');
+    expect(fr.search.results_found_one).toBe('{{count, number}} résultat trouvé');
   });
 
   it('uses a genuine singular in English', () => {
     const en = load('en');
-    expect(en.search.stories_found_one).toBe('{{count, number}} story found');
+    expect(en.search.results_found_one).toBe('{{count, number}} result found');
     expect(en.search.publications_found_one).toBe('{{count, number}} publication found');
   });
 

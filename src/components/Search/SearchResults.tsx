@@ -74,7 +74,7 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
   const actualSortOptions = sortOptions || defaultSortOptions;
   const actualRenderCard = renderResultCard || ((row: any, i: number) => <StoryResultCard row={row} onSelect={onSelect} onSelectCharacter={onSelectCharacter} />);
   const actualRenderSkeleton = renderSkeleton || ((i: number) => <StoryResultSkeleton key={i} />);
-  const actualFoundLabel = foundLabel !== undefined ? foundLabel : t("search.stories_found", { count: totalCount });
+  const actualFoundLabel = foundLabel !== undefined ? foundLabel : t("search.results_found", { count: totalCount });
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full">

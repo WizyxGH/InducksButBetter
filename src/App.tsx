@@ -16,6 +16,7 @@ import { useRouteMetadata } from "@/hooks/useRouteMetadata"
 import { incrementHistoryCount, navigateBack } from "@/lib/utils"
 import { loadCachedDb, hasLocalDb } from "@/lib/localDb"
 import { OnboardingModal } from "@/components/OnboardingModal"
+import { PwaInstallPrompt } from "@/components/PwaInstallPrompt"
 
 // Lazy load heavy components to code-split the application
 const Home = lazy(() => import("@/components/Home").then(module => ({ default: module.Home })))
@@ -478,6 +479,7 @@ function App() {
       </div>
       <Toaster position="top-center" richColors />
       <OnboardingModal />
+      <PwaInstallPrompt />
     </TooltipProvider>
   )
 }

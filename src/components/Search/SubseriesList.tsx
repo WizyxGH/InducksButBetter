@@ -10,6 +10,7 @@ import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
 import { matchesSubseriesQuery, groupSubseriesByCategory } from "@/lib/subseries"
 import { toast } from "sonner"
+import { describeQueryError, QUERY_ERROR_TOAST_ID } from "@/lib/queryError"
 
 interface SubseriesListProps {
   onSelectSubseries?: (code: string) => void
@@ -29,7 +30,7 @@ export function SubseriesList({ onSelectSubseries }: SubseriesListProps) {
         setRows(await getSubseriesList(i18n.language))
       } catch (e) {
         console.error(e)
-        toast.error(t("common.error"))
+        toast.error(describeQueryError(e, t), { id: QUERY_ERROR_TOAST_ID })
       } finally {
         setLoading(false)
       }

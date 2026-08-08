@@ -10,6 +10,7 @@ import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
 import { matchesUniverseQuery } from "@/lib/universes"
 import { toast } from "sonner"
+import { describeQueryError, QUERY_ERROR_TOAST_ID } from "@/lib/queryError"
 
 interface UniverseListProps {
   onSelectUniverse?: (code: string) => void
@@ -29,7 +30,7 @@ export function UniverseList({ onSelectUniverse }: UniverseListProps) {
         setRows(await getUniverseList(i18n.language))
       } catch (e) {
         console.error(e)
-        toast.error(t("common.error"))
+        toast.error(describeQueryError(e, t), { id: QUERY_ERROR_TOAST_ID })
       } finally {
         setLoading(false)
       }

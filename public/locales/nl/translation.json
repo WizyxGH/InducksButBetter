@@ -97,8 +97,8 @@
     "export_csv": "Export CSV",
     "page_indicator": "Pagina {{current}} van {{total}}",
     "exclude_indirect_creators": "Exclude items based on these creators' work but not originally intended for it",
-    "stories_found_one": "{{count, number}} stories found",
-    "stories_found_other": "{{count, number}} stories found",
+    "results_found_one": "{{count, number}} resultaat gevonden",
+    "results_found_other": "{{count, number}} resultaten gevonden",
     "publications_found_one": "{{count, number}} publications found",
     "publications_found_other": "{{count, number}} publications found"
   },
@@ -392,7 +392,7 @@
     "global_progress": "Global progress",
     "btn_select_new": "Drop a local file",
     "btn_select_sub_new": "Select inducks.sqlite or inducks.sqlite.gz",
-    "step_download": "Downloading database: {{percent}}%",
+    "step_download": "Database downloaden...",
     "step_decompress": "Decompressing database...",
     "step_validate": "Verifying database integrity...",
     "step_install": "Installing database in local storage...",
@@ -607,10 +607,13 @@
   "pwa": {
     "installed_title": "App installed",
     "installed_desc": "You are already using InducksButBetter as an installed app.",
-    "install_title": "Install the app",
+    "install_title": "De app installeren?",
     "install_desc": "Install InducksButBetter on your device for quick access, full-screen mode, and a better experience.",
     "install_button": "Install",
-    "install_manual": "On iOS, tap Safari's share button then \"Add to Home Screen\". On Android, use the browser menu."
+    "install_manual": "On iOS, tap Safari's share button then \"Add to Home Screen\". On Android, use the browser menu.",
+    "install_description": "Voeg InducksButBetter toe aan je beginscherm voor snellere, offline toegang.",
+    "install_action": "Installeren",
+    "install_dismiss": "Niet nu"
   },
   "csv": {
     "storyCode": "Story code",

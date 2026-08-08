@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!-- .ico carries 16/32/48 for browser chrome; the SVG is used by browsers
+         that prefer it and stays sharp at any density. -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Find exactly what you are looking for in the Inducks database" />
     <meta name="theme-color" content="#2563eb" />
@@ -11,7 +14,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="InducksButBetter" />
-    <link rel="apple-touch-icon" href="/InducksButBetter/pwa-icon-512.jpg" />
+    <!-- iOS wants 180x180 and composites transparency onto black, so this one
+         carries its own opaque background. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />

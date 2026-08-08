@@ -75,7 +75,9 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 export function describeInstallProgress(progress: InstallProgress, t: Translate): string {
   switch (progress.step) {
     case "download":
-      return t("localDb.step_download", { percent: progress.percent });
+      // No percentage in the wording: the toast renders its own, to the
+      // right of the message, and showing both read as "2%" twice.
+      return t("localDb.step_download");
     case "decompress":
       return t("localDb.step_decompress");
     case "validate":

@@ -51,12 +51,12 @@ describe('SearchResults counter', () => {
       />
     );
 
-    expect(screen.getByText('42 search.stories_found')).toBeInTheDocument();
+    expect(screen.getByText('42 search.results_found')).toBeInTheDocument();
   });
 
   it('hides the counter when there is nothing to count', () => {
     render(<SearchResults {...baseProps} totalCount={0} />);
-    expect(screen.queryByText(/search\.stories_found/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/search\.results_found/)).not.toBeInTheDocument();
   });
 });
 

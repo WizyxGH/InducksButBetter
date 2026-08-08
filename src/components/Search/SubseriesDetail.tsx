@@ -12,7 +12,9 @@ import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
 import { cleanComment, formatInducksDate, hasInducksCookie } from "@/lib/utils"
 import { thumbUrl } from "@/components/ResultCard/thumbUrl"
+import { formatStoryPages } from "@/lib/storyPages"
 import { toast } from "sonner"
+import { describeQueryError, QUERY_ERROR_TOAST_ID } from "@/lib/queryError"
 
 interface SubseriesDetailProps {
   subseriescode: string
@@ -35,7 +37,7 @@ export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: Subser
         setSubseries(details)
       } catch (e) {
         console.error(e)
-        toast.error(t("common.error"))
+        toast.error(describeQueryError(e, t), { id: QUERY_ERROR_TOAST_ID })
       } finally {
         setLoading(false)
       }
@@ -180,10 +182,10 @@ export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: Subser
                   <div className="flex flex-col items-end gap-1.5 shrink-0 text-right">
                     <div className="flex items-center gap-1.5">
                       {story.kind && <KindBadge kind={story.kind} />}
-                      {story.entirepages && (
+                      {formatStoryPages(story) && (
                         <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono flex items-center gap-1">
                           <Layers className="w-3 h-3" />
-                          {story.entirepages} {t("story.pages_short")}
+                          {formatStoryPages(story)!.label} {t("story.pages_short")}
                         </span>
                       )}
                     </div>

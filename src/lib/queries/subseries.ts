@@ -82,6 +82,14 @@ export async function getSubseriesDetail(subseriescode: string, lang: string = "
           (SELECT v.entirepages FROM inducks_storyversion v WHERE v.storyversioncode = s.originalstoryversioncode AND v.storycode = s.storycode),
           (SELECT v.entirepages FROM inducks_storyversion v WHERE v.storycode = s.storycode ORDER BY v.storyversioncode ASC LIMIT 1)
         ) as entirepages,
+        COALESCE(
+          (SELECT v.brokenpagenumerator FROM inducks_storyversion v WHERE v.storyversioncode = s.originalstoryversioncode AND v.storycode = s.storycode),
+          (SELECT v.brokenpagenumerator FROM inducks_storyversion v WHERE v.storycode = s.storycode ORDER BY v.storyversioncode ASC LIMIT 1)
+        ) as brokenpagenumerator,
+        COALESCE(
+          (SELECT v.brokenpagedenominator FROM inducks_storyversion v WHERE v.storyversioncode = s.originalstoryversioncode AND v.storycode = s.storycode),
+          (SELECT v.brokenpagedenominator FROM inducks_storyversion v WHERE v.storycode = s.storycode ORDER BY v.storyversioncode ASC LIMIT 1)
+        ) as brokenpagedenominator,
         (SELECT eu.sitecode || '|' || eu.url
          FROM inducks_storyversion sv_img
          JOIN inducks_entry e_img ON sv_img.storyversioncode = e_img.storyversioncode

@@ -19,7 +19,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'pwa-icon.svg', 'pwa-icon-512.jpg', 'ogimage.jpg'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-icon.svg', 'ogimage.jpg'],
       manifest: {
         name: 'InducksButBetter',
         short_name: 'InducksButBetter',
@@ -30,24 +30,35 @@ export default defineConfig({
         orientation: 'portrait-primary',
         scope: '/InducksButBetter/',
         start_url: '/InducksButBetter/',
+        // PNG before SVG: Android picks the first usable entry and its SVG
+        // support is uneven. 192 and 512 are the two sizes Chrome asks for.
+        // The maskable variant is a separate file — Android crops maskable
+        // icons to a circle 80% of the canvas, so its logo is shrunk to fit
+        // inside that safe zone instead of losing its wingtips.
         icons: [
+          {
+            src: 'pwa-icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: 'pwa-icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: 'pwa-icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
           {
             src: 'pwa-icon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any',
-          },
-          {
-            src: 'pwa-icon-512.jpg',
-            sizes: '512x512',
-            type: 'image/jpeg',
-            purpose: 'any',
-          },
-          {
-            src: 'pwa-icon-512.jpg',
-            sizes: '512x512',
-            type: 'image/jpeg',
-            purpose: 'maskable',
           },
         ],
         categories: ['entertainment', 'reference', 'utilities'],

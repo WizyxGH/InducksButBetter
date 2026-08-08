@@ -91,9 +91,11 @@ describe('resolveDatabaseSources', () => {
 });
 
 describe('describeInstallProgress', () => {
-  it('passes the percentage through for the download step', () => {
+  it('keeps the percentage out of the download wording', () => {
+    // The toast draws its own percentage next to the message; interpolating
+    // one here too showed it twice.
     expect(describeInstallProgress({ step: 'download', current: 0, total: 0, percent: 42 }, t)).toBe(
-      'localDb.step_download:{"percent":42}'
+      'localDb.step_download'
     );
   });
 

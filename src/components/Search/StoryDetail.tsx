@@ -8,10 +8,12 @@ import { Tag } from "@/components/ui/tag"
 import { Card, CardContent } from "@/components/ui/card"
 import { getFlagUrl, hasInducksCookie, isInvalidPlotsummary, formatInducksDate } from "@/lib/utils"
 import { toast } from "sonner"
+import { describeQueryError, QUERY_ERROR_TOAST_ID } from "@/lib/queryError"
 import { EntityBadge } from "@/components/EntityBadge"
 import { KindBadge } from "@/components/KindBadge"
 import { useMetadata } from "@/hooks/useMetadata"
 import { navigate } from "@/lib/navigation";
+import { formatStoryPages } from "@/lib/storyPages";
 import { routes } from "@/lib/routes";
 import { groupCreditsByRole } from "@/lib/credits";
 
@@ -45,7 +47,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
         setStory(details)
       } catch (e) {
         console.error(e)
-        toast.error(t("common.error"))
+        toast.error(describeQueryError(e, t), { id: QUERY_ERROR_TOAST_ID })
       } finally {
         setLoading(false)
       }
@@ -100,6 +102,10 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   // One line per role (Script, Art, …), each listing every person once —
   // grouping by person used to print one "Art" line per artist.
   const roleGroups = groupCreditsByRole(story.creators)
+
+  // Parsed, not tested: "0" whole pages is a truthy string, and hid the
+  // fraction of a page that is the real length of one-panel gags.
+  const storyPages = formatStoryPages(story)
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 lg:p-8 space-y-6">
@@ -164,9 +170,9 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               )}
               <div className="flex items-center gap-1.5 ml-2">
                 <KindBadge kind={story.kind || "s"} />
-                {(story.entirepages || story.brokenpagenumerator) && (
+                {storyPages && (
                   <Tag color="surface" icon={<FileText className="w-3 h-3" />}>
-                    {story.entirepages ? `${story.entirepages} ${t("story.pages")}` : `${story.brokenpagenumerator}/${story.brokenpagedenominator} ${t("story.page")}`}
+                    {storyPages.label} {storyPages.isFraction ? t("story.page") : t("story.pages")}
                   </Tag>
                 )}
                 {story.rowsperpage > 0 && (
@@ -464,13 +470,9 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                             {pub.entry_title && <span className="italic ml-1">{pub.position ? `- ${pub.entry_title}` : pub.entry_title}</span>}
                           </p>
                         </div>
-                        <div className="text-right shrink-0 ml-2">
-                          {pub.entirepages && (
-                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">
-                              {pub.entirepages} {t("story.pages_short")}
-                            </span>
-                          )}
-                        </div>
+                        {/* No page badge here: the length belongs to the story
+                            version, so it is the same for every printing and
+                            already shown in the header. */}
                       </div>
                     ))}
                   </div>

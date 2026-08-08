@@ -81,7 +81,11 @@ export async function getIssueDetail(issuecode: string, lang: string = "fr") {
       SELECT
         e.entrycode,
         e.position,
+        -- Whole pages plus the fraction: a one-panel gag is 0 + 1/4, and
+        -- showing only entirepages printed "0 p." for it.
         sv.entirepages,
+        sv.brokenpagenumerator,
+        sv.brokenpagedenominator,
         sv.kind,
         e.title as entry_title,
         s.storycode,

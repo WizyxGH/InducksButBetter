@@ -11,6 +11,7 @@ import { pickUniverseName, listUniverseNames } from "@/lib/universes"
 import { useMetadata } from "@/hooks/useMetadata"
 import { cleanComment } from "@/lib/utils"
 import { toast } from "sonner"
+import { describeQueryError, QUERY_ERROR_TOAST_ID } from "@/lib/queryError"
 
 interface UniverseDetailProps {
   universecode: string
@@ -32,7 +33,7 @@ export function UniverseDetail({ universecode, onBack, onSelectCharacter }: Univ
         setUniverse(await getUniverseDetail(universecode, i18n.language))
       } catch (e) {
         console.error(e)
-        toast.error(t("common.error"))
+        toast.error(describeQueryError(e, t), { id: QUERY_ERROR_TOAST_ID })
       } finally {
         setLoading(false)
       }

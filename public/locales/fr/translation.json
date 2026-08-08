@@ -107,8 +107,8 @@
     "export_csv": "Export CSV",
     "page_indicator": "Page {{current}} sur {{total}}",
     "exclude_indirect_creators": "Exclure les items dérivés du travail de ces auteurs sans avoir été conçus pour cela",
-    "stories_found_one": "{{count, number}} histoire trouvée",
-    "stories_found_other": "{{count, number}} histoires trouvées",
+    "results_found_one": "{{count, number}} résultat trouvé",
+    "results_found_other": "{{count, number}} résultats trouvés",
     "publications_found_one": "{{count, number}} publication trouvée",
     "publications_found_other": "{{count, number}} publications trouvées"
   },
@@ -408,7 +408,7 @@
     "tooltip_active": "Base locale en cours d'utilisation",
     "tooltip_upload": "Charger une base de données locale",
     "progress_start": "Démarrage de l'installation...",
-    "step_download": "Téléchargement de la base : {{percent}}%",
+    "step_download": "Téléchargement de la base...",
     "step_decompress": "Décompression de la base...",
     "step_validate": "Vérification de l'intégrité de la base...",
     "step_install": "Installation finale dans le stockage local...",
@@ -607,10 +607,13 @@
   "pwa": {
     "installed_title": "Application installée",
     "installed_desc": "Vous utilisez déjà InducksButBetter en tant qu'application.",
-    "install_title": "Installer l'application",
+    "install_title": "Installer l’application ?",
     "install_desc": "Installez InducksButBetter sur votre appareil pour un accès rapide, un mode plein écran et une meilleure expérience.",
     "install_button": "Installer",
-    "install_manual": "Sur iOS, appuyez sur le bouton de partage de Safari puis « Sur l'écran d'accueil ». Sur Android, utilisez le menu du navigateur."
+    "install_manual": "Sur iOS, appuyez sur le bouton de partage de Safari puis « Sur l'écran d'accueil ». Sur Android, utilisez le menu du navigateur.",
+    "install_description": "Ajoutez InducksButBetter à votre écran d’accueil pour un accès plus rapide et hors ligne.",
+    "install_action": "Installer",
+    "install_dismiss": "Plus tard"
   },
   "suggestions": {
     "title": "Envoyez-nous vos suggestions",
