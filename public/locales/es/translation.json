@@ -14,8 +14,8 @@
     "title": "Search settings",
     "inducks_code": "Inducks code",
     "inducks_code_placeholder": "Search for a story...",
-    "keywords": "Keywords (Title/Description)",
-    "keywords_placeholder": "Ex: treasure",
+    "keywords": "Title / keywords",
+    "keywords_placeholder": "E.g.: christmas, time travel",
     "include_comments": "Search in comments as well",
     "multiple_parts": "Multi-part stories",
     "content_type": "Content Type",
@@ -43,9 +43,9 @@
     "universe": "Universe",
     "all_universes": "All universes",
     "search_universe": "Ex: Donald Duck, Mickey Mouse...",
-    "series": "Series",
-    "all_series": "All series",
-    "search_series": "Search for a series...",
+    "subseries": "Series",
+    "all_subseries": "All series",
+    "search_subseries": "Search for a series...",
     "characters": "Characters",
     "search_character_placeholder": "Search for a character...",
     "no_other_characters": "No other characters appear",
@@ -198,7 +198,8 @@
     "show_languages": "Show descriptions in other languages",
     "pages_short": "p.",
     "code_copied": "Code copied!",
-    "page": "page"
+    "page": "page",
+    "refers_to_creator": "Refers to creator"
   },
   "kinds": {
     "c": "Cover",
@@ -209,7 +210,7 @@
     "f": "Centerfold",
     "q": "Quiz",
     "w": "Unknown",
-    "k": "Daily / Weekly strip",
+    "k": "Newspaper strip",
     "t": "Text",
     "P": "Painting (portrait)",
     "L": "Painting (landscape)",
@@ -258,7 +259,8 @@
   "header": {
     "title": "InducksButBetter",
     "subtitle": "Find exactly what you are looking for in the Inducks database",
-    "search": "Search"
+    "search": "Search",
+    "suggestions": "Suggestions"
   },
   "ai": {
     "welcome": "Hello! I am your Inducks expert. I can help you write complex SQL queries. What are you looking for?",
@@ -390,7 +392,9 @@
     "cookie_help": "This cookie allows access to high-resolution images. Get it from the browser inspector on inducks.org.",
     "download_isv": "Download ISV files",
     "translations": "Translations",
-    "cookie_save_error": "Could not save the cookie."
+    "cookie_save_error": "Could not save the cookie.",
+    "contact_title": "Contact & suggestions",
+    "contact_desc": "Share an idea or report a bug"
   },
   "localDb": {
     "title": "Import Inducks database",
@@ -636,7 +640,11 @@
     "sent": "Sent successfully!",
     "submit": "Send the suggestion",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent."
+    "success": "Thank you! Your suggestion has been sent.",
+    "submit_github": "Send via GitHub",
+    "btn_discord": "Or reach us on Discord",
+    "finish_on_github": "Finish posting your suggestion in the GitHub tab that just opened.",
+    "github_hint": "Sending opens a prefilled GitHub issue in a new tab — a free GitHub account is required to post it."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -676,5 +684,11 @@
     "indexed_issues": "Indexed issues",
     "not_found_title": "Indexer not found",
     "not_found_desc": "No indexer matches the code {{code}}."
+  },
+  "subseries": {
+    "not_found": "Subseries not found.",
+    "stories": "Stories in this subseries",
+    "no_stories": "No story found.",
+    "maybe_error": "This subseries may be an error."
   }
 }
