@@ -201,7 +201,9 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                 <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('story.release_date')} :</span> {formatDate(row.firstpublicationdate)}
                 {row.rowsperpage > 0 && (
                   <span className="ml-2 px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded text-[9px] font-bold uppercase tracking-tight">
-                    {t('story.strips_per_page', { count: row.rowsperpage })}
+                    {/* Number(): i18next skips plural resolution when `count`
+                        is a string, so the raw key leaked into the UI. */}
+                    {t('story.strips_per_page', { count: Number(row.rowsperpage) })}
                   </span>
                 )}
               </div>

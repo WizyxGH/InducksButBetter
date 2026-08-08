@@ -177,7 +177,10 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 )}
                 {story.rowsperpage > 0 && (
                   <Tag color="surface" icon={<AlignJustify className="w-3 h-3" />}>
-                    {t('story.strips_per_page', { count: story.rowsperpage })}
+                    {/* SQLite hands the column back as a string, and i18next
+                        skips plural resolution on a string count — which
+                        rendered the raw `story.strips_per_page` key. */}
+                    {t('story.strips_per_page', { count: Number(story.rowsperpage) })}
                   </Tag>
                 )}
               </div>
