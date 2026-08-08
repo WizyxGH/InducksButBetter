@@ -10,6 +10,7 @@ import { isModifiedClick } from "@/lib/navigation"
 import { pickUniverseName, listUniverseNames } from "@/lib/universes"
 import { useMetadata } from "@/hooks/useMetadata"
 import { cleanComment } from "@/lib/utils"
+import { InducksText } from "@/components/InducksText"
 import { toast } from "sonner"
 import { describeQueryError, QUERY_ERROR_TOAST_ID } from "@/lib/queryError"
 
@@ -63,7 +64,11 @@ export function UniverseDetail({ universecode, onBack, onSelectCharacter }: Univ
           {displayName}
         </h1>
         <p className="text-xs text-muted-foreground font-mono">{universe.universecode}</p>
-        {comment && <p className="text-sm text-text-body leading-relaxed">{comment}</p>}
+        {comment && (
+          <p className="text-sm text-text-body leading-relaxed">
+            <InducksText text={universe.universecomment} />
+          </p>
+        )}
       </div>
 
       {/* Names in the other languages, as on the reference site. */}

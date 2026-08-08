@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
+import { getFlagUrl, cleanPublisherName } from "@/lib/utils";
+import { InducksText } from "@/components/InducksText";
 import { useSharedSort } from "@/hooks/useSharedSort";
 
 interface PublicationInfo {
@@ -184,7 +185,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
                 )}
                 {p.publicationcomment && (
                   <p className="text-[10.5px] text-text-secondary italic line-clamp-2 mt-1.5 pt-0.5">
-                    {cleanComment(p.publicationcomment)}
+                    <InducksText text={p.publicationcomment} />
                   </p>
                 )}
               </div>

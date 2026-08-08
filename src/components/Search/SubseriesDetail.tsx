@@ -11,6 +11,7 @@ import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
 import { cleanComment, formatInducksDate, hasInducksCookie } from "@/lib/utils"
+import { InducksText } from "@/components/InducksText"
 import { thumbUrl } from "@/components/ResultCard/thumbUrl"
 import { formatStoryPages } from "@/lib/storyPages"
 import { toast } from "sonner"
@@ -91,7 +92,9 @@ export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: Subser
         {comment && (
           <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
             <CardContent className="p-4">
-              <p className="text-sm text-text-body leading-relaxed whitespace-pre-wrap">{comment}</p>
+              <p className="text-sm text-text-body leading-relaxed whitespace-pre-wrap">
+                <InducksText text={subseries.subseriescomment} />
+              </p>
             </CardContent>
           </Card>
         )}
@@ -174,7 +177,7 @@ export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: Subser
                     <p className="text-[10px] font-mono text-muted-foreground font-semibold">{story.storycode}</p>
                     {story.storysubseriescomment && (
                       <p className="text-[10px] text-text-secondary italic truncate">
-                        {cleanComment(story.storysubseriescomment)}
+                        <InducksText text={story.storysubseriescomment} />
                       </p>
                     )}
                   </div>

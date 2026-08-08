@@ -5,7 +5,8 @@ import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn, getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
+import { cn, getFlagUrl, cleanPublisherName } from "@/lib/utils";
+import { InducksText } from "@/components/InducksText";
 import { useMetadata } from "@/hooks/useMetadata";
 import { buildIssueSections, issueDisplayNumber, type IssueRange } from "@/lib/publications";
 import { DetailBackButton, DetailLoading } from "@/components/Layout/DetailPage";
@@ -324,7 +325,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
               )}
               {publication.publicationcomment && (
                 <div className="pt-2 leading-relaxed text-text-secondary italic">
-                  {cleanComment(publication.publicationcomment)}
+                  <InducksText text={publication.publicationcomment} />
                 </div>
               )}
             </CardContent>
@@ -374,7 +375,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                         <p className="text-[11px] text-muted-foreground italic -mt-1">
                           {section.circulation && `${t("publication.circulation")}: ${section.circulation}`}
                           {section.circulation && section.comment && " — "}
-                          {section.comment && cleanComment(section.comment)}
+                          {section.comment && <InducksText text={section.comment} />}
                         </p>
                       )}
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
