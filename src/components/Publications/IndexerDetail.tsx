@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, BookOpen, Globe, Loader2, UserCheck } from "lucide-react";
+import { BookOpen, Globe, Loader2, UserCheck } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
+import { DetailBackButton, DetailLoading } from "@/components/Layout/DetailPage";
 import { Link } from "@/components/ui/link";
 import { routes } from "@/lib/routes";
 import { getFlagUrl, formatInducksDate } from "@/lib/utils";
@@ -117,7 +117,7 @@ export function IndexerDetail({ personcode, onBack, onSelectIssue }: IndexerDeta
     }
   };
 
-  if (loading) return <PageLoadingSkeleton />;
+  if (loading) return <DetailLoading />;
 
   const total = Number(stats?.issues ?? 0);
 
@@ -130,20 +130,14 @@ export function IndexerDetail({ personcode, onBack, onSelectIssue }: IndexerDeta
         <p className="text-sm text-muted-foreground">
           {t("indexer.not_found_desc", { code: personcode })}
         </p>
-        <Button onClick={onBack} variant="outline" size="sm" className="rounded-xl gap-1.5 h-9">
-          <ArrowLeft className="w-4 h-4" />
-          {t("common.back")}
-        </Button>
+        <DetailBackButton onClick={onBack} />
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4 lg:p-8 space-y-6">
-      <Button onClick={onBack} variant="outline" size="sm" className="rounded-xl gap-1.5 h-9">
-        <ArrowLeft className="w-4 h-4" />
-        {t("common.back")}
-      </Button>
+      <DetailBackButton onClick={onBack} />
 
       <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
         <CardContent className="p-6 space-y-4">

@@ -11,6 +11,7 @@ interface RouteMetadataProps {
   selectedCountrycode: string | null;
   selectedPublicationcode: string | null;
   selectedPublisherid?: string | null;
+  selectedSubseriescode?: string | null;
 }
 
 export function useRouteMetadata({
@@ -21,7 +22,8 @@ export function useRouteMetadata({
   selectedCharactercode,
   selectedCountrycode,
   selectedPublicationcode,
-  selectedPublisherid
+  selectedPublisherid,
+  selectedSubseriescode
 }: RouteMetadataProps) {
   useEffect(() => {
     let isCancelled = false;
@@ -59,6 +61,16 @@ export function useRouteMetadata({
             const issueName = row.pub_title ? `${row.pub_title} #${row.issuenumber}` : `Issue: ${selectedIssuecode}`;
             title = `${issueName} - InducksButBetter`;
             description = `Explore contents, pages, indexers, and details of the Disney comic issue: ${issueName}.`;
+          }
+        } else if (selectedSubseriescode) {
+          const res = await executeQuery({
+            sql: "SELECT subseriesname FROM inducks_subseries WHERE subseriescode = ?",
+            args: [selectedSubseriescode]
+          });
+          if (!isCancelled && res.rows.length > 0) {
+            const name = res.rows[0].subseriesname || selectedSubseriescode;
+            title = `${name} - InducksButBetter`;
+            description = `Browse every Disney comic story of the subseries: ${name} (${selectedSubseriescode}).`;
           }
         } else if (selectedPersoncode) {
           const res = await executeQuery({
@@ -165,6 +177,7 @@ export function useRouteMetadata({
     selectedPersoncode,
     selectedCharactercode,
     selectedCountrycode,
-    selectedPublicationcode
+    selectedPublicationcode,
+    selectedSubseriescode
   ]);
 }

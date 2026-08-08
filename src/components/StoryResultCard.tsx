@@ -9,6 +9,7 @@ import { EntityBadge } from "@/components/EntityBadge"
 import { FlagBadge } from "@/components/FlagBadge"
 import { KindBadge } from "@/components/KindBadge"
 import { routes } from "@/lib/routes"
+import { Link } from "@/components/ui/link"
 import { getBasePath, isModifiedClick } from "@/lib/navigation"
 import { parseCredits } from "@/lib/credits"
 
@@ -203,6 +204,18 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                   <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1.5 block">
                     {cleanText(row.hero_name)}
                   </span>
+                )}
+                {/* Subseries membership: series_title is the subseries name
+                    whenever subseries_code is present. The card's own click
+                    handler ignores nested anchors, so this link wins. */}
+                {row.subseries_code && row.series_title && (
+                  <Link
+                    to={routes.subseries(row.subseries_code)}
+                    className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-blue-500 hover:underline mb-1 block truncate w-fit max-w-full"
+                    title={cleanText(row.series_title)}
+                  >
+                    {cleanText(row.series_title)}
+                  </Link>
                 )}
                 {(() => {
                   const translated = cleanText(row.translated_title);

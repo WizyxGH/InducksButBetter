@@ -264,12 +264,15 @@ export function SearchForm({
             </div>
 
             <div className="space-y-2">
+              {/* One field, like the reference Inducks search: every typed word
+                  must appear in the title, the description or the curated
+                  keywords; the checkbox widens the reach to comments. */}
               <Label className="text-sm font-medium text-foreground">{t("search.keywords")}</Label>
               <Input
                 variant="search"
                 placeholder={t("search.keywords_placeholder")}
-                value={filters.title}
-                onChange={(e) => updateFilters({ title: e.target.value })}
+                value={filters.keywords}
+                onChange={(e) => updateFilters({ keywords: e.target.value })}
               />
               <div className="flex flex-col gap-2 pt-1">
                 <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
@@ -547,13 +550,13 @@ export function SearchForm({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">{t("search.series")}</Label>
+                <Label className="text-sm font-medium text-foreground">{t("search.subseries")}</Label>
                 <SearchableMultiSelect
                   options={meta.subseries || []}
                   selected={(filters.subseriescode || []) as string[]}
                   onChange={(vals) => updateFilters({ subseriescode: vals })}
-                  placeholder={t("search.all_series")}
-                  searchPlaceholder={t("search.search_series")}
+                  placeholder={t("search.all_subseries")}
+                  searchPlaceholder={t("search.search_subseries")}
                   emptyMessage={t("common.no_data")}
                 />
               </div>

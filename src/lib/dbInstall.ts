@@ -31,15 +31,19 @@ export const DB_ASSET_NAME = "inducks.sqlite.gz";
  * Builds the ordered list of URLs the worker should try when downloading the
  * pre-built database.
  *
- * Order matters — the worker stops at the first URL that answers with 2xx:
+ * Order matters — the worker stops at the first URL that fully installs:
  *
- *  1. the copy bundled with the deployment, when present (no CORS, fastest);
- *  2. the GitHub *API* asset URL. `api.github.com` sends CORS headers and
- *     redirects to `objects.githubusercontent.com`, which does too;
- *  3. `browser_download_url` as a last resort. `github.com` does **not** send
- *     CORS headers on its 302, so this fails in most browsers — it is kept
- *     only because it still works when the app is opened from a same-origin
- *     deployment or a permissive extension.
+ *  1. the copy bundled with the deployment (same-origin, no CORS at all).
+ *     This is the only source that reliably works in production, which is
+ *     why the deploy workflow downloads the release asset into
+ *     `public/datas/` before building;
+ *  2. the GitHub *API* asset URL. `api.github.com` sends CORS headers on its
+ *     302, but the final host (`release-assets.githubusercontent.com`)
+ *     answers **without** `Access-Control-Allow-Origin`, so a cross-origin
+ *     fetch usually still fails — kept because it works same-origin-ish
+ *     setups and may be fixed server-side one day;
+ *  3. `browser_download_url` as a last resort. `github.com` does not send
+ *     CORS headers on its 302 either.
  */
 export async function resolveDatabaseSources(
   baseUrl: string,

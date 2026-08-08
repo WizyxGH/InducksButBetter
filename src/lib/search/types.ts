@@ -1,5 +1,7 @@
 export interface SearchFilters {
   title?: string;
+  /** Free-text query against inducks_storyversion.keywordsummary. */
+  keywords?: string;
   description?: string;
   includeComments?: boolean | string;
   storycode?: string;

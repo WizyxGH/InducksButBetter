@@ -14,8 +14,8 @@
     "title": "Paramètres de recherche",
     "inducks_code": "Code Inducks",
     "inducks_code_placeholder": "Rechercher une histoire...",
-    "keywords": "Mots-clés (Titre/Description)",
-    "keywords_placeholder": "Ex : trésor",
+    "keywords": "Titre / mots-clés",
+    "keywords_placeholder": "Ex : noël, voyage dans le temps",
     "include_comments": "Chercher également dans les commentaires",
     "multiple_parts": "Afficher uniquement les histoires en plusieurs parties",
     "content_type": "Type de contenu",
@@ -47,9 +47,9 @@
     "universe": "Univers",
     "all_universes": "Tous les univers",
     "search_universe": "Ex: Donald Duck, Mickey Mouse...",
-    "series": "Séries",
-    "all_series": "Toutes les séries",
-    "search_series": "Rechercher une série...",
+    "subseries": "Séries",
+    "all_subseries": "Toutes les séries",
+    "search_subseries": "Rechercher une série...",
     "characters": "Personnages",
     "search_character_placeholder": "Chercher un perso...",
     "no_other_characters": "Aucun autre pers. n'apparaît",
@@ -198,7 +198,8 @@
     "show_languages": "Afficher les descriptions dans d'autres langues",
     "pages_short": "p.",
     "code_copied": "Code copié !",
-    "page": "page"
+    "page": "page",
+    "refers_to_creator": "Référence au créateur"
   },
   "kinds": {
     "k": "Bandes quotidienne, hebdomadaire",
@@ -258,7 +259,8 @@
   "header": {
     "title": "InducksButBetter",
     "subtitle": "Trouvez précisément ce que vous cherchez dans la base Inducks",
-    "search": "Recherche"
+    "search": "Recherche",
+    "suggestions": "Suggestions"
   },
   "ai": {
     "welcome": "Bonjour ! Je suis votre expert Inducks. Je peux vous aider à écrire des requêtes SQL complexes. Que cherchez-vous ?",
@@ -390,7 +392,9 @@
     "cookie_help": "Ce cookie permet d'accéder aux images haute résolution. Récupérez-le dans l'inspecteur du navigateur sur inducks.org.",
     "download_isv": "Télécharger les fichiers ISV",
     "translations": "Traductions",
-    "cookie_save_error": "Erreur lors de la sauvegarde du cookie."
+    "cookie_save_error": "Erreur lors de la sauvegarde du cookie.",
+    "contact_title": "Contact & suggestions",
+    "contact_desc": "Partagez une idée ou signalez un bug"
   },
   "localDb": {
     "title": "Stockage local de l'application",
@@ -626,7 +630,11 @@
     "sent": "Envoyé avec succès !",
     "submit": "Envoyer la suggestion",
     "error_short": "Votre message est trop court (min 10 caractères).",
-    "success": "Merci ! Votre suggestion a bien été envoyée."
+    "success": "Merci ! Votre suggestion a bien été envoyée.",
+    "submit_github": "Envoyer via GitHub",
+    "btn_discord": "Ou contactez-nous sur Discord",
+    "finish_on_github": "Terminez la publication de votre suggestion dans l’onglet GitHub qui vient de s’ouvrir.",
+    "github_hint": "L’envoi ouvre une issue GitHub préremplie dans un nouvel onglet — un compte GitHub gratuit est nécessaire pour la publier."
   },
   "csv": {
     "storyCode": "Code histoire",
@@ -676,5 +684,11 @@
     "indexed_issues": "Numéros indexés",
     "not_found_title": "Indexeur introuvable",
     "not_found_desc": "Aucun indexeur ne correspond au code {{code}}."
+  },
+  "subseries": {
+    "not_found": "Sous-série introuvable.",
+    "stories": "Histoires de cette sous-série",
+    "no_stories": "Aucune histoire trouvée.",
+    "maybe_error": "Cette sous-série est peut-être une erreur."
   }
 }

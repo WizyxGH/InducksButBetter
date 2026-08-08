@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { KindBadge } from "@/components/KindBadge"
 import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
-import { isModifiedClick } from "@/lib/navigation"
+import { isModifiedClick, navigate } from "@/lib/navigation"
 import { getEntryAnnotations, hasEntryAnnotations } from "@/lib/entryNotes"
 import { parseCredits } from "@/lib/credits"
 
@@ -155,7 +155,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
     async function fetchDetails() {
       setLoading(true)
       try {
-        const details = await getIssueDetail(issuecode)
+        const details = await getIssueDetail(issuecode, i18n.language)
         setIssue(details)
       } catch (e) {
         console.error(e)
@@ -165,7 +165,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
       }
     }
     fetchDetails()
-  }, [issuecode])
+  }, [issuecode, i18n.language])
 
   useEffect(() => {
     if (!loading && issue) {
@@ -425,6 +425,22 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                               </span>
                             )}
                           </div>
+
+                          {/* Subseries membership: small link below the title.
+                              Nested inside the entry's <Link>, so it must stop
+                              propagation and prevent the outer navigation. */}
+                          {story.subseries_code && story.subseries_name && (
+                            <p
+                              className="text-[10px] font-semibold text-text-secondary hover:text-primary hover:underline truncate w-fit max-w-full cursor-pointer"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                navigate(routes.subseries(story.subseries_code))
+                              }}
+                            >
+                              {story.subseries_name}
+                            </p>
+                          )}
 
                           <div className="flex items-center gap-2 overflow-hidden">
                             {story.kind && (

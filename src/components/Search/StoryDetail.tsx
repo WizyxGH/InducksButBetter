@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, Copy, Check, Calendar, FileText, ChevronDown, ChevronUp, AlignJustify, Users, Link } from "lucide-react"
+import { Copy, Check, Calendar, FileText, ChevronDown, ChevronUp, AlignJustify, Users, Link } from "lucide-react"
 import { getStoryDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
-import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
+import { DetailBackButton, DetailLoading, DetailNotFound } from "@/components/Layout/DetailPage"
 import { Tag } from "@/components/ui/tag"
 import { Card, CardContent } from "@/components/ui/card"
 import { getFlagUrl, hasInducksCookie, isInvalidPlotsummary, formatInducksDate } from "@/lib/utils"
@@ -13,6 +13,7 @@ import { KindBadge } from "@/components/KindBadge"
 import { useMetadata } from "@/hooks/useMetadata"
 import { navigate } from "@/lib/navigation";
 import { routes } from "@/lib/routes";
+import { groupCreditsByRole } from "@/lib/credits";
 
 interface StoryDetailProps {
   storycode: string
@@ -60,19 +61,11 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   }
 
   if (loading) {
-    return <PageLoadingSkeleton />
+    return <DetailLoading />
   }
 
   if (!story) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        <p>{t("story.not_found")}</p>
-        <Button onClick={onBack} variant="outline" className="mt-4 gap-2 rounded-xl">
-          <ArrowLeft className="w-4 h-4" />
-          {t("common.back")}
-        </Button>
-      </div>
-    )
+    return <DetailNotFound message={t("story.not_found")} onBack={onBack} />
   }
 
   const formatDate = (dateStr: string) => {
@@ -104,30 +97,14 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
   const otherDescriptions = story.descriptions?.filter((d: any) => d.languagecode !== defaultDesc?.languagecode) || []
 
-  // Group creators by personcode to show all their roles together
-  const creatorsMap = new Map<string, { code: string, name: string, roles: string[] }>()
-  story.creators?.forEach((c: any) => {
-    if (!creatorsMap.has(c.personcode)) {
-      creatorsMap.set(c.personcode, { code: c.personcode, name: c.fullname || c.personcode, roles: [] })
-    }
-    let roleName = c.role
-    if (["w", "p", "pw"].includes(c.role)) roleName = t("story.script")
-    else if (["a", "i", "pa"].includes(c.role)) roleName = t("story.art")
-    
-    const creator = creatorsMap.get(c.personcode)!
-    if (!creator.roles.includes(roleName)) {
-      creator.roles.push(roleName)
-    }
-  })
-  const unifiedCreators = Array.from(creatorsMap.values())
+  // One line per role (Script, Art, …), each listing every person once —
+  // grouping by person used to print one "Art" line per artist.
+  const roleGroups = groupCreditsByRole(story.creators)
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 lg:p-8 space-y-6">
       <div className="flex items-center gap-4">
-        <Button onClick={onBack} variant="outline" size="sm" className="rounded-xl gap-1.5 h-9">
-          <ArrowLeft className="w-4 h-4" />
-          {t("common.back")}
-        </Button>
+        <DetailBackButton onClick={onBack} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -164,7 +141,18 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               })()}
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
-              <span className="font-semibold">{story.series_title}</span>
+              {/* series_title comes from a subseries name when one exists; only
+                  then is there a subseries page to link to (a storyheader has none). */}
+              {story.subseriescode ? (
+                <span
+                  onClick={() => navigate(routes.subseries(story.subseriescode))}
+                  className="font-semibold text-primary hover:underline cursor-pointer"
+                >
+                  {story.series_title}
+                </span>
+              ) : (
+                <span className="font-semibold">{story.series_title}</span>
+              )}
               {story.firstpublicationdate && (
                 <>
                   <span>•</span>
@@ -272,19 +260,26 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
             </h3>
             <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
               <CardContent className="p-4 space-y-3">
-                {unifiedCreators.length > 0 ? (
+                {roleGroups.length > 0 ? (
                   <div className="flex flex-col gap-3">
-                    {unifiedCreators.map((creator) => (
-                      <div key={creator.code} className="flex flex-col gap-1 items-start">
+                    {roleGroups.map((group) => (
+                      <div key={group.role} className="flex flex-col gap-1 items-start">
                         <span className="text-[10px] font-bold text-text-secondary tracking-wider">
-                          {creator.roles.join(", ")}
+                          {t(`story.${group.role}`)}
                         </span>
-                        <EntityBadge
-                          type="creator"
-                          code={creator.code}
-                          name={creator.name}
-                          onSelect={(code) => navigate(routes.author(code))}
-                        />
+                        <div className="flex flex-wrap gap-x-2.5 gap-y-2 items-center">
+                          {group.people.map((person, i) => (
+                            <React.Fragment key={person.code}>
+                              <EntityBadge
+                                type="creator"
+                                code={person.code}
+                                name={person.name}
+                                onSelect={(code) => navigate(routes.author(code))}
+                              />
+                              {i < group.people.length - 1 && <span className="text-sm text-text-secondary -ml-1">,</span>}
+                            </React.Fragment>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>

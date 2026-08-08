@@ -73,3 +73,76 @@ export function parseCredits(creators: string | null | undefined): StoryCredits 
     artists: selectRole(entries, ARTIST_ROLES, ["penciller", "ink"]),
   };
 }
+
+// ── Role grouping for the story page ─────────────────────────────────────────
+
+/**
+ * Buckets shown on the story page, in display order. `plotwritartink` codes
+ * map as: p (plot) and w (script) → script; a (pencils) and i (ink) → art;
+ * r → "refers to creator" (an item that merely references the person — the
+ * Inducks legend in util35-storyversion.php labels it "refers to creator",
+ * it is NOT a redrawing credit).
+ */
+export type StoryRoleKey = "script" | "art" | "refers_to_creator";
+
+const ROLE_BUCKETS: Record<string, StoryRoleKey> = {
+  p: "script",
+  w: "script",
+  pw: "script",
+  a: "art",
+  i: "art",
+  // Combined codes count for both buckets and are handled explicitly below.
+  r: "refers_to_creator",
+};
+
+/** Codes that credit the same person as both writer and artist. */
+const COMBINED_ROLES: Record<string, StoryRoleKey[]> = {
+  pa: ["script", "art"],
+  wa: ["script", "art"],
+};
+
+const ROLE_ORDER: StoryRoleKey[] = ["script", "art", "refers_to_creator"];
+
+export interface RoleGroup {
+  /** i18n suffix: rendered as t(`story.${role}`). */
+  role: StoryRoleKey;
+  people: Credit[];
+}
+
+/**
+ * Groups raw storyjob rows into one line per role with deduplicated people.
+ *
+ * The story page used to group by *person*, so two artists produced two "Art"
+ * lines. Grouping by role instead yields a single "Art" line listing both
+ * names. A person credited p+w appears once on the script line; unknown role
+ * codes are dropped so no raw database code ever reaches the screen.
+ */
+export function groupCreditsByRole(
+  rows: Array<{ role?: string | null; personcode?: string | null; fullname?: string | null }> | null | undefined
+): RoleGroup[] {
+  const buckets = new Map<StoryRoleKey, Map<string, Credit>>();
+
+  for (const row of rows ?? []) {
+    const code = String(row?.personcode ?? "").trim();
+    if (!code || PLACEHOLDER_CODES.has(code)) continue;
+
+    const roleCode = String(row?.role ?? "").trim().toLowerCase();
+    const targets = COMBINED_ROLES[roleCode] ?? (ROLE_BUCKETS[roleCode] ? [ROLE_BUCKETS[roleCode]] : []);
+
+    for (const target of targets) {
+      let bucket = buckets.get(target);
+      if (!bucket) {
+        bucket = new Map();
+        buckets.set(target, bucket);
+      }
+      if (!bucket.has(code)) {
+        bucket.set(code, { code, name: String(row?.fullname ?? "").trim() || code });
+      }
+    }
+  }
+
+  return ROLE_ORDER.filter((role) => buckets.has(role)).map((role) => ({
+    role,
+    people: Array.from(buckets.get(role)!.values()),
+  }));
+}

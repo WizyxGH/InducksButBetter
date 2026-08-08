@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, ChevronLeft, LibraryBig, FileText } from "lucide-react";
+import { LibraryBig, FileText } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
+import { DetailBackButton, DetailLoading } from "@/components/Layout/DetailPage";
 
 interface PublicationInfo {
   publicationcode: string;
@@ -129,25 +129,14 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
   const flagUrl = getFlagUrl(publisherCountry);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DetailLoading variant="spinner" />;
   }
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="h-9 w-9 rounded-xl border border-border-subtle hover:bg-surface-2"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
+          <DetailBackButton onClick={onBack} appearance="icon" />
           <div className="min-w-0">
             <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 truncate">
               {flagUrl && (

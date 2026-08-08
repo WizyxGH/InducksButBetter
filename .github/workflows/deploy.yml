@@ -34,6 +34,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # The "cloud import" needs a same-origin copy of the database: GitHub's
+      # release-asset CDN (release-assets.githubusercontent.com) sends no CORS
+      # headers, so a cross-origin fetch from the deployed site fails. Bundling
+      # the asset into the Pages artifact makes {BASE_URL}datas/inducks.sqlite.gz
+      # the reliable primary source the app tries first.
+      - name: Download pre-built database into the site
+        run: |
+          mkdir -p public/datas
+          gh release download datas --repo "$GITHUB_REPOSITORY" --pattern inducks.sqlite.gz --dir public/datas --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Build
         run: pnpm run build
         env:

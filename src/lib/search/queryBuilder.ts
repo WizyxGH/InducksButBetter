@@ -1,5 +1,6 @@
 
 import { SearchFilters, PublicationsSearchFilters, SearchQueryResponse, StorycodeCandidate } from './types';
+import { tokenizeKeywords, keywordLikeVariants } from './keywords';
 
 /**
  * Normalises a multi-value filter into a clean list of codes.
@@ -209,18 +210,53 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   }
 
   if (filters.description) {
-    let descClause = "(sv.plotsummary LIKE ? OR EXISTS (SELECT 1 FROM inducks_storydescription sd WHERE sd.storyversioncode = sv.storyversioncode AND sd.desctext LIKE ?))";
-    svWhereParams.push(`%${filters.description}%`, `%${filters.description}%`);
+    const like = `%${filters.description}%`;
+    const descParts = [
+      "sv.plotsummary LIKE ?",
+      "EXISTS (SELECT 1 FROM inducks_storydescription sd WHERE sd.storyversioncode = sv.storyversioncode AND sd.desctext LIKE ?)",
+    ];
+    const descParams = [like, like];
     if (filters.includeComments === "true" || filters.includeComments === true) {
-      descClause = "(sv.plotsummary LIKE ? OR s.storycomment LIKE ? OR EXISTS (SELECT 1 FROM inducks_storydescription sd WHERE sd.storyversioncode = sv.storyversioncode AND sd.desctext LIKE ?))";
-      // We need to insert s.storycomment in whereParams, but it's part of svWhere? 
-      // Wait, s.storycomment is on s, which is available inside the EXISTS (SELECT 1 FROM inducks_storyversion sv ... WHERE sv.storycode = s.storycode)
-      // So svWhereParams is fine! BUT WAIT, we popped the two we just pushed?
-      svWhereParams.pop();
-      svWhereParams.pop();
-      svWhereParams.push(`%${filters.description}%`, `%${filters.description}%`, `%${filters.description}%`);
+      // The story comment must be reached through its own correlated subquery:
+      // a bare `s.storycomment` is out of scope inside the BestVersions CTE
+      // (where these clauses are re-applied with the alias rewritten to `v`),
+      // and made the whole main query fail with "no such column".
+      descParts.push("EXISTS (SELECT 1 FROM inducks_story s_cm WHERE s_cm.storycode = sv.storycode AND s_cm.storycomment LIKE ?)");
+      descParams.push(like);
     }
-    svWhere.push(descClause);
+    svWhere.push(`(${descParts.join(" OR ")})`);
+    svWhereParams.push(...descParams);
+  }
+
+  // Keyword search, modelled on the reference Inducks site: every meaningful
+  // typed word must appear somewhere in the story — title (story or entry),
+  // description, or the curated keyword summary (which stores its words with
+  // stop words stripped, hence the same tokenisation on the input side).
+  // Words are AND'ed; each is tried with and without accents (LIKE is
+  // accent-sensitive). The comments checkbox widens each word's reach.
+  // `s.` columns must be reached through correlated subqueries: these clauses
+  // are re-applied inside the BestVersions CTE where `s` is out of scope.
+  const searchComments = filters.includeComments === "true" || filters.includeComments === true;
+  for (const word of tokenizeKeywords(filters.keywords ? String(filters.keywords) : "")) {
+    const fields = [
+      "sv.keywordsummary LIKE ?",
+      "sv.plotsummary LIKE ?",
+      "EXISTS (SELECT 1 FROM inducks_storydescription sd_kw WHERE sd_kw.storyversioncode = sv.storyversioncode AND sd_kw.desctext LIKE ?)",
+      "EXISTS (SELECT 1 FROM inducks_story s_kw WHERE s_kw.storycode = sv.storycode AND s_kw.title LIKE ?)",
+      "EXISTS (SELECT 1 FROM inducks_entry e_kw WHERE e_kw.storyversioncode = sv.storyversioncode AND e_kw.title LIKE ?)",
+    ];
+    if (searchComments) {
+      fields.push(
+        "EXISTS (SELECT 1 FROM inducks_story s_kwc WHERE s_kwc.storycode = sv.storycode AND s_kwc.storycomment LIKE ?)"
+      );
+    }
+
+    const clauses: string[] = [];
+    for (const variant of keywordLikeVariants(word)) {
+      clauses.push(...fields);
+      svWhereParams.push(...fields.map(() => `%${variant}%`));
+    }
+    svWhere.push(`(${clauses.join(" OR ")})`);
   }
 
   const kinds = normalizeList(filters.kind);
@@ -478,6 +514,9 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
         (SELECT sn.subseriesname FROM inducks_storysubseries ss JOIN inducks_subseriesname sn ON ss.subseriescode = sn.subseriescode WHERE ss.storycode = s.storycode ORDER BY CASE WHEN sn.languagecode = ? THEN 0 ELSE 1 END, sn.preferred DESC LIMIT 1),
         (SELECT sh.title FROM inducks_storyheader sh WHERE sh.storyheadercode = s.storyheadercode LIMIT 1)
       ) as series_title,
+      -- Same pick order as series_title: when this is non-null, series_title
+      -- is a subseries name and the card can link to /subseries/<code>.
+      (SELECT ss.subseriescode FROM inducks_storysubseries ss JOIN inducks_subseriesname sn ON ss.subseriescode = sn.subseriescode WHERE ss.storycode = s.storycode ORDER BY CASE WHEN sn.languagecode = ? THEN 0 ELSE 1 END, sn.preferred DESC LIMIT 1) as subseries_code,
       COALESCE(
         NULLIF(s.firstpublicationdate, ''),
         (SELECT MIN(i_fb.oldestdate) FROM inducks_storyversion sv_fb JOIN inducks_entry e_fb ON sv_fb.storyversioncode = e_fb.storyversioncode JOIN inducks_issue i_fb ON e_fb.issuecode = i_fb.issuecode WHERE sv_fb.storycode = s.storycode AND i_fb.oldestdate IS NOT NULL AND i_fb.oldestdate != '')
@@ -602,7 +641,10 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     ORDER BY ${orderBy}
   `;
 
-  return { query: mainQuery, countQuery, params: [...p, pageSize, offset, ...svWhereParams, lang, lang, lang, lang, lang, lang, lang], countParams: p, pageSize, page };
+  // One `lang` per localised column of the SELECT, in order of appearance
+  // (series_title, subseries_code, translated_title, story_title, story_thumb,
+  // full_description, character_list, hero_name).
+  return { query: mainQuery, countQuery, params: [...p, pageSize, offset, ...svWhereParams, lang, lang, lang, lang, lang, lang, lang, lang], countParams: p, pageSize, page };
 }
 
 export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters): SearchQueryResponse {

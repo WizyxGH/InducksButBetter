@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
+import { loadStoredPublicationSort, storePublicationSort } from "@/lib/countrySort";
 
 interface PublicationInfo {
   publicationcode: string;
@@ -29,8 +30,15 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
   const [publications, setPublications] = useState<PublicationInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
-  const [sortOrder, setSortOrder] = useState("title_asc");
+  // Persisted and shared with CountryList: activating "most issues" here also
+  // reorders the country list by their biggest publication.
+  const [sortOrder, setSortOrder] = useState(() => loadStoredPublicationSort("title_asc"));
   const [visibleCount, setVisibleCount] = useState(30);
+
+  const handleSortChange = (value: string) => {
+    setSortOrder(value);
+    storePublicationSort(value);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,7 +155,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
             onChange={(e) => setFilterText(e.target.value)}
             className="w-full sm:w-64 rounded-xl h-10 border-border-subtle bg-surface"
           />
-          <Select value={sortOrder} onValueChange={setSortOrder}>
+          <Select value={sortOrder} onValueChange={handleSortChange}>
             <SelectTrigger className="w-full sm:w-48 h-10 border-border-subtle bg-surface rounded-xl text-sm">
               <SelectValue placeholder={t("sort.title_az")} />
             </SelectTrigger>

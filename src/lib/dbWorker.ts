@@ -1,6 +1,14 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
+import { openResumableStream } from "./download";
 
 const DB_FILENAME = "/inducks.sqlite3";
+
+/**
+ * The full Inducks snapshot decompresses to ~1.06 GiB. Anything much smaller
+ * is a truncated download or a wrong file, and installing it would replace a
+ * working database with a broken one.
+ */
+const MIN_DB_BYTES = 500 * 1024 * 1024;
 
 let db: any = null;
 let sqlite3: any = null;
@@ -144,6 +152,107 @@ function shortenUrl(url: string): string {
   }
 }
 
+/**
+ * Validates an open SQLite connection before it is accepted as the new
+ * database. Returns an empty string when valid, or the reason it is not.
+ *
+ * Three independent checks, cheapest first: the schema must contain
+ * `inducks_story` (any other file is simply not an Inducks export), the
+ * decompressed size must be plausible (a truncated gzip can still be a
+ * readable-but-incomplete database), and `PRAGMA quick_check(1)` must pass —
+ * `quick_check` rather than `integrity_check` because the latter also
+ * verifies every index checksum, far too slow on ~1 GiB over OPFS.
+ */
+function validateDbConnection(candidate: any): string {
+  try {
+    let hasStory = false;
+    const stmt = candidate.prepare(
+      "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='inducks_story'"
+    );
+    if (stmt.step()) hasStory = stmt.get({}).count > 0;
+    stmt.finalize();
+    if (!hasStory) return "missing inducks_story table";
+
+    let pageSize = 0;
+    let pageCount = 0;
+    const stmtSize = candidate.prepare("PRAGMA page_size");
+    if (stmtSize.step()) pageSize = stmtSize.get({}).page_size;
+    stmtSize.finalize();
+    const stmtCount = candidate.prepare("PRAGMA page_count");
+    if (stmtCount.step()) pageCount = stmtCount.get({}).page_count;
+    stmtCount.finalize();
+    const bytes = pageSize * pageCount;
+    if (bytes < MIN_DB_BYTES) {
+      return `implausibly small database (${bytes} bytes, expected > ${MIN_DB_BYTES})`;
+    }
+
+    let verdict = "";
+    const stmtCheck = candidate.prepare("PRAGMA quick_check(1)");
+    if (stmtCheck.step()) verdict = String(stmtCheck.get({}).quick_check ?? "");
+    stmtCheck.finalize();
+    if (verdict !== "ok") return `quick_check failed: ${verdict || "no result"}`;
+
+    return "";
+  } catch (err: any) {
+    return err?.message || String(err);
+  }
+}
+
+const SQLITE_MAGIC = "SQLite format 3";
+
+/**
+ * Rejects an obviously wrong local file before a single byte is written.
+ *
+ * A gigabyte-scale import that only fails at the SQLite validation stage
+ * wastes minutes; a 3-byte text file or a PNG can be refused from its first
+ * 16 bytes. Throws `error_validation|…` so the UI wording stays translated.
+ */
+async function assertPlausibleLocalFile(file: File): Promise<void> {
+  if (file.size < 512) {
+    throw new Error(`error_validation|File is too small (${file.size} bytes) to be a database`);
+  }
+  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  const isGzip = head.length >= 2 && head[0] === 0x1f && head[1] === 0x8b;
+  const isSqlite =
+    head.length >= SQLITE_MAGIC.length &&
+    SQLITE_MAGIC.split("").every((c, i) => head[i] === c.charCodeAt(0));
+  if (!isGzip && !isSqlite) {
+    throw new Error(
+      "error_validation|File is neither gzip-compressed nor a SQLite database"
+    );
+  }
+}
+
+/**
+ * Wraps a stream so cumulative byte counts are reported as they flow.
+ * `Content-Length` covers the compressed body only, so once gzip enters the
+ * picture this is the only way to show any life during decompression.
+ */
+function withByteCounter(
+  source: ReadableStream<Uint8Array>,
+  onBytes: (loaded: number) => void
+): ReadableStream<Uint8Array> {
+  let loaded = 0;
+  const reader = source.getReader();
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const { done, value } = await reader.read();
+      if (done) {
+        controller.close();
+        return;
+      }
+      loaded += value.byteLength;
+      onBytes(loaded);
+      controller.enqueue(value);
+    },
+    cancel(reason) {
+      try {
+        reader.cancel(reason);
+      } catch {}
+    },
+  });
+}
+
 const handleMessage = async (e: MessageEvent, port: MessagePort) => {
   const { id, action, payload } = e.data;
 
@@ -153,70 +262,15 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
     switch (action) {
       case "installDb": {
         const { url, file } = payload;
-        
+
         const type = await getStorageType(s3);
 
-        let responseStream: ReadableStream;
-
-        if (url) {
-          const urls = (Array.isArray(url) ? url : [url]).filter(Boolean);
-          let response: Response | null = null;
-          const failures: string[] = [];
-
-          for (const targetUrl of urls) {
-            try {
-              port.postMessage({ type: 'progress', step: 'download', percent: 0 });
-              const headers: HeadersInit = {};
-              // GitHub only serves release assets as raw bytes (and with CORS
-              // headers) through its API endpoint when this header is set.
-              if (targetUrl.includes('api.github.com')) {
-                headers['Accept'] = 'application/octet-stream';
-              }
-
-              const res = await fetch(targetUrl, { headers, redirect: 'follow' });
-              if (res.ok && res.body) {
-                response = res;
-                break;
-              }
-              failures.push(`${shortenUrl(targetUrl)}: HTTP ${res.status}`);
-            } catch (err: any) {
-              // A CORS rejection surfaces as an opaque TypeError, so name the
-              // URL that failed — otherwise the user only sees "NetworkError".
-              failures.push(`${shortenUrl(targetUrl)}: ${err?.message || 'network error'}`);
-            }
-          }
-
-          if (!response) {
-            throw new Error(`error_download|${failures.join(' — ') || 'no source available'}`);
-          }
-
-          const contentLength = Number(response.headers.get('content-length')) || 0;
-          let loaded = 0;
-          const targetResponse = response;
-
-          responseStream = new ReadableStream({
-            async start(controller) {
-              const reader = targetResponse.body!.getReader();
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                  controller.close();
-                  break;
-                }
-                loaded += value.byteLength;
-                const percent = contentLength ? Math.min(Math.round((loaded / contentLength) * 100), 100) : 0;
-                port.postMessage({ type: 'progress', step: 'download', loaded, total: contentLength, percent });
-                controller.enqueue(value);
-              }
-            }
-          });
-
-        } else if (file) {
-          responseStream = file.stream();
-        } else {
-          throw new Error("error_no_url");
-        }
-
+        /**
+         * Consumes one candidate stream end-to-end: sniff gzip, decompress,
+         * write to the backend, validate, swap in. Throws `code|detail`
+         * errors; the caller decides whether another source is worth trying.
+         */
+        const installFromStream = async (responseStream: ReadableStream<Uint8Array>) => {
         // Determine if Gzip compressed by reading the first chunk
         const reader = responseStream.getReader();
         const firstRead = await reader.read();
@@ -227,7 +281,7 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         const isGzipped = firstChunk.length >= 2 && firstChunk[0] === 0x1f && firstChunk[1] === 0x8b;
 
         // Reconstruct the stream
-        const rawStream = new ReadableStream({
+        const rawStream = new ReadableStream<Uint8Array>({
           async start(controller) {
             controller.enqueue(firstChunk);
             while (true) {
@@ -245,30 +299,46 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         if (isGzipped) {
           port.postMessage({ type: 'progress', step: 'decompress' });
           const ds = new DecompressionStream('gzip');
-          decompressedStream = rawStream.pipeThrough(ds);
+          // The decompressed size is unknown up front, so this progress is
+          // indeterminate — but reporting the bytes produced at least proves
+          // the pipeline is alive during a step that takes minutes.
+          let lastReport = 0;
+          // The lib.dom typing of DecompressionStream accepts BufferSource on
+          // its writable side, which TS refuses to pair with a Uint8Array
+          // readable — the runtime shapes are compatible.
+          const gunzipped = rawStream.pipeThrough(
+            ds as unknown as ReadableWritablePair<Uint8Array, Uint8Array>
+          );
+          decompressedStream = withByteCounter(gunzipped, (loaded) => {
+            if (loaded - lastReport >= 64 * 1024 * 1024) {
+              lastReport = loaded;
+              port.postMessage({ type: 'progress', step: 'decompress', loaded, total: 0, percent: 0 });
+            }
+          });
         }
-
-        port.postMessage({ type: 'progress', step: 'validate' });
-        let isValid = false;
-        let tempDb: any = null;
 
         if (type === "opfs") {
           const root = await navigator.storage.getDirectory();
-          
+
           // Stream directly to temporary OPFS file on disk
           const tempHandle = await root.getFileHandle("inducks_temp.sqlite3", { create: true });
-          const writable = await tempHandle.createWritable();
-          await decompressedStream.pipeTo(writable);
+          try {
+            const writable = await tempHandle.createWritable();
+            await decompressedStream.pipeTo(writable);
+          } catch (err) {
+            // An aborted write must not leave a half-written temp file behind.
+            try { await root.removeEntry("inducks_temp.sqlite3"); } catch (e) {}
+            throw err;
+          }
 
-          // Validate temp database on disk
+          // Validate temp database on disk — the live database stays untouched
+          // until the candidate passed every check.
+          port.postMessage({ type: 'progress', step: 'validate' });
           let validationError = "";
+          let tempDb: any = null;
           try {
             tempDb = new s3.oo1.DB("/inducks_temp.sqlite3", "c", "opfs");
-            const stmt = tempDb.prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='inducks_story'");
-            if (stmt.step()) {
-              if (stmt.get({}).count > 0) isValid = true;
-            }
-            stmt.finalize();
+            validationError = validateDbConnection(tempDb);
           } catch (err: any) {
             validationError = err.message || String(err);
             console.error("Validation error:", err);
@@ -278,9 +348,9 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
             }
           }
 
-          if (!isValid) {
+          if (validationError) {
             try { await root.removeEntry("inducks_temp.sqlite3"); } catch (e) {}
-            throw new Error(`error_validation|${validationError || "Empty or invalid database"}`);
+            throw new Error(`error_validation|${validationError}`);
           }
 
           port.postMessage({ type: 'progress', step: 'install' });
@@ -295,11 +365,18 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
              await tempFile.stream().pipeTo(mainWritable);
              await root.removeEntry("inducks_temp.sqlite3");
            }
-           
+
            db = new s3.oo1.DB("/inducks.sqlite3", "c", "opfs");
 
         } else {
           if (type === "sah") {
+            // KNOWN LIMIT: unlike the plain-OPFS path above, this one is not
+            // atomic. The SAH pool exposes no rename, so `importDb` has to
+            // write to the live filename directly — a failure mid-import
+            // loses the previous database. Making it atomic would mean
+            // importing under a temp name and copying through RAM (~1 GiB),
+            // which is exactly what this streaming path exists to avoid. The
+            // partial file is at least removed so the pool is left clean.
             port.postMessage({ type: 'progress', step: 'install' });
             closeActiveDb();
 
@@ -316,32 +393,33 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
               return value;
             };
 
-            await poolUtil.importDb(DB_FILENAME, chunkReader);
+            try {
+              await poolUtil.importDb(DB_FILENAME, chunkReader);
+            } catch (err) {
+              try { poolUtil.removeOpfsSAHPoolFile(DB_FILENAME); } catch (e) {}
+              throw err;
+            }
 
+            port.postMessage({ type: 'progress', step: 'validate' });
             let validationError = "";
             try {
               db = new poolUtil.OpfsSAHPoolDb(DB_FILENAME);
-              const stmt = db.prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='inducks_story'");
-              if (stmt.step()) {
-                if (stmt.get({}).count > 0) isValid = true;
-              }
-              stmt.finalize();
+              validationError = validateDbConnection(db);
             } catch (err: any) {
               validationError = err.message || String(err);
               console.error("Validation error:", err);
             }
 
-            if (!isValid) {
+            if (validationError) {
               closeActiveDb();
               try { poolUtil.removeOpfsSAHPoolFile(DB_FILENAME); } catch (e) {}
-              throw new Error(`error_validation|${validationError || "Empty or invalid database"}`);
+              throw new Error(`error_validation|${validationError}`);
             }
 
           } else {
             // Memory VFS
             // Note: memory fallback reads the entire DB into a Uint8Array, which may crash if the DB is too large!
             const decompressedData = await readStreamToUint8Array(decompressedStream);
-            isValid = true;
             port.postMessage({ type: 'progress', step: 'install' });
             closeActiveDb();
 
@@ -360,7 +438,84 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
                 throw new Error(`error_deserialize|${rc}`);
               }
             }
+
+            port.postMessage({ type: 'progress', step: 'validate' });
+            const validationError = validateDbConnection(db);
+            if (validationError) {
+              closeActiveDb();
+              throw new Error(`error_validation|${validationError}`);
+            }
           }
+        }
+        };
+
+        if (url) {
+          const urls = (Array.isArray(url) ? url : [url]).filter(Boolean);
+          if (urls.length === 0) {
+            throw new Error("error_no_url");
+          }
+
+          const failures: string[] = [];
+          let installed = false;
+
+          for (const targetUrl of urls) {
+            try {
+              port.postMessage({ type: 'progress', step: 'download', percent: 0 });
+              const headers: Record<string, string> = {};
+              // GitHub only serves release assets as raw bytes (and with CORS
+              // headers) through its API endpoint when this header is set.
+              if (targetUrl.includes('api.github.com')) {
+                headers['Accept'] = 'application/octet-stream';
+              }
+
+              // Resumable download: transient network failures retry with a
+              // Range request from the last byte received, so a hiccup at 90%
+              // of ~285 MB does not restart the transfer from zero.
+              const { stream } = await openResumableStream(targetUrl, {
+                headers,
+                onProgress: (loaded, total) => {
+                  const percent = total ? Math.min(Math.round((loaded / total) * 100), 100) : 0;
+                  port.postMessage({ type: 'progress', step: 'download', loaded, total, percent });
+                },
+              });
+
+              await installFromStream(stream);
+              installed = true;
+              break;
+            } catch (err: any) {
+              const msg = err?.message || 'network error';
+              // A payload that downloaded fully but failed validation will be
+              // byte-identical on every mirror — re-downloading a gigabyte
+              // from the next source cannot fix it, so surface it right away.
+              if (msg.startsWith('error_validation') || msg.startsWith('error_deserialize')) {
+                throw err;
+              }
+              // A CORS rejection surfaces as an opaque TypeError, so name the
+              // URL that failed — otherwise the user only sees "NetworkError".
+              failures.push(`${shortenUrl(targetUrl)}: ${msg}`);
+            }
+          }
+
+          if (!installed) {
+            throw new Error(`error_download|${failures.join(' — ') || 'no source available'}`);
+          }
+        } else if (file) {
+          // Refuse an obviously wrong file before a single byte is processed.
+          await assertPlausibleLocalFile(file);
+
+          // Local reads are fast but not instant on ~1 GiB: reuse the download
+          // progress channel so the user sees the file being consumed.
+          let lastPercent = -1;
+          const counted = withByteCounter(file.stream(), (loaded) => {
+            const percent = file.size ? Math.min(Math.round((loaded / file.size) * 100), 100) : 0;
+            if (percent !== lastPercent) {
+              lastPercent = percent;
+              port.postMessage({ type: 'progress', step: 'download', loaded, total: file.size, percent });
+            }
+          });
+          await installFromStream(counted);
+        } else {
+          throw new Error("error_no_url");
         }
 
         // Optimizations for read-only usage

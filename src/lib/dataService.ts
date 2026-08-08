@@ -1,5 +1,6 @@
 import { executeQuery } from "./db";
 import { splitIssueCode, issueCodeKey } from "./issueCode";
+import { pickReferenceVersion } from "./storyVersion";
 
 // Polyfill for autocomplete queries
 export async function autocompleteCharacter(q: string, lang: string = 'fr') {
@@ -168,7 +169,7 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
   // 1. Core story info
   const coreResult = await executeQuery({
     sql: `
-      SELECT s.storycode, s.firstpublicationdate, s.storyheadercode, s.storycomment,
+      SELECT s.storycode, s.firstpublicationdate, s.storyheadercode, s.storycomment, s.originalstoryversioncode,
         COALESCE(
           NULLIF(NULLIF(s.title, 'Untitled'), ''),
           (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
@@ -177,17 +178,23 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
         COALESCE(
           (SELECT sn.subseriesname FROM inducks_storysubseries ss JOIN inducks_subseriesname sn ON ss.subseriescode = sn.subseriescode WHERE ss.storycode = s.storycode ORDER BY CASE WHEN sn.languagecode = ? THEN 0 ELSE 1 END, sn.preferred DESC LIMIT 1),
           (SELECT sh.title FROM inducks_storyheader sh WHERE sh.storyheadercode = s.storyheadercode LIMIT 1)
-        ) as series_title
+        ) as series_title,
+        -- Same pick order as series_title above, so the code always belongs to
+        -- the subseries whose name is displayed (a story can be in several).
+        (SELECT ss.subseriescode FROM inducks_storysubseries ss JOIN inducks_subseriesname sn ON ss.subseriescode = sn.subseriescode WHERE ss.storycode = s.storycode ORDER BY CASE WHEN sn.languagecode = ? THEN 0 ELSE 1 END, sn.preferred DESC LIMIT 1) as subseriescode
       FROM inducks_story s
       WHERE s.storycode = ?
     `,
-    args: [lang, lang, storycode]
+    args: [lang, lang, lang, storycode]
   });
 
   if (coreResult.rows.length === 0) return null;
   const story = coreResult.rows[0];
 
-  // Get best version/thumb
+  // Get every version, then pick the reference one in JS. Taking
+  // MIN(storyversioncode) in SQL showed the wrong kind/pages when a text
+  // rendition sorted before the drawn original; the story's own
+  // originalstoryversioncode is authoritative when it exists.
   const versionResult = await executeQuery({
     sql: `
       SELECT sv.storyversioncode, sv.kind, sv.entirepages, sv.brokenpagenumerator, sv.brokenpagedenominator, sv.plotsummary, sv.rowsperpage,
@@ -203,12 +210,12 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
       FROM inducks_storyversion sv
       WHERE sv.storycode = ?
       ORDER BY sv.storyversioncode ASC
-      LIMIT 1
     `,
     args: [storycode]
   });
 
-  const version = versionResult.rows[0] || {};
+  const version =
+    pickReferenceVersion(versionResult.rows as any[], (story as any).originalstoryversioncode) || {};
 
   // 2. Creators list
   const creatorsResult = await executeQuery({
@@ -306,6 +313,83 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
 }
 
 /**
+ * Detail of one subseries: localized name, category, comment, and its story
+ * index ordered like subseries.php (publication date, then story code).
+ */
+export async function getSubseriesDetail(subseriescode: string, lang: string = "fr") {
+  const coreResult = await executeQuery({
+    sql: `
+      SELECT subseriescode, subseriesname, official, subseriescategory, subseriescomment
+      FROM inducks_subseries
+      WHERE subseriescode = ?
+    `,
+    args: [subseriescode]
+  });
+  if (coreResult.rows.length === 0) return null;
+  const core = coreResult.rows[0] as any;
+
+  const namesResult = await executeQuery({
+    sql: `
+      SELECT languagecode, subseriesname, preferred
+      FROM inducks_subseriesname
+      WHERE subseriescode = ?
+      ORDER BY languagecode ASC, preferred DESC
+    `,
+    args: [subseriescode]
+  });
+
+  // Story index. Kind and page count come from the reference version
+  // (originalstoryversioncode, falling back to the lowest version code) —
+  // the same choice as the story page.
+  const storiesResult = await executeQuery({
+    sql: `
+      SELECT s.storycode,
+        COALESCE(
+          NULLIF(NULLIF(s.title, 'Untitled'), ''),
+          (SELECT e.title FROM inducks_entry e JOIN inducks_storyversion sv2 ON e.storyversioncode = sv2.storyversioncode
+           WHERE sv2.storycode = s.storycode AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled'
+           ORDER BY e.entrycode ASC LIMIT 1)
+        ) as title,
+        COALESCE(
+          NULLIF(s.firstpublicationdate, ''),
+          (SELECT MIN(i_fb.oldestdate) FROM inducks_storyversion sv_fb JOIN inducks_entry e_fb ON sv_fb.storyversioncode = e_fb.storyversioncode JOIN inducks_issue i_fb ON e_fb.issuecode = i_fb.issuecode
+           WHERE sv_fb.storycode = s.storycode AND i_fb.oldestdate IS NOT NULL AND i_fb.oldestdate != '')
+        ) as firstpublicationdate,
+        -- Reference version first (SQLite rejects outer references inside a
+        -- scalar subquery's ORDER BY, so the fallback is a second subquery).
+        COALESCE(
+          (SELECT v.kind FROM inducks_storyversion v WHERE v.storyversioncode = s.originalstoryversioncode AND v.storycode = s.storycode),
+          (SELECT v.kind FROM inducks_storyversion v WHERE v.storycode = s.storycode ORDER BY v.storyversioncode ASC LIMIT 1)
+        ) as kind,
+        COALESCE(
+          (SELECT v.entirepages FROM inducks_storyversion v WHERE v.storyversioncode = s.originalstoryversioncode AND v.storycode = s.storycode),
+          (SELECT v.entirepages FROM inducks_storyversion v WHERE v.storycode = s.storycode ORDER BY v.storyversioncode ASC LIMIT 1)
+        ) as entirepages,
+        (SELECT eu.sitecode || '|' || eu.url
+         FROM inducks_storyversion sv_img
+         JOIN inducks_entry e_img ON sv_img.storyversioncode = e_img.storyversioncode
+         JOIN inducks_entryurl eu ON e_img.entrycode = eu.entrycode
+         WHERE sv_img.storycode = s.storycode
+           AND eu.sitecode IN ('webusers', 'thumbnails', 'thumbnails2', 'thumbnails3')
+         ORDER BY CASE WHEN eu.sitecode = 'webusers' THEN 0 ELSE 1 END LIMIT 1) as story_thumb,
+        ss.storysubseriescomment
+      FROM inducks_storysubseries ss
+      JOIN inducks_story s ON ss.storycode = s.storycode
+      WHERE ss.subseriescode = ?
+      ORDER BY CASE WHEN s.firstpublicationdate IS NULL OR s.firstpublicationdate = '' THEN '9999' ELSE s.firstpublicationdate END ASC, s.storycode ASC
+    `,
+    args: [subseriescode]
+  });
+
+  return {
+    ...core,
+    lang,
+    names: namesResult.rows,
+    stories: storiesResult.rows,
+  };
+}
+
+/**
  * Resolves an issue whose code may be missing the database's alignment
  * padding — URLs carry `fr/PM 272` while the row stores `fr/PM  272`.
  *
@@ -352,7 +436,7 @@ export async function resolveIssue(issuecode: string) {
   return (loose.rows[0] as any) ?? null;
 }
 
-export async function getIssueDetail(issuecode: string) {
+export async function getIssueDetail(issuecode: string, lang: string = "fr") {
   const issue = await resolveIssue(issuecode);
   if (!issue) return null;
 
@@ -408,14 +492,22 @@ export async function getIssueDetail(issuecode: string) {
         (SELECT GROUP_CONCAT(sj_c.plotwritartink || ':' || p_c.personcode || '|' || p_c.fullname, ';')
          FROM inducks_storyjob sj_c
          JOIN inducks_person p_c ON sj_c.personcode = p_c.personcode
-         WHERE sj_c.storyversioncode = e.storyversioncode) as creators
+         WHERE sj_c.storyversioncode = e.storyversioncode) as creators,
+        -- Subseries the entry's story belongs to, localized name first —
+        -- shown as a small link under the title in the table of contents.
+        (SELECT ss.subseriescode FROM inducks_storysubseries ss JOIN inducks_subseriesname sn ON ss.subseriescode = sn.subseriescode
+         WHERE ss.storycode = s.storycode
+         ORDER BY CASE WHEN sn.languagecode = ? THEN 0 ELSE 1 END, sn.preferred DESC LIMIT 1) as subseries_code,
+        (SELECT sn.subseriesname FROM inducks_storysubseries ss2 JOIN inducks_subseriesname sn ON ss2.subseriescode = sn.subseriescode
+         WHERE ss2.storycode = s.storycode
+         ORDER BY CASE WHEN sn.languagecode = ? THEN 0 ELSE 1 END, sn.preferred DESC LIMIT 1) as subseries_name
       FROM inducks_entry e
       LEFT JOIN inducks_storyversion sv ON e.storyversioncode = sv.storyversioncode
       LEFT JOIN inducks_story s ON sv.storycode = s.storycode
       WHERE e.issuecode = ?
       ORDER BY e.position ASC
     `,
-    args: [issuecode]
+    args: [lang, lang, issuecode]
   });
 
   // Who indexed this issue. `inxtransletcol` is the job column: 'i' is the

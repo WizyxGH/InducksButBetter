@@ -33,6 +33,7 @@ const PublisherDetail = lazy(() => import("@/components/Publications/PublisherDe
 const IndexerDetail = lazy(() => import("@/components/Publications/IndexerDetail").then(m => ({ default: m.IndexerDetail })))
 const IssueDetail = lazy(() => import("@/components/Publications/IssueDetail").then(module => ({ default: module.IssueDetail })))
 const SuggestionForm = lazy(() => import("@/components/SuggestionForm").then(module => ({ default: module.SuggestionForm })))
+const SubseriesDetail = lazy(() => import("@/components/Search/SubseriesDetail").then(module => ({ default: module.SubseriesDetail })))
 
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 
@@ -56,6 +57,7 @@ function App() {
   const [selectedPublicationcode, setSelectedPublicationcode] = useState<string | null>(null);
   const [selectedPublisherid, setSelectedPublisherid] = useState<string | null>(null);
   const [selectedIndexercode, setSelectedIndexercode] = useState<string | null>(null);
+  const [selectedSubseriescode, setSelectedSubseriescode] = useState<string | null>(null);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const isRoutingRef = useState(() => ({ current: false }))[0];
@@ -69,7 +71,8 @@ function App() {
     selectedCharactercode,
     selectedCountrycode,
     selectedPublicationcode,
-    selectedPublisherid
+    selectedPublisherid,
+    selectedSubseriescode
   });
 
   useEffect(() => {
@@ -122,6 +125,7 @@ function App() {
       setSelectedCountrycode(null);
       setSelectedPublicationcode(null);
       setSelectedPublisherid(null);
+      setSelectedSubseriescode(null);
 
       const routeResult = parseRoutePath(pathPart);
       setActiveTab(routeResult.tab);
@@ -133,6 +137,7 @@ function App() {
       if (routeResult.publicationcode) setSelectedPublicationcode(routeResult.publicationcode);
       if (routeResult.publisherid) setSelectedPublisherid(routeResult.publisherid);
       if (routeResult.indexercode) setSelectedIndexercode(routeResult.indexercode);
+      if (routeResult.subseriescode) setSelectedSubseriescode(routeResult.subseriescode);
 
       setIsInitialized(true);
       setTimeout(() => { isRoutingRef.current = false; }, 0);
@@ -188,6 +193,8 @@ function App() {
       pushHashState(routes.suggestions() + queryStr);
     } else if (selectedStorycode) {
       pushHashState(routes.story(selectedStorycode) + queryStr);
+    } else if (selectedSubseriescode) {
+      pushHashState(routes.subseries(selectedSubseriescode) + queryStr);
     } else if (selectedIssuecode) {
       pushHashState(routes.issue(selectedIssuecode) + queryStr);
     } else if (selectedPersoncode) {
@@ -211,9 +218,10 @@ function App() {
     selectedIssuecode, 
     selectedPersoncode, 
     selectedCharactercode, 
-    selectedCountrycode, 
+    selectedCountrycode,
     selectedPublisherid,
-    selectedPublicationcode
+    selectedPublicationcode,
+    selectedSubseriescode
   ]);
 
   const handleTabChange = (tab: string) => {
@@ -225,6 +233,7 @@ function App() {
     setSelectedCountrycode(null);
     setSelectedPublisherid(null);
     setSelectedPublicationcode(null);
+    setSelectedSubseriescode(null);
   };
 
   return (
@@ -244,7 +253,7 @@ function App() {
             activeTab={activeTab} 
             // Every detail view hides the search tabs; forgetting one leaves
             // the advanced-search bar sitting on top of an unrelated page.
-            isDetailPage={!!(selectedStorycode || selectedIssuecode || selectedPersoncode || selectedCharactercode || selectedPublicationcode || selectedPublisherid || selectedCountrycode || selectedIndexercode)} 
+            isDetailPage={!!(selectedStorycode || selectedIssuecode || selectedPersoncode || selectedCharactercode || selectedPublicationcode || selectedPublisherid || selectedCountrycode || selectedIndexercode || selectedSubseriescode)}
           />
 
           {/* Content Viewport */}
@@ -260,12 +269,25 @@ function App() {
             <TabsContent value="stories" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
               {activeTab === "stories" && (
                 <Suspense fallback={<TabFallback />}>
+                  {selectedSubseriescode ? (
+                    <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                      <SubseriesDetail
+                        subseriescode={selectedSubseriescode}
+                        onBack={() => navigateBack(() => setSelectedSubseriescode(null))}
+                        onSelectStory={(code) => {
+                          setSelectedSubseriescode(null);
+                          setSelectedStorycode(code);
+                        }}
+                      />
+                    </div>
+                  ) : (
                   <AdvancedSearch
                     selectedStorycode={selectedStorycode}
                     setSelectedStorycode={setSelectedStorycode}
                     selectedIssuecode={selectedIssuecode}
                     setSelectedIssuecode={setSelectedIssuecode}
                   />
+                  )}
                 </Suspense>
               )}
             </TabsContent>

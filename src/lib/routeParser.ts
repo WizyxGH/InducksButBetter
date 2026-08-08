@@ -15,6 +15,7 @@ export interface ParsedRoute {
   publicationcode?: string;
   publisherid?: string;
   indexercode?: string;
+  subseriescode?: string;
 }
 
 /**
@@ -56,6 +57,13 @@ export function parseRoutePath(pathPart: string): ParsedRoute {
   // live alongside publications rather than under authors.
   if (root === "indexer" || root === "indexers") {
     return { tab: "publications", indexercode: parts.slice(1).join("/") };
+  }
+
+  // Handle /subseries/<code> — subseries group stories, so they live in the
+  // stories tab. The code may itself contain '/' once decoded, so everything
+  // after the root is joined back together.
+  if (root === "subseries") {
+    return { tab: "stories", subseriescode: parts.slice(1).join("/") };
   }
 
   // Handle /publisher/D or /publishers/...

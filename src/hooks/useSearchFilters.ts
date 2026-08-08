@@ -5,6 +5,7 @@ import { getLocalizedCharacterNames } from "@/lib/dataService";
 
 export const initialFilters: SearchFilters = {
   title: "",
+  keywords: "",
   description: "",
   includeComments: false,
   storycode: "",

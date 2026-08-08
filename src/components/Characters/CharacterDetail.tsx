@@ -5,6 +5,7 @@ import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { navigate } from "@/lib/navigation";
+import { DetailNotFound } from "@/components/Layout/DetailPage";
 import { routes } from "@/lib/routes";
 import { hasInducksCookie } from "@/lib/utils";
 
@@ -206,11 +207,7 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
   }
 
   if (!character) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        <p>{t("characters.no_description")}</p>
-      </div>
-    );
+    return <DetailNotFound message={t("characters.no_description")} />;
   }
 
   // Get current language name or English name

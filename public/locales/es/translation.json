@@ -4,8 +4,8 @@
     "title": "Ajustes de búsqueda",
     "inducks_code": "Código Inducks",
     "inducks_code_placeholder": "Buscar una historia...",
-    "keywords": "Palabras clave (Título/Descripción)",
-    "keywords_placeholder": "Ej: tesoro",
+    "keywords": "Título / palabras clave",
+    "keywords_placeholder": "Ej.: navidad, viaje en el tiempo",
     "include_comments": "Buscar también en comentarios",
     "multiple_parts": "Historias en varias partes",
     "content_type": "Tipo de contenido",
@@ -33,9 +33,9 @@
     "universe": "Universo",
     "all_universes": "Todos los universos",
     "search_universe": "Ej: Pato Donald, Mickey Mouse...",
-    "series": "Series",
-    "all_series": "Todas las series",
-    "search_series": "Buscar una serie...",
+    "subseries": "Series",
+    "all_subseries": "Todas las series",
+    "search_subseries": "Buscar una serie...",
     "characters": "Personajes",
     "search_character_placeholder": "Buscar un personaje...",
     "no_other_characters": "No aparecen otros personajes",
@@ -188,7 +188,8 @@
     "show_languages": "Show descriptions in other languages",
     "pages_short": "p.",
     "code_copied": "Code copied!",
-    "page": "page"
+    "page": "page",
+    "refers_to_creator": "Referencia al autor"
   },
   "kinds": {
     "c": "Portada",
@@ -223,7 +224,8 @@
   "header": {
     "title": "InducksButBetter - Búsqueda avanzada",
     "subtitle": "Encuentre exactamente lo que busca en la base de datos de Inducks",
-    "search": "Search"
+    "search": "Search",
+    "suggestions": "Sugerencias"
   },
   "ai": {
     "welcome": "¡Hola! Soy tu experto en Inducks. Puedo ayudarte a escribir consultas SQL complejas. ¿Qué estás buscando?",
@@ -365,7 +367,9 @@
     "cookie_help": "Esta cookie permite acceder a imágenes de alta resolución. Recupérela del inspector del navegador en inducks.org.",
     "download_isv": "Descargar archivos ISV",
     "translations": "Translations",
-    "cookie_save_error": "Could not save the cookie."
+    "cookie_save_error": "Could not save the cookie.",
+    "contact_title": "Contacto y sugerencias",
+    "contact_desc": "Comparte una idea o informa de un error"
   },
   "localDb": {
     "title": "Importar base de datos Inducks",
@@ -636,7 +640,11 @@
     "sent": "Sent successfully!",
     "submit": "Send the suggestion",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent."
+    "success": "Thank you! Your suggestion has been sent.",
+    "submit_github": "Enviar vía GitHub",
+    "btn_discord": "O contáctanos en Discord",
+    "finish_on_github": "Termina de publicar tu sugerencia en la pestaña de GitHub que se acaba de abrir.",
+    "github_hint": "El envío abre una issue de GitHub prellenada en una pestaña nueva; se necesita una cuenta gratuita de GitHub para publicarla."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -676,5 +684,11 @@
     "indexed_issues": "Indexed issues",
     "not_found_title": "Indexer not found",
     "not_found_desc": "No indexer matches the code {{code}}."
+  },
+  "subseries": {
+    "not_found": "Subserie no encontrada.",
+    "stories": "Historias de esta subserie",
+    "no_stories": "No se encontró ninguna historia.",
+    "maybe_error": "Esta subserie puede ser un error."
   }
 }

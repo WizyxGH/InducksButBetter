@@ -2,5 +2,12 @@
   "css.validate": false,
   "less.validate": false,
   "scss.validate": false,
-  "tailwindCSS.emmetCompletions": true
+  "tailwindCSS.emmetCompletions": true,
+  // dist/ mirrors public/ (locales included) at build time: hide it from
+  // search so nobody edits the generated copy by mistake.
+  "search.exclude": {
+    "**/dist": true,
+    "**/node_modules": true,
+    "inducks_extracted": true
+  }
 }

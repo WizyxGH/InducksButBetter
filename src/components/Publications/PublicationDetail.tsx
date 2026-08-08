@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, ChevronLeft, LibraryBig, FileText, Globe, BookOpen } from "lucide-react";
+import { LibraryBig, FileText, Globe, BookOpen } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn, getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
 import { useMetadata } from "@/hooks/useMetadata";
 import { buildIssueSections, issueDisplayNumber, type IssueRange } from "@/lib/publications";
+import { DetailBackButton, DetailLoading } from "@/components/Layout/DetailPage";
 
 interface PublicationDetailData {
   publicationcode: string;
@@ -215,24 +216,13 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   }, [publicationcode]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DetailLoading variant="spinner" />;
   }
 
   if (notFound || !publication) {
     return (
       <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="h-9 w-9 rounded-xl border border-border-subtle hover:bg-surface-2"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
+        <DetailBackButton onClick={onBack} appearance="icon" />
         <div className="rounded-2xl border border-border-subtle bg-surface/50 p-8 text-center space-y-2">
           <p className="font-semibold text-foreground">{t("publication.not_found")}</p>
           <p className="text-xs text-muted-foreground font-mono">{publicationcode}</p>
@@ -249,14 +239,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-5xl mx-auto h-full flex flex-col">
       <div className="flex items-center gap-3 shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="h-9 w-9 rounded-xl border border-border-subtle hover:bg-surface-2"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
+        <DetailBackButton onClick={onBack} appearance="icon" />
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 truncate">
             <LibraryBig className="w-5 h-5 text-primary shrink-0" />

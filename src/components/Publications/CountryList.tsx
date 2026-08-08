@@ -4,12 +4,15 @@ import { Loader2, Globe, LibraryBig } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getFlagUrl } from "@/lib/utils";
+import { sortCountries, isMostIssuesSort, loadStoredPublicationSort, storePublicationSort } from "@/lib/countrySort";
 
 interface CountryInfo {
   countrycode: string;
   countryname: string;
   pubCount: number;
+  maxIssueCount: number;
 }
 
 interface CountryListProps {
@@ -21,6 +24,14 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
   const [countries, setCountries] = useState<CountryInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
+  // Shared with CountryPublications: picking "most issues" on either screen
+  // also reorders the countries here.
+  const [sortOrder, setSortOrder] = useState(() => loadStoredPublicationSort("title_asc"));
+
+  const handleSortChange = (value: string) => {
+    setSortOrder(value);
+    storePublicationSort(value);
+  };
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -28,9 +39,18 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
       try {
         const result = await executeQuery({
           sql: `
-            SELECT c.countrycode, 
+            SELECT c.countrycode,
                    COALESCE((SELECT cn.countryname FROM inducks_countryname cn WHERE cn.countrycode = c.countrycode AND cn.languagecode = ? LIMIT 1), c.countryname) as countryname,
-                   (SELECT COUNT(*) FROM inducks_publication WHERE countrycode = c.countrycode) as pubCount
+                   (SELECT COUNT(*) FROM inducks_publication WHERE countrycode = c.countrycode) as pubCount,
+                   -- Issue count of the country's biggest publication: the
+                   -- criterion the "most issues" sort bubbles up to countries.
+                   COALESCE((SELECT MAX(cnt) FROM (
+                     SELECT COUNT(*) as cnt
+                     FROM inducks_issue i
+                     JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+                     WHERE p.countrycode = c.countrycode
+                     GROUP BY i.publicationcode
+                   )), 0) as maxIssueCount
             FROM inducks_country c
             ORDER BY countryname ASC
           `,
@@ -49,11 +69,12 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
   }, []);
 
   const filteredCountries = React.useMemo(() => {
-    return countries.filter(c => {
+    const filtered = countries.filter(c => {
       return c.countryname.toLowerCase().includes(filterText.toLowerCase()) ||
              c.countrycode.toLowerCase().includes(filterText.toLowerCase());
     });
-  }, [countries, filterText]);
+    return sortCountries(filtered, sortOrder);
+  }, [countries, filterText, sortOrder]);
 
   if (loading) {
     return (
@@ -75,12 +96,23 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
             {t("countries.desc")}
           </p>
         </div>
-        <Input
-          placeholder={t("countries.search_placeholder")}
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          className="w-full sm:w-64 rounded-xl h-10 border-border-subtle bg-surface"
-        />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <Input
+            placeholder={t("countries.search_placeholder")}
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            className="w-full sm:w-64 rounded-xl h-10 border-border-subtle bg-surface"
+          />
+          <Select value={isMostIssuesSort(sortOrder) ? "issues_desc" : "title_asc"} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-full sm:w-48 h-10 border-border-subtle bg-surface rounded-xl text-sm">
+              <SelectValue placeholder={t("sort.title_az")} />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border-subtle bg-surface">
+              <SelectItem value="title_asc" className="rounded-lg">{t("sort.title_az")}</SelectItem>
+              <SelectItem value="issues_desc" className="rounded-lg">{t("sort.issues_desc")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="pr-2">

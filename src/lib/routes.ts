@@ -38,6 +38,9 @@ export const routes = {
   // Indexers get their own space: they catalogue issues, they do not create
   // stories, so an author page would describe the wrong contribution.
   indexer: (code: string) => `/indexers/${encode(code)}`,
+  // Subseries codes contain spaces and accents ("Zio Paperone e..."), so the
+  // whole code is one encoded segment.
+  subseries: (code: string) => `/subseries/${encode(code)}`,
 
   // Country hierarchy
   country: (code: string) => `/countries/${encode(code)}`,

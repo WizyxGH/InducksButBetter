@@ -5,7 +5,7 @@ import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
+import { DetailLoading, DetailNotFound } from "@/components/Layout/DetailPage";
 import { getFlagUrl, hasInducksCookie, formatInducksDate } from "@/lib/utils";
 import { parseCredits } from "@/lib/credits";
 import { isModifiedClick } from "@/lib/navigation";
@@ -237,15 +237,11 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
   };
 
   if (loading) {
-    return <PageLoadingSkeleton />;
+    return <DetailLoading />;
   }
 
   if (!author) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        <p>{t("authors.no_description")}</p>
-      </div>
-    );
+    return <DetailNotFound message={t("authors.no_description")} />;
   }
 
   return (

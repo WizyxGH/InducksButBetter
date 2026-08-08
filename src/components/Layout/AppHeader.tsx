@@ -4,8 +4,6 @@ import { LibraryBig, Search, Settings as SettingsIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/components/ui/link"
 import { cn } from "@/lib/utils"
-import { LanguageToggle } from "@/components/LanguageToggle"
-import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface AppHeaderProps {
   activeTab: string
@@ -78,10 +76,9 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
             <span className="hidden sm:inline">{t('settings.title')}</span>
           </Button>
 
-          <div className="flex items-center gap-1 sm:gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
-          </div>
+          {/* Suggestions stay reachable from the Settings page
+              (CommunityLinksCard); language and theme live in the general
+              settings card — the header stays navigation-only. */}
         </div>
       </div>
     </header>

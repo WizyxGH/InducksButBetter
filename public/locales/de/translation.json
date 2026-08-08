@@ -4,8 +4,8 @@
     "title": "Sucheinstellungen",
     "inducks_code": "Inducks-Code",
     "inducks_code_placeholder": "Nach einer Geschichte suchen...",
-    "keywords": "Schlüsselwörter (Titel/Beschreibung)",
-    "keywords_placeholder": "Bsp: Schatz",
+    "keywords": "Titel / Stichwörter",
+    "keywords_placeholder": "z. B.: Weihnachten, Zeitreise",
     "include_comments": "Auch in Kommentaren suchen",
     "multiple_parts": "Mehrteilige Geschichten",
     "content_type": "Inhaltstyp",
@@ -33,9 +33,9 @@
     "universe": "Universum",
     "all_universes": "Alle Universen",
     "search_universe": "Nach einem Universum suchen...",
-    "series": "Serien",
-    "all_series": "Alle Serien",
-    "search_series": "Nach einer Serie suchen...",
+    "subseries": "Serien",
+    "all_subseries": "Alle Serien",
+    "search_subseries": "Nach einer Serie suchen...",
     "characters": "Figuren",
     "search_character_placeholder": "Nach einer Figur suchen...",
     "no_other_characters": "Keine anderen Figuren enthalten",
@@ -188,7 +188,8 @@
     "show_languages": "Show descriptions in other languages",
     "pages_short": "p.",
     "code_copied": "Code copied!",
-    "page": "page"
+    "page": "page",
+    "refers_to_creator": "Verweis auf den Urheber"
   },
   "kinds": {
     "c": "Cover",
@@ -223,7 +224,8 @@
   "header": {
     "title": "InducksButBetter",
     "subtitle": "Finde genau das, was Du suchst in der Inducks-Datenbank",
-    "search": "Search"
+    "search": "Search",
+    "suggestions": "Vorschläge"
   },
   "ai": {
     "welcome": "Hallo! Ich bin Dein Inducks-Experte. Ich kann Dir helfen, komplexe SQL-Abfragen zu schreiben. Was suchst Du?",
@@ -365,7 +367,9 @@
     "cookie_help": "Dieses Cookie ermöglicht den Zugriff auf hochauflösende Bilder. Du kannst es im Browser-Inspektor auf inducks.org abrufen.",
     "download_isv": "ISV-Dateien herunterladen",
     "translations": "Translations",
-    "cookie_save_error": "Could not save the cookie."
+    "cookie_save_error": "Could not save the cookie.",
+    "contact_title": "Kontakt & Vorschläge",
+    "contact_desc": "Teile eine Idee oder melde einen Fehler"
   },
   "localDb": {
     "title": "Inducks-Datenbank importieren",
@@ -636,7 +640,11 @@
     "sent": "Sent successfully!",
     "submit": "Send the suggestion",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent."
+    "success": "Thank you! Your suggestion has been sent.",
+    "submit_github": "Über GitHub senden",
+    "btn_discord": "Oder erreiche uns auf Discord",
+    "finish_on_github": "Schließe die Veröffentlichung deines Vorschlags im soeben geöffneten GitHub-Tab ab.",
+    "github_hint": "Beim Senden öffnet sich ein vorausgefülltes GitHub-Issue in einem neuen Tab — zum Veröffentlichen ist ein kostenloses GitHub-Konto erforderlich."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -676,5 +684,11 @@
     "indexed_issues": "Indexed issues",
     "not_found_title": "Indexer not found",
     "not_found_desc": "No indexer matches the code {{code}}."
+  },
+  "subseries": {
+    "not_found": "Unterserie nicht gefunden.",
+    "stories": "Geschichten dieser Unterserie",
+    "no_stories": "Keine Geschichte gefunden.",
+    "maybe_error": "Diese Unterserie ist möglicherweise ein Fehler."
   }
 }

@@ -22,8 +22,10 @@
 - **"My collection" filter:** Paste your raw Inducks collection export and instantly filter stories to only show issues you actually own.
 - **Smart SQL editor:** A built-in code editor with syntax highlighting, schema-aware autocomplete, and query helpers for power users.
 - **AI-powered SQL assistant:** Ask the AI in plain English/French and it will help translate your request into an Inducks query.
+- **Rich detail pages:** Stories, issues, publications, publishers, indexers, countries — and subseries pages listing every story of a subseries with localized names.
+- **Built-in feedback:** A suggestions page that pre-fills a GitHub issue with your report, straight from the app.
 - **Fully internationalized:** Seamless switching between multiple languages via the built-in translation system.
-- **Offline-first & private:** Runs primarily inside your browser via Web Assembly (sql.js) and IndexedDB. No remote server required for search and browsing.
+- **Offline-first & private:** Runs primarily inside your browser via WebAssembly (SQLite WASM) and OPFS. No remote server required for search and browsing.
 
 ## Quick start
 
@@ -50,21 +52,20 @@ pnpm test
 pnpm build
 ```
 
-### 3. Loading the Database (ISV files)
+### 3. Loading the Database
 
-The app operates locally using official Inducks `.isv` data files stored in IndexedDB:
-1. Obtain the official Inducks ISV database dump (a ZIP file containing `.isv` files).
-2. Extract the `.isv` files to a folder on your computer.
-3. Click the **Import DB** button in the top right corner of the application (or go to Settings).
-4. Select the extracted `.isv` files. The app will parse them, build necessary indexes for speed, and cache the database locally in IndexedDB.
-5. Your searches will now be executed entirely offline in a background **Web Worker**, with results **streamed progressively** to the UI without freezing your browser!
+The app runs on a pre-compiled SQLite copy of the Inducks database, stored persistently in your browser (OPFS):
+1. On first launch, click **Download from cloud**: the app fetches the pre-built `inducks.sqlite.gz` (from the site itself or the GitHub release), with automatic resume if the download is interrupted.
+2. Alternatively, drop a local `inducks.sqlite` or `inducks.sqlite.gz` file into the importer.
+3. The database is decompressed and saved to the **Origin Private File System (OPFS)** with persistent-storage permission, so it survives restarts and works offline.
+4. All queries then run inside a **SharedWorker** (SQLite WASM), keeping the UI responsive and sharing one database instance across all open tabs.
 
 ## Architecture and optimizations
 
 - **Modular React architecture**: Search logic is split into reusable hooks and focused UI components for maintainability.
 - **Shared web worker database engine (`sql.js` WASM)**: Queries run in a dedicated `SharedWorker` so the UI stays responsive while large searches execute. Using a SharedWorker means the memory footprint remains minimal (e.g., 150MB total) regardless of how many tabs you open!
 - **Vite bundle optimization**: The app uses Vite with code-splitting and PWA support to keep the experience fast and cache-friendly.
-- **Local-first data handling**: The database is loaded from local ISV files and cached in IndexedDB for repeated searches and offline browsing.
+- **Local-first data handling**: The pre-compiled SQLite database is downloaded once (or supplied locally) and persisted in OPFS for repeated searches and offline browsing.
 
 ## Credits
 
