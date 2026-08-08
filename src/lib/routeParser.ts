@@ -16,6 +16,7 @@ export interface ParsedRoute {
   publisherid?: string;
   indexercode?: string;
   subseriescode?: string;
+  universecode?: string;
 }
 
 /**
@@ -63,7 +64,16 @@ export function parseRoutePath(pathPart: string): ParsedRoute {
   // stories tab. The code may itself contain '/' once decoded, so everything
   // after the root is joined back together.
   if (root === "subseries") {
-    return { tab: "stories", subseriescode: parts.slice(1).join("/") };
+    // Bare /subseries is the catalogue of every subseries, its own tab.
+    const code = parts.slice(1).join("/");
+    return code ? { tab: "stories", subseriescode: code } : { tab: "subseries" };
+  }
+
+  // Handle /universes and /universes/<code> — universes gather characters, so
+  // a universe page lives in the characters tab; the catalogue is its own.
+  if (root === "universes" || root === "universe") {
+    const code = parts.slice(1).join("/");
+    return code ? { tab: "characters", universecode: code } : { tab: "universes" };
   }
 
   // Handle /publisher/D or /publishers/...

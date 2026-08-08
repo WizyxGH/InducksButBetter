@@ -545,10 +545,16 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
          LIMIT 1)
       ) as original_title,
       (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title,
+      -- Display title. Restricted to the UI language then English, and only
+      -- then falling back to the title stored on the story itself: ordering
+      -- every language by entrycode handed the fallback to whichever edition
+      -- sorted first, which is how Arabic titles (ae/DDF…) surfaced on a site
+      -- displayed in French. No apostrophes in this comment: they would look
+      -- like a SQL string literal to anything scanning for placeholders.
       COALESCE(
-        (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' ORDER BY CASE WHEN pub.languagecode = ? THEN 0 ELSE 1 END, e.entrycode ASC LIMIT 1),
-        s.title,
-        NULL
+        (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode IN (?, 'en') ORDER BY CASE WHEN pub.languagecode = ? THEN 0 ELSE 1 END, e.entrycode ASC LIMIT 1),
+        NULLIF(NULLIF(s.title, 'Untitled'), ''),
+        (SELECT e.title FROM inducks_entry e WHERE e.storyversioncode = sv.storyversioncode AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY e.entrycode ASC LIMIT 1)
       ) as story_title,
       COALESCE(
         (SELECT eu.sitecode || '|' || eu.url
@@ -641,10 +647,12 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     ORDER BY ${orderBy}
   `;
 
-  // One `lang` per localised column of the SELECT, in order of appearance
-  // (series_title, subseries_code, translated_title, story_title, story_thumb,
-  // full_description, character_list, hero_name).
-  return { query: mainQuery, countQuery, params: [...p, pageSize, offset, ...svWhereParams, lang, lang, lang, lang, lang, lang, lang, lang], countParams: p, pageSize, page };
+  // One `lang` per localised placeholder of the SELECT, in order of
+  // appearance: series_title, subseries_code, translated_title, story_title
+  // (twice — the IN (?, 'en') filter and the ORDER BY preference),
+  // story_thumb, full_description, character_list, hero_name.
+  const selectLangParams = Array(9).fill(lang);
+  return { query: mainQuery, countQuery, params: [...p, pageSize, offset, ...svWhereParams, ...selectLangParams], countParams: p, pageSize, page };
 }
 
 export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters): SearchQueryResponse {

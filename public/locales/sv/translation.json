@@ -5,7 +5,7 @@
     "inducks_code": "Inducks code",
     "inducks_code_placeholder": "Search for a story...",
     "keywords": "Titel / nyckelord",
-    "keywords_placeholder": "T.ex.: jul, tidsresa",
+    "keywords_placeholder": "T.ex.: skatt",
     "include_comments": "Search in comments as well",
     "multiple_parts": "Multi-part stories",
     "content_type": "Content Type",
@@ -178,9 +178,6 @@
     "uncredited": "Uncredited.",
     "original_title": "Original title",
     "not_found": "Story not found.",
-    "strip": "strip",
-    "strips": "strips",
-    "per_page": "/ page",
     "issue_symbol": "#",
     "no_characters": "No characters listed.",
     "xrefs": "Cross-references",
@@ -189,7 +186,9 @@
     "pages_short": "p.",
     "code_copied": "Code copied!",
     "page": "page",
-    "refers_to_creator": "Referens till upphovsmannen"
+    "refers_to_creator": "Referens till upphovsmannen",
+    "strips_per_page_one": "{{count}} remsa per sida",
+    "strips_per_page_other": "{{count}} remsor per sida"
   },
   "kinds": {
     "c": "Cover",
@@ -473,7 +472,6 @@
     "aliases": "Aliases",
     "creators": "Main Creators",
     "co_characters": "Frequent Companions",
-    "stories_featuring": "Stories featuring {{name}}",
     "title": "Search parameters",
     "code": "Character code",
     "code_placeholder": "Ex: DD, MM...",
@@ -522,8 +520,8 @@
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
     "desc": "Select a country to explore its Disney publications.",
-    "publications_singular": "publication",
-    "publications_plural": "publications"
+    "publication_count_one": "{{count}} publikation",
+    "publication_count_other": "{{count}} publikationer"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -549,15 +547,15 @@
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries",
-    "issue_singular": "issue",
-    "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
     "untitled": "Untitled",
     "not_found": "Den här publikationen finns inte.",
     "not_found_desc": "Ingen publikation med den här koden hittades i den lokala databasen.",
     "show_more_sections": "Visa fler avsnitt",
-    "circulation": "Upplaga"
+    "circulation": "Upplaga",
+    "issue_count_one": "{{count}} nummer",
+    "issue_count_other": "{{count}} nummer"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -627,24 +625,12 @@
   "suggestions": {
     "title": "Send us your suggestions",
     "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
-    "label_name": "Name or nickname (optional)",
-    "placeholder_name": "What's your name?",
-    "label_type": "Suggestion type",
-    "type_idea": "Idea",
-    "type_bug": "Bug",
-    "type_db": "Data",
-    "type_other": "Other",
     "label_message": "Your message",
     "placeholder_message": "Describe your idea or the problem you ran into...",
-    "sending": "Sending...",
-    "sent": "Sent successfully!",
-    "submit": "Send the suggestion",
+    "submit": "Skicka förslaget",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent.",
-    "submit_github": "Skicka via GitHub",
-    "btn_discord": "Eller nå oss på Discord",
-    "finish_on_github": "Slutför publiceringen av ditt förslag i GitHub-fliken som just öppnades.",
-    "github_hint": "Sändningen öppnar ett förifyllt GitHub-ärende i en ny flik — ett gratis GitHub-konto krävs för att publicera det."
+    "finish_in_mail": "Slutför sändningen i ditt e-postprogram.",
+    "mail_hint": "Sändningen öppnar ditt e-postprogram med meddelandet ifyllt."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -689,6 +675,28 @@
     "not_found": "Underserien hittades inte.",
     "stories": "Berättelser i denna underserie",
     "no_stories": "Ingen berättelse hittades.",
-    "maybe_error": "Denna underserie kan vara ett fel."
+    "maybe_error": "Denna underserie kan vara ett fel.",
+    "other_names": "Namn på andra språk",
+    "list_title": "Underserier",
+    "list_subtitle": "Alla berättelseserier som Inducks katalogiserar.",
+    "list_search": "Sök en underserie på valfritt språk...",
+    "uncategorized": "Utan kategori",
+    "count_one": "{{count}} underserie",
+    "count_other": "{{count}} underserier",
+    "story_count_one": "{{count}} berättelse",
+    "story_count_other": "{{count}} berättelser"
+  },
+  "universes": {
+    "list_title": "Universum",
+    "list_subtitle": "Alla figuruniversum som Inducks definierar.",
+    "list_search": "Sök ett universum på valfritt språk...",
+    "characters": "Figurer",
+    "no_characters": "Ingen figur listad i detta universum.",
+    "not_found": "Detta universum finns inte.",
+    "other_names": "Namn på andra språk",
+    "count_one": "{{count}} universum",
+    "count_other": "{{count}} universum",
+    "character_count_one": "{{count}} figur",
+    "character_count_other": "{{count}} figurer"
   }
 }

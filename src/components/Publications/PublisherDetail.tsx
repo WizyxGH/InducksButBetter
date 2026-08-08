@@ -230,7 +230,7 @@ export function PublisherDetail({ publisherid, onBack, onSelectPublication }: Pu
               <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-surface-2 px-3 py-1 rounded-xl border border-border-subtle shrink-0">
                 <FileText className="w-3.5 h-3.5 text-primary" />
                 <span>
-                  {p.issueCount} {p.issueCount > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
+                  {t("publication.issue_count", { count: p.issueCount })}
                 </span>
               </div>
             </Card>

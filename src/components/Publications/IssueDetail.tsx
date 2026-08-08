@@ -12,6 +12,7 @@ import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
 import { isModifiedClick, navigate } from "@/lib/navigation"
 import { getEntryAnnotations, hasEntryAnnotations } from "@/lib/entryNotes"
+import { thumbUrl } from "@/components/ResultCard/thumbUrl"
 import { parseCredits } from "@/lib/credits"
 
 interface IssueDetailProps {
@@ -188,20 +189,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   }, [loading, issue, window.location.hash]);
 
   // Build high-res cover image URL
-  const coverUrl = useMemo(() => {
-    if (!issue?.issue_thumb) return null
-    const parts = issue.issue_thumb.split("|")
-    const url = parts.length > 1 ? parts[1] : parts[0]
-    let baseUrl = url
-    if (!url.startsWith("http")) {
-      if (parts[0] === "webusers" && !url.startsWith("webusers/")) {
-        baseUrl = `https://outducks.org/webusers/webusers/${url}`
-      } else {
-        baseUrl = `https://outducks.org/${url.startsWith("/") ? url.substring(1) : url}`
-      }
-    }
-    return `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=${baseUrl}`)}`
-  }, [issue?.issue_thumb])
+  const coverUrl = useMemo(() => thumbUrl(issue?.issue_thumb), [issue?.issue_thumb])
 
   if (loading) {
     return <PageLoadingSkeleton />

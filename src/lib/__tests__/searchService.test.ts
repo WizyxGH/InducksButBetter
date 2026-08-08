@@ -9,10 +9,11 @@ describe('searchService', () => {
       
       expect(result.query).toContain('s.storyheadercode IN (SELECT sh.storyheadercode FROM inducks_storyheader sh WHERE sh.title LIKE ?)');
       expect(result.countParams).toEqual(['%Duck%', '%Duck%', '%Duck%', '%Duck%', '%Duck%']);
-      // 8 trailing langs: one per localised column of the SELECT
-      // (series_title, subseries_code, translated_title, story_title,
-      // story_thumb, full_description, character_list, hero_name).
-      expect(result.params).toEqual(['%Duck%', '%Duck%', '%Duck%', '%Duck%', '%Duck%', 24, 0, 'fr', 'fr', 'fr', 'fr', 'fr', 'fr', 'fr', 'fr']);
+      // 9 trailing langs: one per localised placeholder of the SELECT —
+      // series_title, subseries_code, translated_title, story_title (twice:
+      // the IN (?, 'en') filter and the ORDER BY preference), story_thumb,
+      // full_description, character_list, hero_name.
+      expect(result.params).toEqual(['%Duck%', '%Duck%', '%Duck%', '%Duck%', '%Duck%', 24, 0, ...Array(9).fill('fr')]);
     });
 
     it('generates a query for charactercode correctly', () => {

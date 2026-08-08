@@ -73,8 +73,8 @@ describe('subseries routing', () => {
     expect(parseRoutePath(decoded).subseriescode).toBe(code);
   });
 
-  it('falls back to the plain stories tab without a code', () => {
-    expect(parseRoutePath('subseries').tab).toBe('stories');
+  it('routes the bare path to the subseries catalogue, not a detail page', () => {
+    expect(parseRoutePath('subseries').tab).toBe('subseries');
     expect(parseRoutePath('subseries').subseriescode ?? '').toBe('');
   });
 });

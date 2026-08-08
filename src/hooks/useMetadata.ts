@@ -35,9 +35,24 @@ export function useMetadata() {
             args: [currentLang],
           }),
           executeQuery("SELECT universecode, universecomment as universename FROM inducks_universe ORDER BY universecomment"),
+          // Label in the UI language (en, then official as fallbacks), plus
+          // every language variant as hidden aliases so typing a subseries in
+          // any language finds it whatever language the site is displayed in.
           executeQuery({
-            sql: "SELECT subseriescode, subseriesname as label FROM inducks_subseriesname WHERE languagecode = ? OR languagecode = 'en' GROUP BY subseriescode ORDER BY CASE WHEN languagecode = ? THEN 0 ELSE 1 END, subseriesname",
-            args: [currentLang, currentLang],
+            sql: `
+              SELECT s.subseriescode,
+                COALESCE(
+                  (SELECT sn.subseriesname FROM inducks_subseriesname sn
+                   WHERE sn.subseriescode = s.subseriescode
+                   ORDER BY CASE WHEN sn.languagecode = ? THEN 0 WHEN sn.languagecode = 'en' THEN 1 ELSE 2 END,
+                            sn.preferred DESC LIMIT 1),
+                  s.subseriesname
+                ) as label,
+                (SELECT GROUP_CONCAT(sn2.subseriesname, char(10)) FROM inducks_subseriesname sn2
+                 WHERE sn2.subseriescode = s.subseriescode) as allnames
+              FROM inducks_subseries s
+            `,
+            args: [currentLang],
           }),
         ]);
 
@@ -51,7 +66,12 @@ export function useMetadata() {
             .map((r: any) => ({ universecode: String(r.universecode), universename: String(r.universename) }))
             .sort((a: any, b: any) => a.universename.localeCompare(b.universename, currentLang)),
           subseries: subseriesRes.rows
-            .map((r: any) => ({ value: String(r.subseriescode), label: String(r.label), group: "Series" }))
+            .map((r: any) => ({
+              value: String(r.subseriescode),
+              label: String(r.label),
+              group: "Subseries",
+              aliases: String(r.allnames ?? "").split("\n").filter(Boolean),
+            }))
             .sort((a: any, b: any) => a.label.localeCompare(b.label, currentLang)),
         };
         sessionStorage.setItem(cacheKey, JSON.stringify(metaObj));

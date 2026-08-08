@@ -5,7 +5,7 @@
     "inducks_code": "Inducks code",
     "inducks_code_placeholder": "Search for a story...",
     "keywords": "Otsikko / avainsanat",
-    "keywords_placeholder": "Esim.: joulu, aikamatka",
+    "keywords_placeholder": "Esim.: aarre",
     "include_comments": "Search in comments as well",
     "multiple_parts": "Multi-part stories",
     "content_type": "Content Type",
@@ -177,9 +177,6 @@
     "uncredited": "Uncredited.",
     "original_title": "Original title",
     "not_found": "Story not found.",
-    "strip": "strip",
-    "strips": "strips",
-    "per_page": "/ page",
     "issue_label": "Issue",
     "issue_symbol": "#",
     "no_characters": "No characters listed.",
@@ -189,7 +186,9 @@
     "pages_short": "p.",
     "code_copied": "Code copied!",
     "page": "page",
-    "refers_to_creator": "Viittaus tekijään"
+    "refers_to_creator": "Viittaus tekijään",
+    "strips_per_page_one": "{{count}} nauha sivua kohden",
+    "strips_per_page_other": "{{count}} nauhaa sivua kohden"
   },
   "kinds": {
     "c": "Cover",
@@ -473,7 +472,6 @@
     "aliases": "Aliases",
     "creators": "Main Creators",
     "co_characters": "Frequent Companions",
-    "stories_featuring": "Stories featuring {{name}}",
     "title": "Search parameters",
     "code": "Character code",
     "code_placeholder": "Ex: DD, MM...",
@@ -522,8 +520,8 @@
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
     "desc": "Select a country to explore its Disney publications.",
-    "publications_singular": "publication",
-    "publications_plural": "publications"
+    "publication_count_one": "{{count}} julkaisu",
+    "publication_count_other": "{{count}} julkaisua"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -549,15 +547,15 @@
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries",
-    "issue_singular": "issue",
-    "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
     "untitled": "Untitled",
     "not_found": "Tätä julkaisua ei ole olemassa.",
     "not_found_desc": "Paikallisesta tietokannasta ei löytynyt julkaisua tällä koodilla.",
     "show_more_sections": "Näytä lisää osioita",
-    "circulation": "Levikki"
+    "circulation": "Levikki",
+    "issue_count_one": "{{count}} numero",
+    "issue_count_other": "{{count}} numeroa"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -627,24 +625,12 @@
   "suggestions": {
     "title": "Send us your suggestions",
     "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
-    "label_name": "Name or nickname (optional)",
-    "placeholder_name": "What's your name?",
-    "label_type": "Suggestion type",
-    "type_idea": "Idea",
-    "type_bug": "Bug",
-    "type_db": "Data",
-    "type_other": "Other",
     "label_message": "Your message",
     "placeholder_message": "Describe your idea or the problem you ran into...",
-    "sending": "Sending...",
-    "sent": "Sent successfully!",
-    "submit": "Send the suggestion",
+    "submit": "Lähetä ehdotus",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent.",
-    "submit_github": "Lähetä GitHubin kautta",
-    "btn_discord": "Tai ota yhteyttä Discordissa",
-    "finish_on_github": "Viimeistele ehdotuksesi julkaisu juuri avautuneessa GitHub-välilehdessä.",
-    "github_hint": "Lähetys avaa esitäytetyn GitHub-issuen uuteen välilehteen — julkaisuun tarvitaan ilmainen GitHub-tili."
+    "finish_in_mail": "Viimeistele lähetys sähköpostiohjelmassasi.",
+    "mail_hint": "Lähettäminen avaa sähköpostiohjelmasi valmiiksi täytetyllä viestillä."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -689,6 +675,28 @@
     "not_found": "Alasarjaa ei löytynyt.",
     "stories": "Tämän alasarjan tarinat",
     "no_stories": "Tarinoita ei löytynyt.",
-    "maybe_error": "Tämä alasarja voi olla virhe."
+    "maybe_error": "Tämä alasarja voi olla virhe.",
+    "other_names": "Nimet muilla kielillä",
+    "list_title": "Alisarjat",
+    "list_subtitle": "Kaikki Inducksin luetteloimat tarinasarjat.",
+    "list_search": "Hae alisarjaa millä tahansa kielellä...",
+    "uncategorized": "Ei luokkaa",
+    "count_one": "{{count}} alisarja",
+    "count_other": "{{count}} alisarjaa",
+    "story_count_one": "{{count}} tarina",
+    "story_count_other": "{{count}} tarinaa"
+  },
+  "universes": {
+    "list_title": "Universumit",
+    "list_subtitle": "Kaikki Inducksin määrittelemät hahmouniversumit.",
+    "list_search": "Hae universumia millä tahansa kielellä...",
+    "characters": "Hahmot",
+    "no_characters": "Tässä universumissa ei ole hahmoja.",
+    "not_found": "Tätä universumia ei ole olemassa.",
+    "other_names": "Nimet muilla kielillä",
+    "count_one": "{{count}} universumi",
+    "count_other": "{{count}} universumia",
+    "character_count_one": "{{count}} hahmo",
+    "character_count_other": "{{count}} hahmoa"
   }
 }

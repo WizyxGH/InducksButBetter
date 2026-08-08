@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { BookOpen, Calendar, Layers, ListOrdered } from "lucide-react"
+import { BookOpen, Calendar, Globe, Layers, ListOrdered } from "lucide-react"
 import { getSubseriesDetail } from "@/lib/dataService"
-import { pickSubseriesName } from "@/lib/subseries"
+import { pickSubseriesName, listSubseriesNames } from "@/lib/subseries"
+import { useMetadata } from "@/hooks/useMetadata"
 import { DetailBackButton, DetailLoading, DetailNotFound } from "@/components/Layout/DetailPage"
 import { Card, CardContent } from "@/components/ui/card"
 import { KindBadge } from "@/components/KindBadge"
@@ -10,6 +11,7 @@ import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
 import { cleanComment, formatInducksDate, hasInducksCookie } from "@/lib/utils"
+import { thumbUrl } from "@/components/ResultCard/thumbUrl"
 import { toast } from "sonner"
 
 interface SubseriesDetailProps {
@@ -18,24 +20,9 @@ interface SubseriesDetailProps {
   onSelectStory?: (storycode: string) => void
 }
 
-/** Builds the proxied thumbnail URL from the aggregated "sitecode|url" value. */
-function thumbUrl(storyThumb?: string | null): string | null {
-  if (!storyThumb) return null
-  const parts = storyThumb.split("|")
-  const url = parts.length > 1 ? parts[1] : parts[0]
-  let baseUrl = url
-  if (!url.startsWith("http")) {
-    if (parts[0] === "webusers" && !url.startsWith("webusers/")) {
-      baseUrl = `https://outducks.org/webusers/webusers/${url}`
-    } else {
-      baseUrl = `https://outducks.org/${url.startsWith("/") ? url.substring(1) : url}`
-    }
-  }
-  return `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=${baseUrl}`)}`
-}
-
 export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: SubseriesDetailProps) {
   const { t, i18n } = useTranslation()
+  const { meta } = useMetadata()
   const [loading, setLoading] = useState(true)
   const [subseries, setSubseries] = useState<any>(null)
   const hasCookie = useMemo(() => hasInducksCookie(), [])
@@ -67,6 +54,12 @@ export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: Subser
   const displayName = pickSubseriesName(subseries.names, i18n.language, subseries.subseriesname)
   const comment = subseries.subseriescomment ? cleanComment(subseries.subseriescomment) : ""
   const stories: any[] = subseries.stories || []
+  // One name per language, minus the one already used as the page title.
+  const otherNames = listSubseriesNames(subseries.names).filter(
+    (n) => n.subseriesname !== displayName
+  )
+  const languageName = (code: string) =>
+    meta.languages.find((l) => l.languagecode === code)?.languagename || code.toUpperCase()
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 lg:p-8 space-y-6">
@@ -101,6 +94,32 @@ export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: Subser
           </Card>
         )}
       </div>
+
+      {/* Names in the other languages, like the reference subseries page. */}
+      {otherNames.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Globe className="w-4 h-4 text-primary" />
+            {t("subseries.other_names")}
+          </h3>
+          <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+            <CardContent className="p-4">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                {otherNames.map((name) => (
+                  <li key={name.languagecode} className="flex items-baseline gap-2 text-sm min-w-0">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide shrink-0 capitalize">
+                      {languageName(name.languagecode)}
+                    </span>
+                    <span className="text-text-body truncate" title={name.subseriesname}>
+                      {name.subseriesname}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Story index */}
       <div className="space-y-3 pt-2">

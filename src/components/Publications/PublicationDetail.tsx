@@ -341,7 +341,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                   {t("publication.issues")}
                 </span>
                 <Badge variant="secondary" className="font-bold text-xs">
-                  {issues.length} {issues.length > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
+                  {t("publication.issue_count", { count: issues.length })}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -366,8 +366,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                           </h3>
                           <div className="h-px bg-border-subtle flex-1" />
                           <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                            {section.issues.length}{" "}
-                            {section.issues.length > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
+                            {t("publication.issue_count", { count: section.issues.length })}
                           </span>
                         </div>
                       )}

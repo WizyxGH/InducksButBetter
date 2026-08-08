@@ -1,9 +1,8 @@
 import * as React from "react"
-import { cn, hasInducksCookie, formatInducksDate } from "@/lib/utils"
+import { hasInducksCookie, formatInducksDate } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
-import { Maximize2, BookOpen } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { ResultCardThumb } from "@/components/ResultCard/ResultCardThumb"
+import { thumbUrls } from "@/components/ResultCard/thumbUrl"
 import { FlagBadge } from "@/components/FlagBadge"
 import { navigate, isModifiedClick } from "@/lib/navigation";
 import { Link } from "@/components/ui/link";
@@ -16,13 +15,6 @@ interface IssueResultCardProps {
 
 export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
   const { t, i18n } = useTranslation();
-  const [imageError, setImageError] = React.useState(false);
-  const [imageLoaded, setImageLoaded] = React.useState(false);
-
-  React.useEffect(() => {
-    setImageError(false);
-    setImageLoaded(false);
-  }, [row.issuecode]);
 
   const cleanText = (val: string) => {
     if (!val) return "";
@@ -39,25 +31,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
 
   const issueUrl = `https://inducks.org/issue.php?c=${row.issuecode}`;
 
-  const thumbData = React.useMemo(() => {
-    if (!row.issue_thumb) return null;
-    const parts = row.issue_thumb.split('|');
-    const url = parts.length > 1 ? parts[1] : parts[0];
-
-    let baseUrl = url;
-    if (!url.startsWith('http')) {
-      if (parts[0] === 'webusers' && !url.startsWith('webusers/')) {
-        baseUrl = `https://outducks.org/webusers/webusers/${url}`;
-      } else {
-        baseUrl = `https://outducks.org/${url.startsWith('/') ? url.substring(1) : url}`;
-      }
-    }
-
-    return {
-      preview: `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=${baseUrl}`)}`,
-      full: `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?image=${baseUrl}`)}`
-    };
-  }, [row.issue_thumb]);
+  const thumbData = React.useMemo(() => thumbUrls(row.issue_thumb), [row.issue_thumb]);
 
   const targetHref = routes.issue(row.issuecode, row.publicationcode);
 
@@ -95,46 +69,13 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
       <div className="p-0 flex flex-row">
         {/* Left: Cover Thumbnail */}
         {hasCookie && (
-          <div
+          <ResultCardThumb
+            thumb={thumbData}
+            resetKey={row.issuecode}
+            emptyLabel="No Cover"
             className="w-[140px] sm:w-[180px] shrink-0 border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
-          >
-          {thumbData && !imageError && !imageLoaded && (
-            <div className="absolute inset-1 rounded animate-shimmer" />
-          )}
-          <img
-            src={thumbData && !imageError ? thumbData.preview : ""}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className={cn(
-              "max-w-full max-h-full object-contain opacity-90 group-hover/thumb:opacity-100 transition-all duration-500 group-hover/thumb:scale-105",
-              (!thumbData || imageError) && "hidden",
-              imageLoaded ? "opacity-90" : "opacity-0"
-            )}
-            onError={() => setImageError(true)}
-            onLoad={() => setImageLoaded(true)}
+            imgClassName="max-w-full max-h-full object-contain opacity-90 group-hover/thumb:opacity-100 transition-all duration-500 group-hover/thumb:scale-105"
           />
-          {(!thumbData || imageError) && (
-            <div className="flex flex-col items-center gap-2 text-zinc-300">
-              <BookOpen className="w-8 h-8 opacity-20" />
-              <span className="text-[10px] font-bold uppercase tracking-tighter opacity-30">No Cover</span>
-            </div>
-          )}
-
-          {thumbData && !imageError && imageLoaded && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute top-2 right-2 h-7 w-7 rounded-full opacity-0 group-hover/thumb:opacity-100 transition-opacity bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-zinc-700 shadow-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(thumbData.full, "_blank");
-              }}
-            >
-              <Maximize2 className="w-3.5 h-3.5 text-zinc-600" />
-            </Button>
-          )}
-        </div>
         )}
 
         {/* Right: Content */}

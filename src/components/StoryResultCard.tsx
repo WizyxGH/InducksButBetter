@@ -1,9 +1,8 @@
 import * as React from "react"
-import { cn, hasInducksCookie, formatInducksDate } from "@/lib/utils"
+import { hasInducksCookie, formatInducksDate } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
-import { Maximize2, BookOpen } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { ResultCardThumb } from "@/components/ResultCard/ResultCardThumb"
+import { thumbUrls } from "@/components/ResultCard/thumbUrl"
 import { HoverTooltip } from '@/components/HoverTooltip';
 import { EntityBadge } from "@/components/EntityBadge"
 import { FlagBadge } from "@/components/FlagBadge"
@@ -24,13 +23,6 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
   const [isExpanded, setIsExpanded] = React.useState(false);
   const textRef = React.useRef<HTMLDivElement>(null);
   const [isTruncated, setIsTruncated] = React.useState(false);
-  const [imageError, setImageError] = React.useState(false);
-  const [imageLoaded, setImageLoaded] = React.useState(false);
-
-  React.useEffect(() => {
-    setImageError(false);
-    setImageLoaded(false);
-  }, [row.storycode]);
 
   const cleanText = (val: string) => {
     if (!val) return "";
@@ -88,30 +80,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
 
   const storyUrl = `https://inducks.org/story.php?c=${row.storycode}`;
 
-  const thumbData = React.useMemo(() => {
-    if (!row.story_thumb) return null;
-
-    // Handle both "sitecode|url" and plain "url"
-    const parts = row.story_thumb.split('|');
-    const url = parts.length > 1 ? parts[1] : parts[0];
-
-    // Outducks site logic
-    let baseUrl = url;
-    if (!url.startsWith('http')) {
-      // If sitecode is webusers and path doesn't start with webusers, prepend it
-      // Note: Outducks often uses 'webusers/webusers/' for recent uploads
-      if (parts[0] === 'webusers' && !url.startsWith('webusers/')) {
-        baseUrl = `https://outducks.org/webusers/webusers/${url}`;
-      } else {
-        baseUrl = `https://outducks.org/${url.startsWith('/') ? url.substring(1) : url}`;
-      }
-    }
-
-    return {
-      preview: `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=${baseUrl}`)}`,
-      full: `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?image=${baseUrl}`)}`
-    };
-  }, [row.story_thumb]);
+  const thumbData = React.useMemo(() => thumbUrls(row.story_thumb), [row.story_thumb]);
 
   const targetHref = routes.story(row.storycode);
 
@@ -152,47 +121,13 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
       <div className="p-0 flex flex-col sm:flex-row">
         {/* Left: Thumbnail */}
         {hasCookie && (
-          <div
+          <ResultCardThumb
+            thumb={thumbData}
+            resetKey={row.storycode}
+            emptyLabel="No Image"
             className="w-full h-48 sm:w-[200px] sm:h-auto shrink-0 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-700 relative flex items-center justify-center p-1 group/thumb overflow-hidden bg-zinc-50 dark:bg-zinc-800"
-          >
-          {/* Shimmer skeleton while image loads */}
-          {thumbData && !imageError && !imageLoaded && (
-            <div className="absolute inset-1 rounded animate-shimmer" />
-          )}
-          <img
-            src={thumbData && !imageError ? thumbData.preview : ""}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className={cn(
-              "max-w-full max-h-full object-contain opacity-90 group-hover/thumb:opacity-100 transition-all duration-500 group-hover/thumb:scale-110",
-              (!thumbData || imageError) && "hidden",
-              imageLoaded ? "opacity-90" : "opacity-0"
-            )}
-            onError={() => setImageError(true)}
-            onLoad={() => setImageLoaded(true)}
+            imgClassName="max-w-full max-h-full object-contain opacity-90 group-hover/thumb:opacity-100 transition-all duration-500 group-hover/thumb:scale-110"
           />
-          {(!thumbData || imageError) && (
-            <div className="flex flex-col items-center gap-2 text-zinc-300">
-              <BookOpen className="w-8 h-8 opacity-20" />
-              <span className="text-[10px] font-bold uppercase tracking-tighter opacity-30">No Image</span>
-            </div>
-          )}
-
-          {thumbData && !imageError && imageLoaded && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute top-2 right-2 h-7 w-7 rounded-full opacity-0 group-hover/thumb:opacity-100 transition-opacity bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-zinc-700 shadow-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(thumbData.full, "_blank");
-              }}
-            >
-              <Maximize2 className="w-3.5 h-3.5 text-zinc-600" />
-            </Button>
-          )}
-        </div>
         )}
 
         {/* Right: Content */}
@@ -266,7 +201,7 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                 <span className="font-bold text-zinc-700 dark:text-zinc-300">{t('story.release_date')} :</span> {formatDate(row.firstpublicationdate)}
                 {row.rowsperpage > 0 && (
                   <span className="ml-2 px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded text-[9px] font-bold uppercase tracking-tight">
-                    {row.rowsperpage} {row.rowsperpage > 1 ? t('story.strips') : t('story.strip')} {t('story.per_page')}
+                    {t('story.strips_per_page', { count: row.rowsperpage })}
                   </span>
                 )}
               </div>

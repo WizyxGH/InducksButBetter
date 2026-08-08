@@ -5,7 +5,7 @@
     "inducks_code": "Inducks code",
     "inducks_code_placeholder": "Search for a story...",
     "keywords": "Titel / nøgleord",
-    "keywords_placeholder": "F.eks.: jul, tidsrejse",
+    "keywords_placeholder": "F.eks.: skat",
     "include_comments": "Search in comments as well",
     "multiple_parts": "Multi-part stories",
     "content_type": "Content Type",
@@ -177,9 +177,6 @@
     "uncredited": "Uncredited.",
     "original_title": "Original title",
     "not_found": "Story not found.",
-    "strip": "strip",
-    "strips": "strips",
-    "per_page": "/ page",
     "issue_label": "Issue",
     "issue_symbol": "#",
     "no_characters": "No characters listed.",
@@ -189,7 +186,9 @@
     "pages_short": "p.",
     "code_copied": "Code copied!",
     "page": "page",
-    "refers_to_creator": "Reference til skaberen"
+    "refers_to_creator": "Reference til skaberen",
+    "strips_per_page_one": "{{count}} stribe pr. side",
+    "strips_per_page_other": "{{count}} striber pr. side"
   },
   "kinds": {
     "c": "Cover",
@@ -473,7 +472,6 @@
     "aliases": "Aliases",
     "creators": "Main Creators",
     "co_characters": "Frequent Companions",
-    "stories_featuring": "Stories featuring {{name}}",
     "title": "Search parameters",
     "code": "Character code",
     "code_placeholder": "Ex: DD, MM...",
@@ -522,8 +520,8 @@
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
     "desc": "Select a country to explore its Disney publications.",
-    "publications_singular": "publication",
-    "publications_plural": "publications"
+    "publication_count_one": "{{count}} udgivelse",
+    "publication_count_other": "{{count}} udgivelser"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -549,15 +547,15 @@
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries",
-    "issue_singular": "issue",
-    "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
     "untitled": "Untitled",
     "not_found": "Denne udgivelse findes ikke.",
     "not_found_desc": "Der blev ikke fundet nogen udgivelse med denne kode i den lokale database.",
     "show_more_sections": "Vis flere afsnit",
-    "circulation": "Oplag"
+    "circulation": "Oplag",
+    "issue_count_one": "{{count}} nummer",
+    "issue_count_other": "{{count}} numre"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -627,24 +625,12 @@
   "suggestions": {
     "title": "Send us your suggestions",
     "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
-    "label_name": "Name or nickname (optional)",
-    "placeholder_name": "What's your name?",
-    "label_type": "Suggestion type",
-    "type_idea": "Idea",
-    "type_bug": "Bug",
-    "type_db": "Data",
-    "type_other": "Other",
     "label_message": "Your message",
     "placeholder_message": "Describe your idea or the problem you ran into...",
-    "sending": "Sending...",
-    "sent": "Sent successfully!",
-    "submit": "Send the suggestion",
+    "submit": "Send forslaget",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent.",
-    "submit_github": "Send via GitHub",
-    "btn_discord": "Eller kontakt os på Discord",
-    "finish_on_github": "Afslut offentliggørelsen af dit forslag i den GitHub-fane, der lige er åbnet.",
-    "github_hint": "Afsendelse åbner en forudfyldt GitHub-issue i en ny fane — en gratis GitHub-konto er nødvendig for at offentliggøre den."
+    "finish_in_mail": "Afslut afsendelsen i dit mailprogram.",
+    "mail_hint": "Afsendelse åbner dit mailprogram med beskeden udfyldt."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -689,6 +675,28 @@
     "not_found": "Underserie ikke fundet.",
     "stories": "Historier i denne underserie",
     "no_stories": "Ingen historie fundet.",
-    "maybe_error": "Denne underserie kan være en fejl."
+    "maybe_error": "Denne underserie kan være en fejl.",
+    "other_names": "Navne på andre sprog",
+    "list_title": "Underserier",
+    "list_subtitle": "Alle historieserier registreret af Inducks.",
+    "list_search": "Søg en underserie på et hvilket som helst sprog...",
+    "uncategorized": "Uden kategori",
+    "count_one": "{{count}} underserie",
+    "count_other": "{{count}} underserier",
+    "story_count_one": "{{count}} historie",
+    "story_count_other": "{{count}} historier"
+  },
+  "universes": {
+    "list_title": "Universer",
+    "list_subtitle": "Alle figuruniverser defineret af Inducks.",
+    "list_search": "Søg et univers på et hvilket som helst sprog...",
+    "characters": "Figurer",
+    "no_characters": "Ingen figur er opført i dette univers.",
+    "not_found": "Dette univers findes ikke.",
+    "other_names": "Navne på andre sprog",
+    "count_one": "{{count}} univers",
+    "count_other": "{{count}} universer",
+    "character_count_one": "{{count}} figur",
+    "character_count_other": "{{count}} figurer"
   }
 }

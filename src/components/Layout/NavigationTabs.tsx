@@ -12,8 +12,16 @@ interface NavigationTabsProps {
 export function NavigationTabs({ activeTab, isDetailPage }: NavigationTabsProps) {
   const { t } = useTranslation()
 
-  // Tabs are only shown on the main search pages, not on home/settings/countries or detail pages
-  if (activeTab === "settings" || activeTab === "countries" || activeTab === "home" || isDetailPage) {
+  // Tabs are only shown on the main search pages, not on
+  // home/settings/countries/subseries or detail pages
+  if (
+    activeTab === "settings" ||
+    activeTab === "countries" ||
+    activeTab === "home" ||
+    activeTab === "subseries" ||
+    activeTab === "universes" ||
+    isDetailPage
+  ) {
     return null
   }
 

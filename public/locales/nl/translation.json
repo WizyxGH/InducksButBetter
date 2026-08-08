@@ -5,7 +5,7 @@
     "inducks_code": "Inducks code",
     "inducks_code_placeholder": "Search for a story...",
     "keywords": "Titel / trefwoorden",
-    "keywords_placeholder": "Bijv.: kerstmis, tijdreizen",
+    "keywords_placeholder": "Bijv.: schat",
     "include_comments": "Search in comments as well",
     "multiple_parts": "Multi-part stories",
     "content_type": "Content Type",
@@ -177,9 +177,6 @@
     "uncredited": "Uncredited.",
     "original_title": "Original title",
     "not_found": "Story not found.",
-    "strip": "strip",
-    "strips": "strips",
-    "per_page": "/ page",
     "issue_label": "Issue",
     "issue_symbol": "#",
     "no_characters": "No characters listed.",
@@ -189,7 +186,9 @@
     "pages_short": "p.",
     "code_copied": "Code copied!",
     "page": "page",
-    "refers_to_creator": "Verwijzing naar de maker"
+    "refers_to_creator": "Verwijzing naar de maker",
+    "strips_per_page_one": "{{count}} strook per pagina",
+    "strips_per_page_other": "{{count}} stroken per pagina"
   },
   "kinds": {
     "c": "Cover",
@@ -473,7 +472,6 @@
     "aliases": "Aliases",
     "creators": "Main Creators",
     "co_characters": "Frequent Companions",
-    "stories_featuring": "Stories featuring {{name}}",
     "title": "Search parameters",
     "code": "Character code",
     "code_placeholder": "Ex: DD, MM...",
@@ -522,8 +520,8 @@
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
     "desc": "Select a country to explore its Disney publications.",
-    "publications_singular": "publication",
-    "publications_plural": "publications"
+    "publication_count_one": "{{count}} publicatie",
+    "publication_count_other": "{{count}} publicaties"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -549,15 +547,15 @@
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries",
-    "issue_singular": "issue",
-    "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
     "untitled": "Untitled",
     "not_found": "Deze publicatie bestaat niet.",
     "not_found_desc": "Er is geen publicatie met deze code gevonden in de lokale database.",
     "show_more_sections": "Meer secties tonen",
-    "circulation": "Oplage"
+    "circulation": "Oplage",
+    "issue_count_one": "{{count}} nummer",
+    "issue_count_other": "{{count}} nummers"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -627,24 +625,12 @@
   "suggestions": {
     "title": "Send us your suggestions",
     "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
-    "label_name": "Name or nickname (optional)",
-    "placeholder_name": "What's your name?",
-    "label_type": "Suggestion type",
-    "type_idea": "Idea",
-    "type_bug": "Bug",
-    "type_db": "Data",
-    "type_other": "Other",
     "label_message": "Your message",
     "placeholder_message": "Describe your idea or the problem you ran into...",
-    "sending": "Sending...",
-    "sent": "Sent successfully!",
-    "submit": "Send the suggestion",
+    "submit": "Suggestie versturen",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent.",
-    "submit_github": "Versturen via GitHub",
-    "btn_discord": "Of bereik ons op Discord",
-    "finish_on_github": "Rond het plaatsen van je suggestie af in het zojuist geopende GitHub-tabblad.",
-    "github_hint": "Versturen opent een vooraf ingevulde GitHub-issue in een nieuw tabblad — een gratis GitHub-account is nodig om deze te plaatsen."
+    "finish_in_mail": "Rond het versturen af in je e-mailprogramma.",
+    "mail_hint": "Versturen opent je e-mailprogramma met het bericht al ingevuld."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -689,6 +675,28 @@
     "not_found": "Subreeks niet gevonden.",
     "stories": "Verhalen in deze subreeks",
     "no_stories": "Geen verhaal gevonden.",
-    "maybe_error": "Deze subreeks is mogelijk een fout."
+    "maybe_error": "Deze subreeks is mogelijk een fout.",
+    "other_names": "Namen in andere talen",
+    "list_title": "Subreeksen",
+    "list_subtitle": "Alle verhalenreeksen die Inducks catalogiseert.",
+    "list_search": "Zoek een subreeks in elke taal...",
+    "uncategorized": "Zonder categorie",
+    "count_one": "{{count}} subreeks",
+    "count_other": "{{count}} subreeksen",
+    "story_count_one": "{{count}} verhaal",
+    "story_count_other": "{{count}} verhalen"
+  },
+  "universes": {
+    "list_title": "Universa",
+    "list_subtitle": "Alle personage-universa die Inducks definieert.",
+    "list_search": "Zoek een universum in elke taal...",
+    "characters": "Personages",
+    "no_characters": "Geen personage in dit universum vermeld.",
+    "not_found": "Dit universum bestaat niet.",
+    "other_names": "Namen in andere talen",
+    "count_one": "{{count}} universum",
+    "count_other": "{{count}} universa",
+    "character_count_one": "{{count}} personage",
+    "character_count_other": "{{count}} personages"
   }
 }

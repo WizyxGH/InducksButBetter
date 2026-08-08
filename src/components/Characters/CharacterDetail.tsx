@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, ExternalLink, Calendar, Star, BookOpen, Users, Cat, Globe, User } from "lucide-react";
+import { Loader2, ExternalLink, Calendar, Star, Users, Cat, Globe, User } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { navigate } from "@/lib/navigation";
 import { DetailNotFound } from "@/components/Layout/DetailPage";
 import { routes } from "@/lib/routes";
 import { hasInducksCookie } from "@/lib/utils";
+import { useMetadata } from "@/hooks/useMetadata";
 
 interface CharacterDetailData {
   charactercode: string;
@@ -45,6 +46,7 @@ interface CharacterDetailProps {
 
 export default function CharacterDetail({ charactercode, onSelectStory }: CharacterDetailProps) {
   const { t, i18n } = useTranslation();
+  const { meta } = useMetadata();
   const hasCookie = hasInducksCookie();
   const [character, setCharacter] = useState<CharacterDetailData | null>(null);
   const [names, setNames] = useState<CharName[]>([]);
@@ -52,7 +54,6 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
   const [creators, setCreators] = useState<CreatorStat[]>([]);
   const [coCharacters, setCoCharacters] = useState<CoCharacter[]>([]);
   const [firstAppearance, setFirstAppearance] = useState<any | null>(null);
-  const [stories, setStories] = useState<any[]>([]);
   const [universes, setUniverses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,7 +79,6 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
             creatorsResult,
             coCharResult,
             firstAppResult,
-            storiesResult,
             univResult
           ] = await Promise.all([
             // 2. Fetch all translated names
@@ -127,30 +127,28 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                     LIMIT 1`,
               args: [charactercode],
             }),
-            // 7. Fetch recent stories
+            // 7. Fetch universes
             executeQuery({
-              sql: `SELECT DISTINCT s.storycode, 
-                            COALESCE(
-                              NULLIF(NULLIF(s.title, 'Untitled'), ''),
-                              (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND e.title != 'Untitled' ORDER BY i.oldestdate ASC, e.entrycode ASC LIMIT 1)
-                            ) as original_title, s.firstpublicationdate,
-                            (SELECT COUNT(*) FROM inducks_appearance WHERE charactercode = ? AND storyversioncode = sv.storyversioncode) as appearances,
-                            (SELECT e.title FROM inducks_entry e JOIN inducks_issue i ON e.issuecode = i.issuecode JOIN inducks_publication pub ON i.publicationcode = pub.publicationcode WHERE e.storyversioncode = (SELECT MIN(sv2.storyversioncode) FROM inducks_storyversion sv2 WHERE sv2.storycode = s.storycode) AND e.title IS NOT NULL AND e.title != '' AND pub.languagecode = ? ORDER BY e.entrycode ASC LIMIT 1) as translated_title
-                    FROM inducks_appearance a
-                    JOIN inducks_storyversion sv ON a.storyversioncode = sv.storyversioncode
-                    JOIN inducks_story s ON sv.storycode = s.storycode
-                    WHERE a.charactercode = ?
-                    ORDER BY s.firstpublicationdate DESC
-                    LIMIT 30`,
-              args: [charactercode, currentLang, charactercode],
-            }),
-            // 8. Fetch universes
-            executeQuery({
-              sql: `SELECT u.universecode, u.universename 
+              // inducks_universe has no `universename`: the localized names
+              // live in inducks_universename, with universecomment as the
+              // only fallback label.
+              // Restricted to the UI language then English: without the
+              // filter, a universe translated into neither would surface an
+              // arbitrary language (a Danish name on the French site).
+              sql: `SELECT u.universecode,
+                      COALESCE(
+                        (SELECT un.universename FROM inducks_universename un
+                         WHERE un.universecode = u.universecode
+                           AND un.languagecode IN (?, 'en')
+                         ORDER BY CASE WHEN un.languagecode = ? THEN 0 ELSE 1 END
+                         LIMIT 1),
+                        NULLIF(u.universecomment, ''),
+                        u.universecode
+                      ) as universename
                     FROM inducks_ucrelation ucr
                     JOIN inducks_universe u ON ucr.universecode = u.universecode
                     WHERE ucr.charactercode = ?`,
-              args: [charactercode],
+              args: [i18n.language, i18n.language, charactercode],
             })
           ]);
 
@@ -163,7 +161,6 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
           } else {
             setFirstAppearance(null);
           }
-          setStories(storiesResult.rows as any[]);
           setUniverses(univResult.rows as any[]);
         }
       } catch (error) {
@@ -270,7 +267,13 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                 {t("characters.universe")}:
               </span>
               {universes.map((univ, idx) => (
-                <Badge key={idx} variant="outline" className="text-[10px] rounded-lg">
+                <Badge
+                  key={idx}
+                  variant="outline"
+                  onClick={() => navigate(routes.universe(univ.universecode))}
+                  className="text-[10px] rounded-lg cursor-pointer hover:border-primary/50 hover:text-primary transition-colors"
+                  title={univ.universecode}
+                >
                   {univ.universename}
                 </Badge>
               ))}
@@ -315,9 +318,16 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
               </CardHeader>
               <CardContent className="space-y-1.5 max-h-[300px] overflow-y-auto text-xs">
                 {names.map((n, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-1 border-b border-border-subtle/30 last:border-b-0">
-                    <span className="font-bold text-muted-foreground uppercase">{n.languagecode}</span>
-                    <span className="font-semibold text-foreground">{n.charactername}</span>
+                  <div key={idx} className="flex justify-between items-baseline gap-3 py-1 border-b border-border-subtle/30 last:border-b-0">
+                    {/* Readable language name rather than the raw code: "fr"
+                        tells a visitor much less than "Français". */}
+                    <span className="font-bold text-muted-foreground capitalize shrink-0">
+                      {meta.languages.find((l) => l.languagecode === n.languagecode)?.languagename ||
+                        n.languagecode.toUpperCase()}
+                    </span>
+                    <span className="font-semibold text-foreground text-right" title={n.charactername}>
+                      {n.charactername}
+                    </span>
                   </div>
                 ))}
               </CardContent>
@@ -437,67 +447,6 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
             )}
           </div>
 
-          {/* Stories List */}
-          {stories.length > 0 && (
-            <Card className="border-border-subtle rounded-2xl">
-              <CardHeader className="py-4">
-                <CardTitle className="text-sm font-bold flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-primary" />
-                  {t("characters.stories_featuring", { name: displayName })}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2.5">
-                {stories.map((story) => (
-                  <div
-                    key={story.storycode}
-                    onClick={() => {
-                      if (onSelectStory) {
-                        onSelectStory(story.storycode);
-                      } else {
-                        navigate(routes.story(story.storycode));
-                      }
-                    }}
-                    className="p-3.5 rounded-xl bg-surface-2/30 border border-border-subtle hover:bg-surface-2 hover:border-primary/20 cursor-pointer transition-all flex justify-between items-center gap-4 group"
-                  >
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="font-semibold text-foreground text-xs truncate group-hover:text-primary transition-colors">
-                        {(() => {
-                          const translated = story.translated_title;
-                          const original = story.original_title || story.story_title;
-                          let mainTitle = original;
-                          let subTitle = null;
-
-                          if (translated && translated !== 'Untitled' && translated.toLowerCase() !== 'sans titre') {
-                            mainTitle = translated;
-                            if (original && original !== 'Untitled' && original !== translated) {
-                              subTitle = original;
-                            }
-                          } else if (!original || original === 'Untitled') {
-                            mainTitle = t("story.no_title");
-                          }
-
-                          return (
-                            <div className="truncate flex flex-col min-w-0">
-                              <span className="truncate" title={mainTitle}>{mainTitle}</span>
-                              {subTitle && (
-                                <span className="text-[10px] text-muted-foreground font-medium truncate font-normal" title={subTitle}>
-                                  {subTitle}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground font-mono">{story.storycode}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] text-muted-foreground">{story.firstpublicationdate}</span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>

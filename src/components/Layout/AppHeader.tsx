@@ -1,6 +1,6 @@
 import React from "react"
 import { useTranslation } from "react-i18next"
-import { LibraryBig, Search, Settings as SettingsIcon } from "lucide-react"
+import { Layers, LibraryBig, Orbit, Search, Settings as SettingsIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/components/ui/link"
 import { cn } from "@/lib/utils"
@@ -59,6 +59,37 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
           >
             <LibraryBig className="w-5 h-5" />
             <span className="hidden sm:inline">{t('tabs.publications')}</span>
+          </Button>
+
+          {/* Subseries catalogue: a browsing entry point of its own, not a
+              facet of the advanced search. */}
+          <Button
+            variant="ghost"
+            onClick={() => setActiveTab("subseries")}
+            aria-current={activeTab === "subseries" ? "page" : undefined}
+            className={cn(
+              "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
+              activeTab === "subseries" && "border-border-subtle bg-surface-2 text-primary"
+            )}
+            title={t("subseries.list_title")}
+          >
+            <Layers className="w-5 h-5" />
+            <span className="hidden sm:inline">{t('subseries.list_title')}</span>
+          </Button>
+
+          {/* Universe catalogue: a browsing entry point of its own too. */}
+          <Button
+            variant="ghost"
+            onClick={() => setActiveTab("universes")}
+            aria-current={activeTab === "universes" ? "page" : undefined}
+            className={cn(
+              "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
+              activeTab === "universes" && "border-border-subtle bg-surface-2 text-primary"
+            )}
+            title={t("universes.list_title")}
+          >
+            <Orbit className="w-5 h-5" />
+            <span className="hidden sm:inline">{t('universes.list_title')}</span>
           </Button>
 
           {/* Settings shortcut */}

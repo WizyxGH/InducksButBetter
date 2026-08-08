@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getFlagUrl } from "@/lib/utils";
-import { sortCountries, isMostIssuesSort, loadStoredPublicationSort, storePublicationSort } from "@/lib/countrySort";
+import { sortCountries, isMostIssuesSort } from "@/lib/countrySort";
+import { useSharedSort } from "@/hooks/useSharedSort";
 
 interface CountryInfo {
   countrycode: string;
@@ -26,12 +27,7 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
   const [filterText, setFilterText] = useState("");
   // Shared with CountryPublications: picking "most issues" on either screen
   // also reorders the countries here.
-  const [sortOrder, setSortOrder] = useState(() => loadStoredPublicationSort("title_asc"));
-
-  const handleSortChange = (value: string) => {
-    setSortOrder(value);
-    storePublicationSort(value);
-  };
+  const [sortOrder, handleSortChange] = useSharedSort("title_asc");
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -140,7 +136,7 @@ export function CountryList({ onSelectCountry }: CountryListProps) {
                   </h3>
                   <div className="text-[10px] text-muted-foreground">
                     <span>
-                      {c.pubCount} {c.pubCount > 1 ? t("countries.publications_plural", "publications") : t("countries.publications_singular", "publication")}
+                      {t("countries.publication_count", { count: c.pubCount })}
                     </span>
                   </div>
                 </div>

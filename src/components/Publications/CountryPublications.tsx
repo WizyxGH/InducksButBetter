@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getFlagUrl, cleanComment, cleanPublisherName } from "@/lib/utils";
-import { loadStoredPublicationSort, storePublicationSort } from "@/lib/countrySort";
+import { useSharedSort } from "@/hooks/useSharedSort";
 
 interface PublicationInfo {
   publicationcode: string;
@@ -32,13 +32,8 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
   const [filterText, setFilterText] = useState("");
   // Persisted and shared with CountryList: activating "most issues" here also
   // reorders the country list by their biggest publication.
-  const [sortOrder, setSortOrder] = useState(() => loadStoredPublicationSort("title_asc"));
+  const [sortOrder, handleSortChange] = useSharedSort("title_asc");
   const [visibleCount, setVisibleCount] = useState(30);
-
-  const handleSortChange = (value: string) => {
-    setSortOrder(value);
-    storePublicationSort(value);
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -197,7 +192,7 @@ export function CountryPublications({ countrycode, onBack, onSelectPublication }
               <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-surface-2 px-3 py-1 rounded-xl border border-border-subtle shrink-0">
                 <FileText className="w-3.5 h-3.5 text-primary" />
                 <span>
-                  {p.issueCount} {p.issueCount > 1 ? t("publication.issues_plural", "issues") : t("publication.issue_singular", "issue")}
+                  {t("publication.issue_count", { count: p.issueCount })}
                 </span>
               </div>
             </Card>

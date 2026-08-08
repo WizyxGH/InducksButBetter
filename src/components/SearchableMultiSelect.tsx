@@ -24,6 +24,12 @@ export interface MultiSelectOption {
   description?: string
   icon?: React.ReactNode
   group?: string
+  /**
+   * Extra hidden strings the search matches against. Lets an option be found
+   * under names that are not displayed — e.g. a subseries typed in French
+   * ("Mickey à travers les siècles") while the UI shows its English name.
+   */
+  aliases?: string[]
 }
 
 interface SearchableMultiSelectProps {
@@ -50,12 +56,18 @@ export function SearchableMultiSelect({
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
 
+  // Accent-insensitive ("a travers" finds "à travers") and alias-aware, so an
+  // option is found under any of its language variants, not only its label.
+  const normalize = (value: string) =>
+    value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
   const filteredOptions = React.useMemo(() => {
     if (!search) return options;
-    const lowerSearch = search.toLowerCase();
-    return options.filter(opt => 
-      opt.label.toLowerCase().includes(lowerSearch) || 
-      opt.group?.toLowerCase().includes(lowerSearch)
+    const needle = normalize(search);
+    return options.filter(opt =>
+      normalize(opt.label).includes(needle) ||
+      (opt.group && normalize(opt.group).includes(needle)) ||
+      opt.aliases?.some(alias => normalize(alias).includes(needle))
     );
   }, [options, search]);
 

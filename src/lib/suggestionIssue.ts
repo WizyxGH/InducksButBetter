@@ -1,64 +1,34 @@
 /**
- * Builds the prefilled GitHub issue URL used by the suggestion form.
+ * Builds the `mailto:` link the contact form opens.
  *
  * The app is fully serverless, so there is no backend to receive feedback:
- * the honest minimal channel is a prefilled "new issue" page on the project
- * repository, which the user finishes and posts themselves. Kept as a pure
- * module so the URL construction (labels, encoding, truncation) is testable.
+ * the form hands the message to the visitor's own mail client, prefilled.
+ * Kept as a pure module so the subject/body encoding stays testable.
  */
 
-export const SUGGESTION_ISSUES_URL = "https://github.com/WizyxGH/InducksButBetter/issues/new";
-export const DISCORD_INVITE_URL = "https://discord.gg/trPVaPwDJz";
+export const SUGGESTION_EMAIL = "j.levy228@laposte.net";
 
-export type SuggestionType = "idea" | "bug" | "db" | "other";
+/** Mail subjects stay scannable in an inbox list. */
+const SUBJECT_PREFIX = "[InducksButBetter] ";
+const MAX_SUBJECT_LENGTH = 80;
 
-/** Maps the form's suggestion type to the repository's issue labels. */
-const TYPE_LABELS: Record<SuggestionType, string> = {
-  idea: "enhancement",
-  bug: "bug",
-  db: "data",
-  other: "question",
-};
-
-/** GitHub truncates long titles anyway; keep them scannable in the issue list. */
-const MAX_TITLE_LENGTH = 80;
-
-export interface SuggestionInput {
-  /** One of `SuggestionType`; anything unknown falls back to `other`. */
-  type: string;
-  /** Optional display name the user typed in. */
-  name?: string;
-  message: string;
-}
-
-export function buildSuggestionIssueUrl({ type, name, message }: SuggestionInput): string {
-  const kind: SuggestionType = (Object.keys(TYPE_LABELS) as SuggestionType[]).includes(
-    type as SuggestionType
-  )
-    ? (type as SuggestionType)
-    : "other";
-
-  const trimmed = message.trim();
-  // The first line of the message doubles as the issue title, tagged with the
-  // suggestion type so triage can happen from the issue list alone.
+/**
+ * Turns a free-text message into a prefilled mailto link.
+ *
+ * The first line doubles as the subject so the mail is recognisable in an
+ * inbox; the whole message stays in the body, first line included, because the
+ * visitor may still edit the subject in their mail client.
+ */
+export function buildSuggestionMailto(message: string): string {
+  const trimmed = (message ?? "").trim();
   const firstLine = trimmed.split("\n")[0].trim();
-  const prefix = `[${kind}] `;
-  const title = prefix + firstLine.slice(0, MAX_TITLE_LENGTH - prefix.length);
+  const subject = SUBJECT_PREFIX + firstLine.slice(0, MAX_SUBJECT_LENGTH - SUBJECT_PREFIX.length);
 
-  const bodyParts = [trimmed, "", "---"];
-  bodyParts.push(
-    name?.trim()
-      ? `_Submitted by ${name.trim()} via the in-app suggestion form._`
-      : "_Submitted via the in-app suggestion form._"
+  // encodeURIComponent, not URLSearchParams: mailto is not a form payload, so
+  // spaces must stay %20 rather than '+', and newlines %0A.
+  return (
+    `mailto:${SUGGESTION_EMAIL}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(trimmed)}`
   );
-
-  // URLSearchParams percent-encodes accents and newlines correctly, which is
-  // what broke naive `?title=` concatenation attempts.
-  const params = new URLSearchParams({
-    title,
-    body: bodyParts.join("\n"),
-    labels: TYPE_LABELS[kind],
-  });
-
-  return `${SUGGESTION_ISSUES_URL}?${params.toString()}`;
 }

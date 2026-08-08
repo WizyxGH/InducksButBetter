@@ -12,6 +12,7 @@ interface RouteMetadataProps {
   selectedPublicationcode: string | null;
   selectedPublisherid?: string | null;
   selectedSubseriescode?: string | null;
+  selectedUniversecode?: string | null;
 }
 
 export function useRouteMetadata({
@@ -23,7 +24,8 @@ export function useRouteMetadata({
   selectedCountrycode,
   selectedPublicationcode,
   selectedPublisherid,
-  selectedSubseriescode
+  selectedSubseriescode,
+  selectedUniversecode
 }: RouteMetadataProps) {
   useEffect(() => {
     let isCancelled = false;
@@ -71,6 +73,21 @@ export function useRouteMetadata({
             const name = res.rows[0].subseriesname || selectedSubseriescode;
             title = `${name} - InducksButBetter`;
             description = `Browse every Disney comic story of the subseries: ${name} (${selectedSubseriescode}).`;
+          }
+        } else if (selectedUniversecode) {
+          // inducks_universe holds no name: the label comes from
+          // inducks_universename, falling back to the code.
+          const res = await executeQuery({
+            sql: `SELECT COALESCE(
+                    (SELECT un.universename FROM inducks_universename un
+                     WHERE un.universecode = ? AND un.languagecode IN ('en')
+                     LIMIT 1), ?) as name`,
+            args: [selectedUniversecode, selectedUniversecode]
+          });
+          if (!isCancelled && res.rows.length > 0) {
+            const name = res.rows[0].name || selectedUniversecode;
+            title = `${name} - InducksButBetter`;
+            description = `Browse every Disney comic character of the universe: ${name}.`;
           }
         } else if (selectedPersoncode) {
           const res = await executeQuery({
@@ -178,6 +195,7 @@ export function useRouteMetadata({
     selectedCharactercode,
     selectedCountrycode,
     selectedPublicationcode,
-    selectedSubseriescode
+    selectedSubseriescode,
+  selectedUniversecode
   ]);
 }

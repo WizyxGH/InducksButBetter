@@ -34,6 +34,9 @@ const IndexerDetail = lazy(() => import("@/components/Publications/IndexerDetail
 const IssueDetail = lazy(() => import("@/components/Publications/IssueDetail").then(module => ({ default: module.IssueDetail })))
 const SuggestionForm = lazy(() => import("@/components/SuggestionForm").then(module => ({ default: module.SuggestionForm })))
 const SubseriesDetail = lazy(() => import("@/components/Search/SubseriesDetail").then(module => ({ default: module.SubseriesDetail })))
+const SubseriesList = lazy(() => import("@/components/Search/SubseriesList").then(module => ({ default: module.SubseriesList })))
+const UniverseList = lazy(() => import("@/components/Characters/UniverseList").then(module => ({ default: module.UniverseList })))
+const UniverseDetail = lazy(() => import("@/components/Characters/UniverseDetail").then(module => ({ default: module.UniverseDetail })))
 
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 
@@ -58,6 +61,7 @@ function App() {
   const [selectedPublisherid, setSelectedPublisherid] = useState<string | null>(null);
   const [selectedIndexercode, setSelectedIndexercode] = useState<string | null>(null);
   const [selectedSubseriescode, setSelectedSubseriescode] = useState<string | null>(null);
+  const [selectedUniversecode, setSelectedUniversecode] = useState<string | null>(null);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const isRoutingRef = useState(() => ({ current: false }))[0];
@@ -72,7 +76,8 @@ function App() {
     selectedCountrycode,
     selectedPublicationcode,
     selectedPublisherid,
-    selectedSubseriescode
+    selectedSubseriescode,
+    selectedUniversecode
   });
 
   useEffect(() => {
@@ -126,6 +131,7 @@ function App() {
       setSelectedPublicationcode(null);
       setSelectedPublisherid(null);
       setSelectedSubseriescode(null);
+      setSelectedUniversecode(null);
 
       const routeResult = parseRoutePath(pathPart);
       setActiveTab(routeResult.tab);
@@ -138,6 +144,7 @@ function App() {
       if (routeResult.publisherid) setSelectedPublisherid(routeResult.publisherid);
       if (routeResult.indexercode) setSelectedIndexercode(routeResult.indexercode);
       if (routeResult.subseriescode) setSelectedSubseriescode(routeResult.subseriescode);
+      if (routeResult.universecode) setSelectedUniversecode(routeResult.universecode);
 
       setIsInitialized(true);
       setTimeout(() => { isRoutingRef.current = false; }, 0);
@@ -191,10 +198,16 @@ function App() {
       pushHashState(routes.settings() + queryStr);
     } else if (activeTab === "suggestions") {
       pushHashState(routes.suggestions() + queryStr);
+    } else if (activeTab === "subseries") {
+      pushHashState(routes.subseriesList() + queryStr);
+    } else if (activeTab === "universes") {
+      pushHashState(routes.universeList() + queryStr);
     } else if (selectedStorycode) {
       pushHashState(routes.story(selectedStorycode) + queryStr);
     } else if (selectedSubseriescode) {
       pushHashState(routes.subseries(selectedSubseriescode) + queryStr);
+    } else if (selectedUniversecode) {
+      pushHashState(routes.universe(selectedUniversecode) + queryStr);
     } else if (selectedIssuecode) {
       pushHashState(routes.issue(selectedIssuecode) + queryStr);
     } else if (selectedPersoncode) {
@@ -253,7 +266,7 @@ function App() {
             activeTab={activeTab} 
             // Every detail view hides the search tabs; forgetting one leaves
             // the advanced-search bar sitting on top of an unrelated page.
-            isDetailPage={!!(selectedStorycode || selectedIssuecode || selectedPersoncode || selectedCharactercode || selectedPublicationcode || selectedPublisherid || selectedCountrycode || selectedIndexercode || selectedSubseriescode)}
+            isDetailPage={!!(selectedStorycode || selectedIssuecode || selectedPersoncode || selectedCharactercode || selectedPublicationcode || selectedPublisherid || selectedCountrycode || selectedIndexercode || selectedSubseriescode || selectedUniversecode)}
           />
 
           {/* Content Viewport */}
@@ -276,6 +289,7 @@ function App() {
                         onBack={() => navigateBack(() => setSelectedSubseriescode(null))}
                         onSelectStory={(code) => {
                           setSelectedSubseriescode(null);
+      setSelectedUniversecode(null);
                           setSelectedStorycode(code);
                         }}
                       />
@@ -288,6 +302,32 @@ function App() {
                     setSelectedIssuecode={setSelectedIssuecode}
                   />
                   )}
+                </Suspense>
+              )}
+            </TabsContent>
+
+            <TabsContent value="subseries" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
+              {activeTab === "subseries" && (
+                <Suspense fallback={<TabFallback />}>
+                  <SubseriesList
+                    onSelectSubseries={(code) => {
+                      setActiveTab("stories");
+                      setSelectedSubseriescode(code);
+                    }}
+                  />
+                </Suspense>
+              )}
+            </TabsContent>
+
+            <TabsContent value="universes" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
+              {activeTab === "universes" && (
+                <Suspense fallback={<TabFallback />}>
+                  <UniverseList
+                    onSelectUniverse={(code) => {
+                      setActiveTab("characters");
+                      setSelectedUniversecode(code);
+                    }}
+                  />
                 </Suspense>
               )}
             </TabsContent>
@@ -390,10 +430,23 @@ function App() {
             <TabsContent value="characters" className="h-full m-0 p-0 border-none outline-none overflow-hidden">
               {activeTab === "characters" && (
                 <Suspense fallback={<TabFallback />}>
-                  <CharactersSearch
-                    selectedCharactercode={selectedCharactercode}
-                    setSelectedCharactercode={setSelectedCharactercode}
-                  />
+                  {selectedUniversecode ? (
+                    <div className="h-full overflow-y-auto bg-surface-2/20 w-full">
+                      <UniverseDetail
+                        universecode={selectedUniversecode}
+                        onBack={() => navigateBack(() => setSelectedUniversecode(null))}
+                        onSelectCharacter={(code) => {
+                          setSelectedUniversecode(null);
+                          setSelectedCharactercode(code);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <CharactersSearch
+                      selectedCharactercode={selectedCharactercode}
+                      setSelectedCharactercode={setSelectedCharactercode}
+                    />
+                  )}
                 </Suspense>
               )}
             </TabsContent>

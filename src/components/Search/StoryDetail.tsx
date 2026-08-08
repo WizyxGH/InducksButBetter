@@ -171,7 +171,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
                 )}
                 {story.rowsperpage > 0 && (
                   <Tag color="surface" icon={<AlignJustify className="w-3 h-3" />}>
-                    {story.rowsperpage} {story.rowsperpage > 1 ? t('story.strips') : t('story.strip')} {t('story.per_page')}
+                    {t('story.strips_per_page', { count: story.rowsperpage })}
                   </Tag>
                 )}
               </div>

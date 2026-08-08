@@ -5,7 +5,7 @@
     "inducks_code": "Inducks code",
     "inducks_code_placeholder": "Search for a story...",
     "keywords": "Judul / kata kunci",
-    "keywords_placeholder": "Mis.: natal, perjalanan waktu",
+    "keywords_placeholder": "Mis.: harta karun",
     "include_comments": "Search in comments as well",
     "multiple_parts": "Multi-part stories",
     "content_type": "Content Type",
@@ -177,9 +177,6 @@
     "uncredited": "Uncredited.",
     "original_title": "Original title",
     "not_found": "Story not found.",
-    "strip": "strip",
-    "strips": "strips",
-    "per_page": "/ page",
     "issue_label": "Issue",
     "issue_symbol": "#",
     "no_characters": "No characters listed.",
@@ -189,7 +186,9 @@
     "pages_short": "p.",
     "code_copied": "Code copied!",
     "page": "page",
-    "refers_to_creator": "Referensi ke pembuat"
+    "refers_to_creator": "Referensi ke pembuat",
+    "strips_per_page_one": "{{count}} strip per halaman",
+    "strips_per_page_other": "{{count}} strip per halaman"
   },
   "kinds": {
     "c": "Cover",
@@ -473,7 +472,6 @@
     "aliases": "Aliases",
     "creators": "Main Creators",
     "co_characters": "Frequent Companions",
-    "stories_featuring": "Stories featuring {{name}}",
     "title": "Search parameters",
     "code": "Character code",
     "code_placeholder": "Ex: DD, MM...",
@@ -522,8 +520,8 @@
     "publications_count": "Publications",
     "search_placeholder": "Filter countries...",
     "desc": "Select a country to explore its Disney publications.",
-    "publications_singular": "publication",
-    "publications_plural": "publications"
+    "publication_count_one": "{{count}} publikasi",
+    "publication_count_other": "{{count}} publikasi"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -549,15 +547,15 @@
     "content": "Content",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries",
-    "issue_singular": "issue",
-    "issues_plural": "issues",
     "error_load": "Failed to load issue details.",
     "show_more_years": "Show more years",
     "untitled": "Untitled",
     "not_found": "Publikasi ini tidak ada.",
     "not_found_desc": "Tidak ada publikasi dengan kode ini di basis data lokal.",
     "show_more_sections": "Tampilkan lebih banyak bagian",
-    "circulation": "Oplah"
+    "circulation": "Oplah",
+    "issue_count_one": "{{count}} edisi",
+    "issue_count_other": "{{count}} edisi"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -627,24 +625,12 @@
   "suggestions": {
     "title": "Send us your suggestions",
     "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
-    "label_name": "Name or nickname (optional)",
-    "placeholder_name": "What's your name?",
-    "label_type": "Suggestion type",
-    "type_idea": "Idea",
-    "type_bug": "Bug",
-    "type_db": "Data",
-    "type_other": "Other",
     "label_message": "Your message",
     "placeholder_message": "Describe your idea or the problem you ran into...",
-    "sending": "Sending...",
-    "sent": "Sent successfully!",
-    "submit": "Send the suggestion",
+    "submit": "Kirim saran",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent.",
-    "submit_github": "Kirim melalui GitHub",
-    "btn_discord": "Atau hubungi kami di Discord",
-    "finish_on_github": "Selesaikan pengiriman saran Anda di tab GitHub yang baru saja terbuka.",
-    "github_hint": "Pengiriman membuka issue GitHub yang sudah terisi di tab baru — akun GitHub gratis diperlukan untuk memublikasikannya."
+    "finish_in_mail": "Selesaikan pengiriman di aplikasi email Anda.",
+    "mail_hint": "Mengirim akan membuka aplikasi email Anda dengan pesan terisi."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -689,6 +675,28 @@
     "not_found": "Subseri tidak ditemukan.",
     "stories": "Cerita dalam subseri ini",
     "no_stories": "Tidak ada cerita yang ditemukan.",
-    "maybe_error": "Subseri ini mungkin sebuah kesalahan."
+    "maybe_error": "Subseri ini mungkin sebuah kesalahan.",
+    "other_names": "Nama dalam bahasa lain",
+    "list_title": "Subseri",
+    "list_subtitle": "Semua seri cerita yang dikatalogkan Inducks.",
+    "list_search": "Cari subseri dalam bahasa apa pun...",
+    "uncategorized": "Tanpa kategori",
+    "count_one": "{{count}} subseri",
+    "count_other": "{{count}} subseri",
+    "story_count_one": "{{count}} cerita",
+    "story_count_other": "{{count}} cerita"
+  },
+  "universes": {
+    "list_title": "Semesta",
+    "list_subtitle": "Semua semesta karakter yang ditetapkan Inducks.",
+    "list_search": "Cari semesta dalam bahasa apa pun...",
+    "characters": "Karakter",
+    "no_characters": "Tidak ada karakter dalam semesta ini.",
+    "not_found": "Semesta ini tidak ada.",
+    "other_names": "Nama dalam bahasa lain",
+    "count_one": "{{count}} semesta",
+    "count_other": "{{count}} semesta",
+    "character_count_one": "{{count}} karakter",
+    "character_count_other": "{{count}} karakter"
   }
 }

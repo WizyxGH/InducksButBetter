@@ -3,7 +3,8 @@ export interface MetaData {
   kinds: string[];
   countries: { countrycode: string; countryname: string }[];
   universes: { universecode: string; universename: string }[];
-  subseries: { value: string; label: string; group: string }[];
+  /** `aliases` carries the name in every other language, for searching. */
+  subseries: { value: string; label: string; group: string; aliases?: string[] }[];
 }
 
 export const COUNTRY_CONTINENTS: Record<string, string> = {

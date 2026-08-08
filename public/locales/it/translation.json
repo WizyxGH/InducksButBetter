@@ -5,7 +5,7 @@
     "inducks_code": "Codice Inducks",
     "inducks_code_placeholder": "Cerca una storia...",
     "keywords": "Titolo / parole chiave",
-    "keywords_placeholder": "Es.: natale, viaggio nel tempo",
+    "keywords_placeholder": "Es.: tesoro",
     "include_comments": "Cerca anche nei commenti",
     "multiple_parts": "Storie in più parti",
     "content_type": "Tipo di contenuto",
@@ -177,9 +177,6 @@
     "uncredited": "Non accreditato.",
     "original_title": "Titolo originale",
     "not_found": "Story not found.",
-    "strip": "strip",
-    "strips": "strips",
-    "per_page": "/ page",
     "issue_label": "Issue",
     "issue_symbol": "#",
     "no_characters": "No characters listed.",
@@ -189,7 +186,9 @@
     "pages_short": "p.",
     "code_copied": "Code copied!",
     "page": "page",
-    "refers_to_creator": "Riferimento all'autore"
+    "refers_to_creator": "Riferimento all'autore",
+    "strips_per_page_one": "{{count}} striscia per pagina",
+    "strips_per_page_other": "{{count}} strisce per pagina"
   },
   "kinds": {
     "c": "Copertina",
@@ -473,7 +472,6 @@
     "aliases": "Alias",
     "creators": "Creatori principali",
     "co_characters": "Compagni frequenti",
-    "stories_featuring": "Stories featuring {{name}}",
     "title": "Parametri di ricerca",
     "code": "Codice del personaggio",
     "code_placeholder": "Es: DD, MM...",
@@ -522,8 +520,8 @@
     "publications_count": "Pubblicazioni",
     "search_placeholder": "Filtra paesi...",
     "desc": "Seleziona un paese per esplorare le sue pubblicazioni Disney.",
-    "publications_singular": "pubblicazione",
-    "publications_plural": "pubblicazioni"
+    "publication_count_one": "{{count}} pubblicazione",
+    "publication_count_other": "{{count}} pubblicazioni"
   },
   "countryPubs": {
     "title": "Publications of {{country}}",
@@ -549,15 +547,15 @@
     "content": "Contenuto",
     "entry_one": "{{count}} entry",
     "entry_other": "{{count}} entries",
-    "issue_singular": "numero",
-    "issues_plural": "numeri",
     "error_load": "Impossibile caricare i dettagli del fascicolo.",
     "show_more_years": "Show more years",
     "untitled": "Untitled",
     "not_found": "Questa pubblicazione non esiste.",
     "not_found_desc": "Nessuna pubblicazione con questo codice è stata trovata nel database locale.",
     "show_more_sections": "Mostra altre sezioni",
-    "circulation": "Tiratura"
+    "circulation": "Tiratura",
+    "issue_count_one": "{{count}} numero",
+    "issue_count_other": "{{count}} numeri"
   },
   "publisher": {
     "title": "Publisher: {{publisher}}",
@@ -627,24 +625,12 @@
   "suggestions": {
     "title": "Send us your suggestions",
     "subtitle": "An idea for an improvement? Spotted a bug? Help us make InducksButBetter even better!",
-    "label_name": "Name or nickname (optional)",
-    "placeholder_name": "What's your name?",
-    "label_type": "Suggestion type",
-    "type_idea": "Idea",
-    "type_bug": "Bug",
-    "type_db": "Data",
-    "type_other": "Other",
     "label_message": "Your message",
     "placeholder_message": "Describe your idea or the problem you ran into...",
-    "sending": "Sending...",
-    "sent": "Sent successfully!",
-    "submit": "Send the suggestion",
+    "submit": "Invia il suggerimento",
     "error_short": "Your message is too short (10 characters minimum).",
-    "success": "Thank you! Your suggestion has been sent.",
-    "submit_github": "Invia tramite GitHub",
-    "btn_discord": "Oppure contattaci su Discord",
-    "finish_on_github": "Completa la pubblicazione del tuo suggerimento nella scheda GitHub appena aperta.",
-    "github_hint": "L’invio apre una issue GitHub precompilata in una nuova scheda: per pubblicarla serve un account GitHub gratuito."
+    "finish_in_mail": "Completa l’invio dalla tua app di posta.",
+    "mail_hint": "L’invio apre la tua app di posta con il messaggio precompilato."
   },
   "speech": {
     "error_denied": "Microphone access denied. Check your browser permissions.",
@@ -689,6 +675,28 @@
     "not_found": "Sottoserie non trovata.",
     "stories": "Storie di questa sottoserie",
     "no_stories": "Nessuna storia trovata.",
-    "maybe_error": "Questa sottoserie potrebbe essere un errore."
+    "maybe_error": "Questa sottoserie potrebbe essere un errore.",
+    "other_names": "Nomi in altre lingue",
+    "list_title": "Sottoserie",
+    "list_subtitle": "Tutte le serie di storie catalogate da Inducks.",
+    "list_search": "Cerca una sottoserie in qualsiasi lingua...",
+    "uncategorized": "Senza categoria",
+    "count_one": "{{count}} sottoserie",
+    "count_other": "{{count}} sottoserie",
+    "story_count_one": "{{count}} storia",
+    "story_count_other": "{{count}} storie"
+  },
+  "universes": {
+    "list_title": "Universi",
+    "list_subtitle": "Tutti gli universi di personaggi definiti da Inducks.",
+    "list_search": "Cerca un universo in qualsiasi lingua...",
+    "characters": "Personaggi",
+    "no_characters": "Nessun personaggio elencato in questo universo.",
+    "not_found": "Questo universo non esiste.",
+    "other_names": "Nomi in altre lingue",
+    "count_one": "{{count}} universo",
+    "count_other": "{{count}} universi",
+    "character_count_one": "{{count}} personaggio",
+    "character_count_other": "{{count}} personaggi"
   }
 }

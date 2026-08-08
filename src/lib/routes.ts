@@ -41,6 +41,11 @@ export const routes = {
   // Subseries codes contain spaces and accents ("Zio Paperone e..."), so the
   // whole code is one encoded segment.
   subseries: (code: string) => `/subseries/${encode(code)}`,
+  subseriesList: () => `/subseries`,
+  // Universe codes are plain words ("Ducks", "A Bug's Life") but may contain
+  // spaces and apostrophes, so they stay a single encoded segment too.
+  universe: (code: string) => `/universes/${encode(code)}`,
+  universeList: () => `/universes`,
 
   // Country hierarchy
   country: (code: string) => `/countries/${encode(code)}`,
