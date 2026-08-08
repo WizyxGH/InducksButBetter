@@ -21,6 +21,19 @@ interface SqlEditorProps {
   setQuery: (query: string) => void
 }
 
+/**
+ * Whether a result value should be rendered as a number.
+ *
+ * SQLite hands most columns back as strings, so the check is on the shape of
+ * the value rather than its type — an all-digit issue number is still worth
+ * aligning right.
+ */
+function isNumericValue(value: unknown): boolean {
+  if (typeof value === "number") return true
+  if (typeof value !== "string" || value.trim() === "") return false
+  return /^-?\d+(\.\d+)?$/.test(value.trim())
+}
+
 /** Returns a CodeMirror SQL extension pre-loaded with DB schema for autocompletion */
 function useSqlExtension(schema: Record<string, string[]>) {
   return useMemo(() => {
@@ -54,6 +67,9 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
 
   const [columnOrder, setColumnOrder] = useState<string[]>([])
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set())
+  // Kept apart from `hiddenColumns`: that set is the user's own choice, and a
+  // new result set must not quietly inherit it.
+  const [showEmptyColumns, setShowEmptyColumns] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalRows, setTotalRows] = useState<number | null>(null)
   const ROWS_PER_PAGE = 1000
@@ -63,12 +79,58 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
     if (results.length > 0 && columnOrder.length === 0) {
       setColumnOrder(Object.keys(results[0]).filter(k => isNaN(Number(k))))
       setHiddenColumns(new Set())
+      setShowEmptyColumns(false)
     }
   }, [results, columnOrder])
 
+  /**
+   * Columns with nothing in them on this page.
+   *
+   * Inducks rows are sparse — `doubt`, `error`, `locked` and the various
+   * `*comment` fields are empty far more often than not — so a `SELECT *`
+   * spends most of its width on blanks. They are folded away by default and
+   * can be brought back, rather than dropped silently.
+   */
+  const emptyColumns = useMemo(() => {
+    if (results.length === 0) return new Set<string>()
+    const empty = columnOrder.filter((col) =>
+      results.every((row) => {
+        const value = row[col]
+        return value === null || value === undefined || value === ""
+      })
+    )
+    // Folding every column away would leave an empty grid and no way back.
+    return empty.length === columnOrder.length ? new Set<string>() : new Set(empty)
+  }, [results, columnOrder])
+
+  /**
+   * Columns whose every filled value is a number.
+   *
+   * Alignment is a property of the column, not of the cell: deciding per cell
+   * sent `12` right and `12bis` left inside the same column, which reads as a
+   * rendering fault. One doubtful value is enough to keep the column textual.
+   */
+  const numericColumns = useMemo(() => {
+    if (results.length === 0) return new Set<string>()
+    return new Set(
+      columnOrder.filter((col) => {
+        let sawValue = false
+        for (const row of results) {
+          const value = row[col]
+          if (value === null || value === undefined || value === "") continue
+          if (!isNumericValue(value)) return false
+          sawValue = true
+        }
+        return sawValue
+      })
+    )
+  }, [results, columnOrder])
+
   const visibleColumns = useMemo(() => {
-    return columnOrder.filter((col) => !hiddenColumns.has(col))
-  }, [columnOrder, hiddenColumns])
+    return columnOrder.filter(
+      (col) => !hiddenColumns.has(col) && (showEmptyColumns || !emptyColumns.has(col))
+    )
+  }, [columnOrder, hiddenColumns, emptyColumns, showEmptyColumns])
 
   const handleHideColumn = (col: string) => {
     setHiddenColumns((prev) => {
@@ -197,8 +259,15 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
       const result = await executeQuery({ sql: executableSql, args: [] })
       const rows = result.rows || []
       const columns = result.columns || (rows.length > 0 ? Object.keys(rows[0]).filter(k => isNaN(Number(k))) : [])
-      
-      setColumnOrder(columns as string[])
+
+      // `getColumnNames()` keeps duplicates — `SELECT *` over a join returns
+      // `storycode` twice — but the rows are objects keyed by column name, so
+      // sql.js has already collapsed them to a single value. Rendering the
+      // second column would fill it with the first one's data, which is worse
+      // than not showing it: the value is genuinely no longer distinguishable.
+      const uniqueColumns = [...new Set(columns as string[])]
+
+      setColumnOrder(uniqueColumns)
       setHiddenColumns(new Set())
       setResults(rows)
       
@@ -362,9 +431,22 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
 
       {results.length > 0 && (
         <Card className="rounded-2xl border border-border shadow-xl overflow-hidden bg-surface">
+          {emptyColumns.size > 0 && (
+            <div className="px-4 py-2 border-b border-border-subtle bg-surface-2/50 flex items-center justify-between gap-3 text-xs">
+              <span className="text-text-hint">
+                {t("sql.empty_columns_hidden", { count: emptyColumns.size })}
+              </span>
+              <button
+                onClick={() => setShowEmptyColumns((prev) => !prev)}
+                className="font-semibold text-primary hover:underline underline-offset-2 shrink-0"
+              >
+                {showEmptyColumns ? t("sql.empty_columns_fold") : t("sql.empty_columns_show")}
+              </button>
+            </div>
+          )}
           <div className="max-h-[600px] overflow-auto">
             <table className="min-w-full text-sm text-left border-collapse">
-              <thead className="sticky top-0 z-10 text-xs text-text-hint uppercase border-b border-border font-bold tracking-wider bg-surface">
+              <thead className="sticky top-0 z-10 text-xs text-text-hint uppercase border-b border-border font-bold tracking-wider bg-surface/95 backdrop-blur-sm shadow-sm shadow-border/40">
                 <tr>
                   {visibleColumns.map((col) => (
                     <SortableTh
@@ -381,14 +463,37 @@ export function SqlEditor({ query, setQuery }: SqlEditorProps) {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-subtle">
+              <tbody className="divide-y divide-border-subtle/60">
                 {sortedResults.map((row, i) => (
-                  <tr key={i} className="bg-surface hover:bg-surface-2 transition-colors">
-                    {visibleColumns.map((col) => (
-                      <td key={col} className="px-6 py-4 font-medium text-text-body whitespace-nowrap border-x border-border-subtle/50">
-                        {String(row[col] ?? "")}
-                      </td>
-                    ))}
+                  // Zebra striping earns its keep here: a result set can be
+                  // dozens of columns wide, and the eye needs something to hold
+                  // on to when tracking a row across a horizontal scroll.
+                  <tr
+                    key={i}
+                    className={cn(
+                      "transition-colors hover:bg-primary/5",
+                      i % 2 === 0 ? "bg-surface" : "bg-surface-2/40"
+                    )}
+                  >
+                    {visibleColumns.map((col) => {
+                      const value = row[col]
+                      const isEmpty = value === null || value === undefined || value === ""
+                      return (
+                        <td
+                          key={col}
+                          className={cn(
+                            "px-4 py-2.5 text-text-body whitespace-nowrap border-r border-border-subtle/40 last:border-r-0",
+                            // Everything stays left-aligned: mixing left and
+                            // right columns reads as a rendering fault. Digits
+                            // still line up thanks to the tabular figures.
+                            numericColumns.has(col) && "tabular-nums",
+                            isEmpty && "text-text-hint/50 italic"
+                          )}
+                        >
+                          {isEmpty ? "—" : String(value)}
+                        </td>
+                      )
+                    })}
                   </tr>
                 ))}
               </tbody>

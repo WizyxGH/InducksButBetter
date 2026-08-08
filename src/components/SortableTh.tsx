@@ -12,9 +12,9 @@ interface SortableThProps {
   onDrop?: (e: React.DragEvent<HTMLTableCellElement>, key: string) => void
 }
 
-export function SortableTh({ 
-  col, 
-  sortKey, 
+export function SortableTh({
+  col,
+  sortKey,
   direction, 
   onSort, 
   onHide,
@@ -26,8 +26,10 @@ export function SortableTh({
   const isActive = sortKey === col
 
   return (
+    // One separator per boundary, not two: `border-x` on every cell drew the
+    // rule twice and gave the grid a heavy spreadsheet look.
     <th
-      className="px-6 py-4 cursor-pointer hover:bg-surface-2 transition-colors border-x border-border-subtle/50 group select-none"
+      className="px-4 py-2.5 cursor-pointer hover:bg-surface-2 transition-colors border-r border-border-subtle/40 last:border-r-0 group select-none whitespace-nowrap"
       draggable={!!onDragStart}
       onDragStart={(e) => onDragStart && onDragStart(e, col)}
       onDragOver={(e) => onDragOver && onDragOver(e)}
