@@ -399,7 +399,8 @@
     "translations": "Translations",
     "cookie_save_error": "Could not save the cookie.",
     "contact_title": "Contact & suggestions",
-    "contact_desc": "Share an idea or report a bug"
+    "contact_desc": "Share an idea or report a bug",
+    "cookie_saved_no_proxy": "Saved, but the local image proxy is not running (pnpm dev:images)."
   },
   "localDb": {
     "title": "Import Inducks database",
@@ -648,7 +649,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Groups",
+    "reprints": "Reprinted in"
   },
   "entry": {
     "comment": "Comment",
