@@ -4,6 +4,7 @@ import { Database, Save } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { parseCollection } from "@/lib/collection"
 
 export function PersonalCollectionCard() {
   const { t } = useTranslation()
@@ -16,7 +17,7 @@ export function PersonalCollectionCard() {
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed)) {
-          setCollectionText(parsed.map((code) => `${code}^1`).join("\n"))
+          setCollectionText(parsed.join("\n"))
           setCollectionCount(parsed.length)
         }
       }
@@ -26,21 +27,10 @@ export function PersonalCollectionCard() {
   }, [])
 
   const handleSaveCollection = () => {
-    const issues = collectionText
-      .split(/[\n;]+/)
-      .map((line) => {
-        const trimmed = line.trim();
-        if (trimmed.includes("^")) {
-          const parts = trimmed.split("^");
-          if (parts[0]) {
-            return parts[0].trim();
-          }
-        }
-        return null;
-      })
-      .filter((line): line is string => line !== null && line.length > 0)
+    const issues = parseCollection(collectionText)
 
     localStorage.setItem("inducks_collection_issues", JSON.stringify(issues))
+    setCollectionText(issues.join("\n"))
     setCollectionCount(issues.length)
     toast.success(t("collection.saved_success"))
   };

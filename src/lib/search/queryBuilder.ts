@@ -1,6 +1,8 @@
 
 import { SearchFilters, PublicationsSearchFilters, SearchQueryResponse, StorycodeCandidate } from './types';
 import { tokenizeKeywords, keywordLikeVariants } from './keywords';
+import { resolveRowsPerPage } from './pagination';
+import { coverThumbSql } from './thumbnailSql';
 
 /**
  * Normalises a multi-value filter into a clean list of codes.
@@ -138,7 +140,7 @@ export function getStorycodeCandidates(code: string): StorycodeCandidate[] {
 }
 
 export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryResponse {
-  const pageSize = Math.max(1, parseInt(String(filters.rowsperpage || "24"), 10) || 24);
+  const pageSize = resolveRowsPerPage(filters.rowsperpage);
   const page = Math.max(1, parseInt(String(filters.page || "1"), 10) || 1);
   const offset = (page - 1) * pageSize;
 
@@ -656,7 +658,7 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
 }
 
 export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters): SearchQueryResponse {
-  const pageSize = Math.max(1, parseInt(String(filters.rowsperpage || "24"), 10) || 24);
+  const pageSize = resolveRowsPerPage(filters.rowsperpage);
   const page = Math.max(1, parseInt(String(filters.page || "1"), 10) || 1);
   const offset = (page - 1) * pageSize;
 
@@ -825,10 +827,7 @@ export function buildPublicationsSearchQuery(filters: PublicationsSearchFilters)
       p.countrycode,
       p.languagecode,
       ${seriesTitle},
-      (SELECT iu.sitecode || '|' || iu.url
-       FROM inducks_issueurl iu
-       WHERE iu.issuecode = i.issuecode
-       ORDER BY CASE WHEN iu.sitecode = 'webusers' THEN 0 ELSE 1 END LIMIT 1) as issue_thumb,
+      ${coverThumbSql("i.issuecode")} as issue_thumb,
       (SELECT pub.publishername
        FROM inducks_publishingjob pj
        JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid

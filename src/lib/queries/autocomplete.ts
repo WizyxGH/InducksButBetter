@@ -1,4 +1,5 @@
 import { executeQuery } from "../db";
+import { characterImageSql, storyThumbByStorycodeSql } from "../search/thumbnailSql";
 
 // Polyfill for autocomplete queries
 export async function autocompleteCharacter(q: string, lang: string = 'fr') {
@@ -6,11 +7,7 @@ export async function autocompleteCharacter(q: string, lang: string = 'fr') {
   const result = await executeQuery({
     sql: `
       SELECT c.charactercode, COALESCE(cn.charactername, c.charactername) as charactername,
-              (SELECT cu.sitecode || '|' || cu.url
-              FROM inducks_characterurl cu
-              WHERE cu.charactercode = c.charactercode
-              ORDER BY CASE WHEN cu.sitecode = 'webusers' THEN 0 ELSE 1 END
-              LIMIT 1) as imageUrl
+              ${characterImageSql('c.charactercode')} as imageUrl
       FROM inducks_character c
       LEFT JOIN inducks_charactername cn ON c.charactercode = cn.charactercode AND cn.languagecode = ?
       WHERE (COALESCE(cn.charactername, c.charactername) LIKE ? OR c.charactercode LIKE ?)
@@ -82,13 +79,7 @@ export async function autocompleteStorycode(q: string, lang: string = 'fr') {
         s.storycode as storycode,
         s.storycode as id,
         MAX(COALESCE(s.story_title, sh.title, 'Sans titre')) as storyname,
-        (SELECT eu.sitecode || '|' || eu.url
-         FROM inducks_storyversion sv_img
-         JOIN inducks_entry e_img ON sv_img.storyversioncode = e_img.storyversioncode
-         JOIN inducks_entryurl eu ON e_img.entrycode = eu.entrycode
-         WHERE sv_img.storycode = s.storycode
-           AND eu.sitecode IN ('webusers', 'thumbnails', 'thumbnails2', 'thumbnails3')
-         ORDER BY CASE WHEN eu.sitecode = 'webusers' THEN 0 ELSE 1 END LIMIT 1) as story_thumb
+        ${storyThumbByStorycodeSql('s.storycode')} as story_thumb
       FROM MatchedStories s
       LEFT JOIN inducks_storyheader sh ON s.storyheadercode = sh.storyheadercode
       GROUP BY s.storycode

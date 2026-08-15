@@ -6,18 +6,25 @@ describe('AvatarWithFallback', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => localStorage.clear())
 
-  it('renders initials when no cookie is present', () => {
-    render(<AvatarWithFallback src="/api/proxy-image?url=foo" name="Donald Duck" />)
+  it('renders initials alone when there is no source', () => {
+    render(<AvatarWithFallback src="" name="Donald Duck" />)
     expect(screen.getByText('DD')).toBeInTheDocument()
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
-  it('renders the image when the cookie is present', () => {
-    localStorage.setItem('inducks_cookie', 'token')
+  it('renders the image when a source and a reachable proxy exist', () => {
+    // Images are gated on proxy availability (true under DEV), no longer on a
+    // string in localStorage — that value was never sent anywhere.
     render(<AvatarWithFallback src="/api/proxy-image?url=foo" name="Mickey Mouse" />)
     const img = screen.getByRole('img')
     expect(img).toHaveAttribute('src', '/api/proxy-image?url=foo')
     expect(screen.getByText('MM')).toBeInTheDocument()
+  })
+
+  it('ignores a stored cookie value entirely', () => {
+    localStorage.setItem('inducks_cookie', 'token')
+    render(<AvatarWithFallback src="" name="Donald Duck" />)
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
   it('uses the provided custom class names', () => {

@@ -1,5 +1,7 @@
 import React from "react"
 import { HoverTooltip } from "@/components/HoverTooltip"
+import { AvatarWithFallback } from "@/components/AvatarWithFallback"
+import { imagesAvailable } from "@/lib/utils"
 
 interface EntityBadgeProps {
   type: "character" | "creator"
@@ -26,7 +28,7 @@ export const EntityBadge = React.memo(function EntityBadge({
   onSelect,
 }: EntityBadgeProps) {
   const isCharacter = type === "character"
-  const hasCookie = React.useMemo(() => !!localStorage.getItem("inducks_cookie"), [])
+  const hasCookie = React.useMemo(() => imagesAvailable(), [])
 
   const avatarSize = size === "sm" ? "w-4 h-4" : "w-5 h-5"
   const tooltipAvatarSize = "w-12 h-12"
@@ -50,22 +52,14 @@ export const EntityBadge = React.memo(function EntityBadge({
     }
   }
 
-  const avatarFallback = isCharacter ? code : name.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2)
-
   const renderAvatar = (className: string, textSize: string) => (
-    <div className={`${className} rounded-full overflow-hidden border border-border-subtle bg-surface-2 shrink-0 relative flex items-center justify-center`}>
-      <span className={`${textSize} font-bold text-text-secondary absolute inset-0 flex items-center justify-center uppercase leading-none tracking-tighter`}>
-        {avatarFallback}
-      </span>
-      <img
-        src={photoUrl}
-        alt={name}
-        loading="lazy"
-        decoding="async"
-        className="w-full h-full object-cover z-10 relative"
-        onError={(e) => (e.currentTarget.style.display = "none")}
-      />
-    </div>
+    <AvatarWithFallback 
+      src={photoUrl} 
+      name={name}
+      fallbackOverride={isCharacter ? code : undefined}
+      sizeClasses={className}
+      textClasses={textSize}
+    />
   )
 
   return (

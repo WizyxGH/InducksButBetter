@@ -1,5 +1,6 @@
 import { executeQuery } from "../db";
 import { splitIssueCode, issueCodeKey } from "../issueCode";
+import { coverThumbSql, storyThumbByVersionSql } from "../search/thumbnailSql";
 
 /**
  * Resolves an issue whose code may be missing the database's alignment
@@ -17,6 +18,8 @@ export async function resolveIssue(issuecode: string) {
       i.oldestdate,
       i.pages,
       i.price,
+      i.printrun,
+      i.issuecomment,
       i.size,
       i.attached,
       p.title as publication_title,
@@ -64,11 +67,7 @@ export async function getIssueDetail(issuecode: string, lang: string = "fr") {
   // 2. Cover / thumbnail
   const thumbResult = await executeQuery({
     sql: `
-      SELECT eu.sitecode || '|' || eu.url as issue_thumb
-      FROM inducks_entryurl eu
-      WHERE eu.entrycode = (
-        SELECT entrycode FROM inducks_entry WHERE issuecode = ? ORDER BY position ASC LIMIT 1
-      )
+      SELECT ${coverThumbSql('?')} as issue_thumb
     `,
     args: [issuecode]
   });
@@ -101,6 +100,7 @@ export async function getIssueDetail(issuecode: string, lang: string = "fr") {
         e.sideways,
         e.printedcode,
         e.includedinentrycode,
+        ${storyThumbByVersionSql('e.storyversioncode')} as thumb,
         -- One row per job, deduplicated on the client by person code. Two
         -- plain GROUP_CONCATs listed anyone credited under two roles of the
         -- same bucket twice ("Fabrizio Petrossi, Fabrizio Petrossi" for an
@@ -139,10 +139,48 @@ export async function getIssueDetail(issuecode: string, lang: string = "fr") {
     args: [issuecode]
   });
 
+  // Additional dates
+  const datesResult = await executeQuery({
+    sql: `
+      SELECT date, kindofdate, doubt
+      FROM inducks_issuedate
+      WHERE issuecode = ?
+      ORDER BY date
+    `,
+    args: [issuecode]
+  });
+
+  // Reprints (issues that reprint this issue)
+  const reprintsResult = await executeQuery({
+    sql: `
+      SELECT c.collectingissuecode, i.issuenumber, p.title as publication_title
+      FROM inducks_issuecollecting c
+      JOIN inducks_issue i ON c.collectingissuecode = i.issuecode
+      LEFT JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+      WHERE c.collectedissuecode = ?
+    `,
+    args: [issuecode]
+  });
+
+  // Collections (issues that this issue collects, e.g. albums)
+  const collectionsResult = await executeQuery({
+    sql: `
+      SELECT c.collectedissuecode, i.issuenumber, p.title as publication_title
+      FROM inducks_issuecollecting c
+      JOIN inducks_issue i ON c.collectedissuecode = i.issuecode
+      LEFT JOIN inducks_publication p ON i.publicationcode = p.publicationcode
+      WHERE c.collectingissuecode = ?
+    `,
+    args: [issuecode]
+  });
+
   return {
     ...issue,
     issue_thumb: thumb,
     indexers: indexersResult.rows,
-    stories: storiesResult.rows
+    stories: storiesResult.rows,
+    dates: datesResult.rows,
+    reprints: reprintsResult.rows,
+    collections: collectionsResult.rows
   };
 }

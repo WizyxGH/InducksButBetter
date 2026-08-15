@@ -251,11 +251,32 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
               </h3>
               
               <div className="space-y-3">
-                <div className="flex items-center gap-3 text-xs text-text-body">
-                  <Calendar className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex items-start gap-3 text-xs text-text-body">
+                  <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold">{t("publication.date")}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatDate(issue.oldestdate)}</p>
+                    {issue.dates && issue.dates.length > 0 ? (
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {issue.dates.map((d: any, i: number) => {
+                          let comment = "";
+                          if (d.kindofdate) {
+                            const kinds: Record<string, string> = { a: "actual", c: "copyright", p: "printed", o: "on sale" };
+                            comment = ` (${kinds[d.kindofdate.toLowerCase()] || d.kindofdate})`;
+                          }
+                          return (
+                            <React.Fragment key={i}>
+                              {formatDate(d.date)}{d.doubt === 'Y' && '?'}{comment}
+                              {i < issue.dates.length - 1 && ", "}
+                            </React.Fragment>
+                          );
+                        })}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground">{formatDate(issue.oldestdate)}</p>
+                    )}
+                    {issue.issuecomment && (
+                      <p className="text-[10px] text-text-secondary italic mt-1">{issue.issuecomment}</p>
+                    )}
                   </div>
                 </div>
 
@@ -274,8 +295,6 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                     <UserCheck className="w-4 h-4 text-primary shrink-0" />
                     <div className="min-w-0">
                       <p className="font-bold">{t("issue.indexed_by")}</p>
-                      {/* A flex row separated names by whitespace alone, which
-                          read as a list of lines. Commas make it a sentence. */}
                       <p className="text-[10px] text-muted-foreground">
                         {issue.indexers.map((p: any, i: number) => (
                           <React.Fragment key={p.personcode}>
@@ -300,6 +319,16 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   </div>
                 )}
 
+                {issue.printrun && (
+                  <div className="flex items-center gap-3 text-xs text-text-body">
+                    <DollarSign className="w-4 h-4 text-primary shrink-0 opacity-0" />
+                    <div className="-ml-7">
+                      <p className="font-bold">{t("circulation")}</p>
+                      <p className="text-[10px] text-muted-foreground">{issue.printrun}</p>
+                    </div>
+                  </div>
+                )}
+
                 {issue.size && (
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <Ruler className="w-4 h-4 text-primary shrink-0" />
@@ -316,6 +345,44 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                     <div>
                       <p className="font-bold">{t("search.attached")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.attached}</p>
+                    </div>
+                  </div>
+                )}
+
+                {issue.collections?.length > 0 && (
+                  <div className="flex items-start gap-3 text-xs text-text-body pt-2 border-t border-border-subtle">
+                    <Layers className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-bold">{t("issue.collections", "Regroupe")}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {issue.collections.map((c: any, i: number) => (
+                          <React.Fragment key={c.collectedissuecode}>
+                            {i > 0 && <span className="text-muted-foreground text-[10px]">,</span>}
+                            <Link to={routes.issue(c.collectedissuecode)} className="text-[10px] font-mono text-primary hover:underline bg-primary/10 px-1 rounded">
+                              {c.publication_title || c.collectedissuecode.split('/')[1]} {c.issuenumber}
+                            </Link>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {issue.reprints?.length > 0 && (
+                  <div className="flex items-start gap-3 text-xs text-text-body pt-2 border-t border-border-subtle">
+                    <BookOpen className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-bold">{t("issue.reprints", "Réédité dans")}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {issue.reprints.map((r: any, i: number) => (
+                          <React.Fragment key={r.collectingissuecode}>
+                            {i > 0 && <span className="text-muted-foreground text-[10px]">,</span>}
+                            <Link to={routes.issue(r.collectingissuecode)} className="text-[10px] font-mono text-primary hover:underline bg-primary/10 px-1 rounded">
+                              {r.publication_title || r.collectingissuecode.split('/')[1]} {r.issuenumber}
+                            </Link>
+                          </React.Fragment>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -393,10 +460,20 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                       onSelectStory={onSelectStory}
                     >
                       <CardContent className="p-4 flex items-start gap-4">
-                        {/* Position / Index badge */}
-                        <span className="w-6 h-6 flex items-center justify-center rounded-lg bg-surface-2 text-[10px] font-bold font-mono text-text-secondary group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
-                          {story.position || idx + 1}
-                        </span>
+                        {/* Position / Index badge and Thumb */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          {story.thumb && hasCookie && (
+                            <img
+                              src={thumbUrl(story.thumb)}
+                              alt=""
+                              loading="lazy"
+                              className="w-12 h-16 object-cover rounded shadow-sm border border-border-subtle hover:scale-150 origin-top-left transition-transform duration-300"
+                            />
+                          )}
+                          <span className="w-6 h-6 flex items-center justify-center rounded-lg bg-surface-2 text-[10px] font-bold font-mono text-text-secondary group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
+                            {story.position || idx + 1}
+                          </span>
+                        </div>
                         
                         <div className="space-y-1.5 flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-4">

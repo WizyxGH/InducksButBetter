@@ -10,6 +10,7 @@ import { InducksText } from "@/components/InducksText";
 import { useMetadata } from "@/hooks/useMetadata";
 import { buildIssueSections, issueDisplayNumber, type IssueRange } from "@/lib/publications";
 import { DetailBackButton, DetailLoading } from "@/components/Layout/DetailPage";
+import { coverThumbSql } from "@/lib/search/thumbnailSql";
 
 interface PublicationDetailData {
   publicationcode: string;
@@ -144,11 +145,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
               SELECT i.issuecode, i.issuenumber, i.issuerangecode, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
                      p.title as series_title, p.countrycode, p.publicationcode,
                      (SELECT pub.publishername FROM inducks_publishingjob pj JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid WHERE pj.issuecode = i.issuecode LIMIT 1) as publishername,
-                     (SELECT eu.sitecode || '|' || eu.url
-                      FROM inducks_entry e
-                      JOIN inducks_entryurl eu ON e.entrycode = eu.entrycode
-                      WHERE e.issuecode = i.issuecode
-                      LIMIT 1) as issue_thumb
+                     ${coverThumbSql('i.issuecode')} as issue_thumb
               FROM inducks_issue i
               JOIN inducks_publication p ON i.publicationcode = p.publicationcode
               WHERE i.publicationcode = ?
@@ -164,11 +161,7 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
             sql: `
               SELECT i.issuecode, i.issuenumber, i.issuerangecode, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
                      ? as series_title, ? as countrycode, ? as publicationcode,
-                     (SELECT eu.sitecode || '|' || eu.url
-                      FROM inducks_entry e
-                      JOIN inducks_entryurl eu ON e.entrycode = eu.entrycode
-                      WHERE e.issuecode = i.issuecode
-                      LIMIT 1) as issue_thumb
+                     ${coverThumbSql('i.issuecode')} as issue_thumb
               FROM inducks_issue i
               WHERE i.publicationcode = ? OR i.issuecode LIKE ? || ' %'
               ORDER BY i.issuecode ASC

@@ -11,7 +11,7 @@ import {
   cleanComment,
   cleanPublisherName,
   isInvalidPlotsummary,
-  hasInducksCookie,
+  imagesAvailable,
   navigateBack,
   incrementHistoryCount,
   formatInducksDate,
@@ -27,6 +27,14 @@ describe('getFlagUrl', () => {
   it('returns the Yugoslavia Wikipedia image for "yu"', () => {
     expect(getFlagUrl('yu')).toContain('Yugoslavia')
     expect(getFlagUrl('YU')).toContain('Yugoslavia') // case-insensitive
+  })
+
+  it('returns the Netherlands Antilles Wikimedia image for "an"', () => {
+    // flagcdn only serves current ISO codes and 404s on "an"; Inducks still
+    // indexes the country.
+    expect(getFlagUrl('an')).toContain('Netherlands_Antilles')
+    expect(getFlagUrl('AN')).toContain('Netherlands_Antilles') // case-insensitive
+    expect(getFlagUrl('an')).not.toContain('flagcdn')
   })
 
   it('maps "uk" → "gb"', () => {
@@ -168,24 +176,24 @@ describe('isInvalidPlotsummary', () => {
   })
 })
 
-// ── hasInducksCookie ──────────────────────────────────────────────────────
+// ── imagesAvailable ──────────────────────────────────────────────────────
 
-describe('hasInducksCookie', () => {
+describe('imagesAvailable', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => localStorage.clear())
 
-  it('returns false when localStorage has no inducks_cookie', () => {
-    expect(hasInducksCookie()).toBe(false)
-  })
+  it('tracks whether a proxy is reachable, not what is in localStorage', () => {
+    // Vitest runs with import.meta.env.DEV true, so the proxy counts as
+    // reachable regardless of any stored value.
+    expect(imagesAvailable()).toBe(true)
 
-  it('returns true when inducks_cookie is set', () => {
+    // The old gate turned on for any non-empty string and off without one.
+    // Neither has any bearing now: that value was never sent anywhere.
     localStorage.setItem('inducks_cookie', 'some_session_token')
-    expect(hasInducksCookie()).toBe(true)
-  })
+    expect(imagesAvailable()).toBe(true)
 
-  it('returns false when inducks_cookie is empty string', () => {
     localStorage.setItem('inducks_cookie', '')
-    expect(hasInducksCookie()).toBe(false)
+    expect(imagesAvailable()).toBe(true)
   })
 })
 

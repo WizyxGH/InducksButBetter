@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StoryResultCard } from "@/components/StoryResultCard";
 import StoryResultSkeleton from "@/components/StoryResultSkeleton";
 import { SearchFilters } from "@/lib/searchService";
+import { ROWS_PER_PAGE_OPTIONS, resolveRowsPerPage } from "@/lib/search/pagination";
 
 interface SearchResultsProps<TFilters = any> {
   results: any[];
@@ -56,7 +57,7 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
       setTimeout(() => setHasCopiedSql(false), 2000);
     }
   };
-  const rowsPerPage = parseInt(String(filters.rowsperpage || "24"), 10) || 24;
+  const rowsPerPage = resolveRowsPerPage(filters.rowsperpage);
   const currentPage = parseInt(String(filters.page || "1"), 10) || 1;
   const totalPages = Math.ceil(totalCount / rowsPerPage);
 
@@ -97,6 +98,33 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
                 {actualSortOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value} className="rounded-lg">
                     {t(opt.labelKey)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {totalCount > 0 && (
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(val) => {
+                // Page 1, like the sort control: the current offset is
+                // meaningless once the page size changes under it.
+                const newFilters = { ...filters, rowsperpage: val, page: 1 };
+                setFilters(newFilters);
+                handleSearch(null, newFilters);
+              }}
+            >
+              <SelectTrigger
+                className="h-10 w-auto gap-2 border-border-subtle bg-surface/80 rounded-xl hover:bg-surface-2 transition-all font-medium text-sm"
+                aria-label={t("search.results_per_page")}
+                title={t("search.results_per_page")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border-subtle bg-surface">
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)} className="rounded-lg">
+                    {n}
                   </SelectItem>
                 ))}
               </SelectContent>

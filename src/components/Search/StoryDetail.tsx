@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { DetailBackButton, DetailLoading, DetailNotFound } from "@/components/Layout/DetailPage"
 import { Tag } from "@/components/ui/tag"
 import { Card, CardContent } from "@/components/ui/card"
-import { getFlagUrl, hasInducksCookie, isInvalidPlotsummary, formatInducksDate } from "@/lib/utils"
+import { getFlagUrl, imagesAvailable, isInvalidPlotsummary, formatInducksDate } from "@/lib/utils"
 import { toast } from "sonner"
 import { describeQueryError, QUERY_ERROR_TOAST_ID } from "@/lib/queryError"
 import { EntityBadge } from "@/components/EntityBadge"
@@ -16,6 +16,7 @@ import { navigate } from "@/lib/navigation";
 import { formatStoryPages } from "@/lib/storyPages";
 import { routes } from "@/lib/routes";
 import { groupCreditsByRole } from "@/lib/credits";
+import { thumbUrl } from "@/components/ResultCard/thumbUrl";
 
 interface StoryDetailProps {
   storycode: string
@@ -30,7 +31,7 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   const [loading, setLoading] = useState(true)
   const [story, setStory] = useState<any>(null)
   const [copied, setCopied] = useState(false)
-  const hasCookie = React.useMemo(() => hasInducksCookie(), [])
+  const hasCookie = React.useMemo(() => imagesAvailable(), [])
 
   // Accordion states
   const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({})
@@ -61,6 +62,16 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
     toast.success(t("story.code_copied"))
     setTimeout(() => setCopied(false), 2000)
   }
+
+  const firstPublication = React.useMemo(() => {
+    if (!story?.publications || story.publications.length === 0) return null;
+    return story.publications.reduce((earliest: any, pub: any) => {
+      if (!earliest || (pub.oldestdate && pub.oldestdate < earliest.oldestdate)) {
+        return pub;
+      }
+      return earliest;
+    }, story.publications[0]);
+  }, [story?.publications]);
 
   if (loading) {
     return <DetailLoading />
@@ -106,6 +117,8 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
   // Parsed, not tested: "0" whole pages is a truthy string, and hid the
   // fraction of a page that is the real length of one-panel gags.
   const storyPages = formatStoryPages(story)
+
+
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 lg:p-8 space-y-6">
@@ -302,16 +315,14 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
 
         {/* Right Content: Cover / Characters / Publications */}
         <div className="space-y-6">
-          {/* Story Thumbnail (if available) */}
+          {/* Story and Original Publication Thumbnails */}
           {hasCookie && story.story_thumb && (
-            <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden">
-              <div className="aspect-[4/3] w-full flex items-center justify-center p-2 bg-zinc-50 dark:bg-zinc-800">
+            <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm overflow-hidden p-4 space-y-4">
+              <div className="aspect-[4/3] w-full flex items-center justify-center p-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
                 <img
-                  src={`/api/proxy-image?url=${encodeURIComponent(
-                    story.story_thumb.split("|")[1] || story.story_thumb
-                  )}`}
+                  src={thumbUrl(story.story_thumb) || undefined}
                   alt=""
-                  className="max-h-full max-w-full object-contain rounded-lg"
+                  className="max-h-full max-w-full object-contain rounded-md shadow-sm border border-border-subtle"
                 />
               </div>
             </Card>

@@ -41,19 +41,32 @@ export function handleDbError(err: any, customMessage?: string) {
   }
 }
 
+/**
+ * Countries Inducks still indexes but ISO 3166-1 has retired, so flagcdn — which
+ * only serves current codes — answers 404 for them. Wikimedia keeps the
+ * historical flags; these thumbnail widths are the ones its renderer actually
+ * produces for each file, and a width it does not offer returns HTTP 400.
+ */
+const RETIRED_COUNTRY_FLAGS: Record<string, string> = {
+  // Yugoslavia (1946–1992)
+  yu: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Flag_of_Yugoslavia_%281946-1992%29.svg/20px-Flag_of_Yugoslavia_%281946-1992%29.svg.png",
+  // Netherlands Antilles (1986–2010) — note the en dash in the file name.
+  an: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Flag_of_the_Netherlands_Antilles_%281986%E2%80%932010%29.svg/120px-Flag_of_the_Netherlands_Antilles_%281986%E2%80%932010%29.svg.png",
+};
+
+/** Inducks country codes that differ from the ISO code flagcdn expects. */
+const COUNTRY_CODE_ALIASES: Record<string, string> = {
+  uk: "gb",
+  en: "gb",
+  sf: "fi",
+};
+
 export function getFlagUrl(countryCode: string): string {
   if (!countryCode) return "";
-  let code = countryCode.toLowerCase().trim();
-  if (code === "yu") {
-    return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Flag_of_Yugoslavia_%281946-1992%29.svg/20px-Flag_of_Yugoslavia_%281946-1992%29.svg.png";
-  }
-  const map: Record<string, string> = {
-    uk: "gb",
-    en: "gb",
-    sf: "fi",
-  };
-  code = map[code] || code;
-  return `https://flagcdn.com/w80/${code}.png`;
+  const code = countryCode.toLowerCase().trim();
+  const retired = RETIRED_COUNTRY_FLAGS[code];
+  if (retired) return retired;
+  return `https://flagcdn.com/w80/${COUNTRY_CODE_ALIASES[code] || code}.png`;
 }
 
 export function getLanguageFlagUrl(languageCode: string): string {
@@ -72,15 +85,21 @@ export function getLanguageFlagUrl(languageCode: string): string {
     fi: "fi",
     id: "id",
   };
-  const resolvedCode = map[code] || code;
-  return resolvedCode === "gb" || resolvedCode === "fr" || resolvedCode === "de" || resolvedCode === "es" || resolvedCode === "it" || resolvedCode === "pt" || resolvedCode === "nl" || resolvedCode === "dk" || resolvedCode === "se" || resolvedCode === "fi" || resolvedCode === "id"
-    ? `https://flagcdn.com/w80/${resolvedCode}.png`
-    : `https://flagcdn.com/w80/${resolvedCode}.png`;
+  // Both branches of the former conditional built the same URL, so the list of
+  // "supported" codes it tested decided nothing.
+  return `https://flagcdn.com/w80/${map[code] || code}.png`;
 }
 
-export function hasInducksCookie(): boolean {
-  return !!localStorage.getItem("inducks_cookie");
-}
+/**
+ * Re-exported here because every image-rendering component already imports
+ * from this module; the logic lives in lib/imageProxy.ts.
+ *
+ * This replaces the former `hasInducksCookie()`, which gated images on a string
+ * sitting in localStorage. That value was never sent anywhere — any non-empty
+ * text opened the gate — so it reported nothing about whether an image could
+ * actually load. What matters is whether a proxy is reachable.
+ */
+export { imagesAvailable } from "./imageProxy";
 
 export function cleanComment(comment?: string): string {
   if (!comment) return "";

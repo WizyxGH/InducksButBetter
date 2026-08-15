@@ -86,62 +86,114 @@ function createDedicatedChannel(): WorkerChannel {
   };
 }
 
-/**
- * A SharedWorker can also fail *after* construction — an unsupported module
- * type, a blocked script, a crash. That surfaces as an async `error` event
- * rather than a throw, and would otherwise leave every pending query hanging
- * forever. Switch to a dedicated worker and replay what was in flight.
- */
-function demoteToDedicatedWorker(reason: unknown) {
-  if (!channel?.shared) return;
-  console.warn('SharedWorker failed, falling back to a dedicated worker:', reason);
+let channelPromise: Promise<WorkerChannel> | null = null;
+let isLeader = false;
+let broadcastChannel: BroadcastChannel | null = null;
 
-  try {
-    channel.dispose();
-  } catch {
-    /* the channel is already broken */
+async function initChannel(): Promise<WorkerChannel> {
+  if (typeof navigator === 'undefined' || !navigator.locks || typeof BroadcastChannel === 'undefined') {
+    isLeader = true;
+    channel = createDedicatedChannel();
+    return channel;
   }
-  channel = createDedicatedChannel();
 
-  for (const [id, pending] of pendingQueries) {
-    channel.post({ id, ...pending.message });
-  }
-}
-
-function createChannel(): WorkerChannel {
-  if (typeof SharedWorker !== 'undefined') {
-    try {
-      const shared = new SharedDbWorker();
-      shared.port.onmessage = handleMessage;
-      shared.port.onmessageerror = (e: unknown) => demoteToDedicatedWorker(e);
-      // Fires when the worker script itself cannot run.
-      (shared as unknown as AbstractWorker).onerror = (e: unknown) => demoteToDedicatedWorker(e);
-      shared.port.start();
-      return {
-        post: (message) => shared.port.postMessage(message),
-        dispose: () => shared.port.close(),
-        shared: true,
-      };
-    } catch (err) {
-      console.warn('SharedWorker unavailable, falling back to a dedicated worker:', err);
+  broadcastChannel = new BroadcastChannel('inducks-db-channel');
+  
+  broadcastChannel.onmessage = (event) => {
+    const data = event.data;
+    if (isLeader && data.type === 'follower-request') {
+      const followerId = data.queryId;
+      request(data.payload, (row) => {
+        broadcastChannel!.postMessage({ type: 'leader-row', queryId: followerId, row });
+      }).then(response => {
+        broadcastChannel!.postMessage({ type: 'leader-response', queryId: followerId, response });
+      }).catch(error => {
+        broadcastChannel!.postMessage({ type: 'leader-error', queryId: followerId, error: error?.message || String(error) });
+      });
+    } else if (!isLeader) {
+      if (data.type === 'new-leader') {
+        // A new leader has taken over.
+      } else if (data.type === 'leader-loaded') {
+        localDbStats = data.stats;
+        window.dispatchEvent(new Event('db-local-loaded'));
+      } else if (data.type === 'leader-unloaded') {
+        localDbStats = null;
+        dbLoadPromise = null;
+        window.dispatchEvent(new Event('db-local-unloaded'));
+      } else {
+        if (data.type === 'leader-response') {
+          handleMessage(new MessageEvent('message', {
+             data: { id: data.queryId, type: 'success', ...data.response }
+          }));
+        } else if (data.type === 'leader-error') {
+          handleMessage(new MessageEvent('message', {
+             data: { id: data.queryId, type: 'error', error: data.error }
+          }));
+        } else if (data.type === 'leader-row') {
+          handleMessage(new MessageEvent('message', {
+             data: { id: data.queryId, type: 'row', row: data.row }
+          }));
+        }
+      }
     }
-  }
+  };
 
-  return createDedicatedChannel();
+  return new Promise((resolve) => {
+    navigator.locks.request('inducks-db-leader', { ifAvailable: true }, async (lock) => {
+      if (lock) {
+        isLeader = true;
+        channel = createDedicatedChannel();
+        broadcastChannel!.postMessage({ type: 'new-leader' });
+        resolve(channel);
+        return new Promise(() => {}); // hold forever
+      } else {
+        isLeader = false;
+        const followerChannel: WorkerChannel = {
+          post: (message) => {
+            broadcastChannel!.postMessage({
+              type: 'follower-request',
+              queryId: message.id,
+              payload: message
+            });
+          },
+          dispose: () => {},
+          shared: true
+        };
+        channel = followerChannel;
+        resolve(followerChannel);
+        
+        navigator.locks.request('inducks-db-leader', async (delayedLock) => {
+          isLeader = true;
+          channel = createDedicatedChannel();
+          broadcastChannel!.postMessage({ type: 'new-leader' });
+          
+          if (dbLoadPromise) {
+            dbLoadPromise = null;
+            void loadCachedDb();
+          } else if (localDbStats) {
+             void loadCachedDb();
+          }
+          
+          return new Promise(() => {}); // hold forever
+        });
+      }
+    });
+  });
 }
 
-function getChannel(): WorkerChannel {
-  if (!channel) channel = createChannel();
-  return channel;
+async function getChannelAsync(): Promise<WorkerChannel> {
+  if (!channelPromise) channelPromise = initChannel();
+  return channelPromise;
 }
 
 /** Sends a request to the worker and resolves with its reply. */
 function request(payload: Record<string, any>, onRow?: (row: any) => void): Promise<any> {
-  const target = getChannel();
-  return new Promise((resolve, reject) => {
-    const id = ++queryIdCounter;
-    pendingQueries.set(id, { resolve, reject, onRow, message: payload });
-    target.post({ id, ...payload });
+  return getChannelAsync().then(target => {
+    return new Promise((resolve, reject) => {
+      const id = ++queryIdCounter;
+      pendingQueries.set(id, { resolve, reject, onRow, message: payload });
+      target.post({ id, ...payload });
+    });
   });
 }
 
@@ -242,6 +294,9 @@ export async function installDatabase(
     if (!data?.stats) throw new Error('error_validation|Database installation failed.');
     localDbStats = toStats(data.stats, null);
     localDbStats = { ...localDbStats, persistGranted: await grant };
+    if (isLeader && broadcastChannel) {
+      broadcastChannel.postMessage({ type: 'leader-loaded', stats: localDbStats });
+    }
   } finally {
     onProgressCallback = null;
   }
@@ -250,8 +305,15 @@ export async function installDatabase(
 export function unloadLocalDb() {
   if (!channel) return;
   channel.post({ id: ++queryIdCounter, action: 'unload', payload: {} });
-  channel.dispose();
-  channel = null;
+  
+  if (isLeader) {
+    channel.dispose();
+    channel = createDedicatedChannel();
+    if (broadcastChannel) {
+      broadcastChannel.postMessage({ type: 'leader-unloaded' });
+    }
+  }
+  
   localDbStats = null;
   dbLoadPromise = null;
 }
@@ -267,7 +329,7 @@ let dbLoadPromise: Promise<boolean> | null = null;
  * to disappear. That window is short — retrying a few times covers it, whereas
  * giving up made an installed database look uninstalled.
  */
-const CACHED_DB_RETRY_DELAYS_MS = [150, 400, 1000];
+const CACHED_DB_RETRY_DELAYS_MS = [150, 400, 1000, 2000, 3000, 5000];
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -283,9 +345,10 @@ async function openCachedDb(): Promise<boolean> {
 
       if (data?.stats) {
         localDbStats = toStats(data.stats, null);
-        // Re-assert the grant on every boot: it can be revoked when the user
-        // clears site data, and a store that is not persisted gets evicted.
-        await refreshPersistGrant();
+        refreshPersistGrant();
+        if (isLeader && broadcastChannel) {
+          broadcastChannel.postMessage({ type: 'leader-loaded', stats: localDbStats });
+        }
         return true;
       }
 
@@ -344,4 +407,10 @@ export async function executeLocal(
   const args = typeof query === 'string' ? [] : query.args ?? [];
 
   return request({ action: 'execute', payload: { sql, args, stream: !!onRow } }, onRow);
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    unloadLocalDb();
+  });
 }

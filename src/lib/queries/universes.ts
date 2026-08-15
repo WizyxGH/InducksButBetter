@@ -1,4 +1,5 @@
 import { executeQuery } from "../db";
+import { characterImageSql } from "../search/thumbnailSql";
 
 /**
  * The whole universe catalogue, for the index page. 163 rows, fetched once.
@@ -55,9 +56,7 @@ export async function getUniverseDetail(universecode: string, lang: string = "fr
         COALESCE(NULLIF(cn.charactername, ''), c.charactername) as charactername,
         c.charactername as originalcharactername,
         c.charactercomment,
-        (SELECT cu.sitecode || '|' || cu.url FROM inducks_characterurl cu
-         WHERE cu.charactercode = c.charactercode
-         ORDER BY CASE WHEN cu.sitecode = 'webusers' THEN 0 ELSE 1 END LIMIT 1) as imageUrl
+        ${characterImageSql('c.charactercode')} as imageUrl
       FROM inducks_character c
       JOIN inducks_ucrelation ucr ON ucr.charactercode = c.charactercode
       LEFT JOIN inducks_charactername cn

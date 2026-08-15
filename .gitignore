@@ -16,3 +16,11 @@ scratch
 *.sqlite.gz
 /public/datas/
 
+
+# Local image proxy cache (scripts/image-proxy.mjs)
+.image-cache/
+
+# Extracted ISV source files and the pre-regeneration database backup
+inducks_extracted/
+*.sqlite.bak
+temp_isv/

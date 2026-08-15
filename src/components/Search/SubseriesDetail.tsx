@@ -10,7 +10,7 @@ import { KindBadge } from "@/components/KindBadge"
 import { Link } from "@/components/ui/link"
 import { routes } from "@/lib/routes"
 import { isModifiedClick } from "@/lib/navigation"
-import { cleanComment, formatInducksDate, hasInducksCookie } from "@/lib/utils"
+import { cleanComment, formatInducksDate, imagesAvailable } from "@/lib/utils"
 import { InducksText } from "@/components/InducksText"
 import { thumbUrl } from "@/components/ResultCard/thumbUrl"
 import { formatStoryPages } from "@/lib/storyPages"
@@ -28,7 +28,7 @@ export function SubseriesDetail({ subseriescode, onBack, onSelectStory }: Subser
   const { meta } = useMetadata()
   const [loading, setLoading] = useState(true)
   const [subseries, setSubseries] = useState<any>(null)
-  const hasCookie = useMemo(() => hasInducksCookie(), [])
+  const hasCookie = useMemo(() => imagesAvailable(), [])
 
   useEffect(() => {
     async function fetchDetails() {

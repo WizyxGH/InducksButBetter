@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Layers, LibraryBig, Orbit, Search, Settings as SettingsIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/components/ui/link"
+import { SEARCH_TABS } from "@/components/Layout/NavigationTabs"
 import { cn } from "@/lib/utils"
 
 interface AppHeaderProps {
@@ -35,10 +36,10 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
           <Button
             variant="ghost"
             onClick={() => setActiveTab("stories")}
-            aria-current={["stories", "publications", "authors", "characters", "sql"].includes(activeTab) ? "page" : undefined}
+            aria-current={SEARCH_TABS.includes(activeTab) ? "page" : undefined}
             className={cn(
               "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
-              ["stories", "publications", "authors", "characters", "sql"].includes(activeTab) && "border-border-subtle bg-surface-2 text-primary"
+              SEARCH_TABS.includes(activeTab) && "border-border-subtle bg-surface-2 text-primary"
             )}
             title={t("header.search")}
           >

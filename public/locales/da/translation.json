@@ -374,7 +374,8 @@
     "translations": "Translations",
     "cookie_save_error": "Could not save the cookie.",
     "contact_title": "Kontakt & forslag",
-    "contact_desc": "Del en idé eller rapportér en fejl"
+    "contact_desc": "Del en idé eller rapportér en fejl",
+    "cookie_saved_no_proxy": "Gemt, men den lokale billedproxy kører ikke (pnpm dev:images)."
   },
   "localDb": {
     "title": "Import Inducks database",

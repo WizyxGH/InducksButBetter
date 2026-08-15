@@ -3,7 +3,7 @@ import { Star, Eye, Cat } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-import { hasInducksCookie } from "@/lib/utils";
+import { imagesAvailable } from "@/lib/utils";
 import { Link } from "@/components/ui/link";
 import { routes } from "@/lib/routes";
 
@@ -23,7 +23,7 @@ interface CharacterResultCardProps {
 }
 
 export function CharacterResultCard({ char, onSelect }: CharacterResultCardProps) {
-  const hasCookie = React.useMemo(() => hasInducksCookie(), []);
+  const hasCookie = React.useMemo(() => imagesAvailable(), []);
   const hasThumb = char.imageUrl && char.imageUrl.includes("|");
   const thumbUrl = (hasCookie && hasThumb)
     ? `/api/proxy-image?url=${encodeURIComponent(char.imageUrl!.split("|")[1])}`

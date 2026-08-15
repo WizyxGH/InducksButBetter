@@ -1,3 +1,4 @@
+import { characterImageSql } from "../search/thumbnailSql";
 export interface CharactersSearchFilters {
   characterName: string;
   heroOnly: boolean;
@@ -71,10 +72,7 @@ export const buildCharactersSearchQuery = (searchFilters: CharactersSearchFilter
   const mainQuery = `
     SELECT c.charactercode, c.charactername, c.official, c.onetime, c.heroonly,
            (SELECT COUNT(*) FROM inducks_appearance WHERE charactercode = c.charactercode) as appearances,
-           (SELECT cu.sitecode || '|' || cu.url 
-            FROM inducks_characterurl cu 
-            WHERE cu.charactercode = c.charactercode 
-            ORDER BY CASE WHEN cu.sitecode = 'webusers' THEN 0 ELSE 1 END LIMIT 1) as imageUrl
+           ${characterImageSql('c.charactercode')} as imageUrl
     FROM inducks_character c
     ${whereClause}
     ORDER BY ${orderBy}

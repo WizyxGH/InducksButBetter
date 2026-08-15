@@ -636,19 +636,4 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
   }
 };
 
-// The same worker file backs both a SharedWorker (one owner of the OPFS
-// handles across every tab) and a dedicated worker (browsers without
-// SharedWorker support). Detect which scope we are running in.
-const isSharedWorkerScope =
-  typeof (globalThis as any).SharedWorkerGlobalScope !== "undefined" &&
-  self instanceof (globalThis as any).SharedWorkerGlobalScope;
-
-if (isSharedWorkerScope) {
-  (self as any).onconnect = (e: MessageEvent) => {
-    const port = e.ports[0];
-    port.onmessage = (msg: MessageEvent) => handleMessage(msg, port);
-    port.start();
-  };
-} else {
-  self.onmessage = (msg: MessageEvent) => handleMessage(msg, self as any);
-}
+self.onmessage = (msg: MessageEvent) => handleMessage(msg, self as any);

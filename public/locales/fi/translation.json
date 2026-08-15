@@ -374,7 +374,8 @@
     "translations": "Translations",
     "cookie_save_error": "Could not save the cookie.",
     "contact_title": "Yhteydenotto ja ehdotukset",
-    "contact_desc": "Jaa idea tai ilmoita virheestä"
+    "contact_desc": "Jaa idea tai ilmoita virheestä",
+    "cookie_saved_no_proxy": "Tallennettu, mutta paikallinen kuvavälityspalvelin ei ole käynnissä (pnpm dev:images)."
   },
   "localDb": {
     "title": "Import Inducks database",

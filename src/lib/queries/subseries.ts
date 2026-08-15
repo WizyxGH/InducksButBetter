@@ -1,4 +1,5 @@
 import { executeQuery } from "../db";
+import { storyThumbByStorycodeSql } from "../search/thumbnailSql";
 
 /**
  * The whole subseries catalogue, for the index page.
@@ -90,13 +91,7 @@ export async function getSubseriesDetail(subseriescode: string, lang: string = "
           (SELECT v.brokenpagedenominator FROM inducks_storyversion v WHERE v.storyversioncode = s.originalstoryversioncode AND v.storycode = s.storycode),
           (SELECT v.brokenpagedenominator FROM inducks_storyversion v WHERE v.storycode = s.storycode ORDER BY v.storyversioncode ASC LIMIT 1)
         ) as brokenpagedenominator,
-        (SELECT eu.sitecode || '|' || eu.url
-         FROM inducks_storyversion sv_img
-         JOIN inducks_entry e_img ON sv_img.storyversioncode = e_img.storyversioncode
-         JOIN inducks_entryurl eu ON e_img.entrycode = eu.entrycode
-         WHERE sv_img.storycode = s.storycode
-           AND eu.sitecode IN ('webusers', 'thumbnails', 'thumbnails2', 'thumbnails3')
-         ORDER BY CASE WHEN eu.sitecode = 'webusers' THEN 0 ELSE 1 END LIMIT 1) as story_thumb,
+        ${storyThumbByStorycodeSql('s.storycode')} as story_thumb,
         ss.storysubseriescomment
       FROM inducks_storysubseries ss
       JOIN inducks_story s ON ss.storycode = s.storycode

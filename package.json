@@ -5,11 +5,12 @@
   "homepage": "https://WizyxGH.github.io/InducksButBetter",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"node scripts/image-proxy.mjs\"",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "deploy": "pnpm build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev:images": "node scripts/image-proxy.mjs"
   },
   "dependencies": {
     "@codemirror/lang-sql": "^6.10.0",
@@ -56,6 +57,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^6.0.5",
     "autoprefixer": "^10.5.4",
+    "concurrently": "^10.0.4",
     "eslint": "^10.8.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",

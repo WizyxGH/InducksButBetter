@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DetailLoading, DetailNotFound } from "@/components/Layout/DetailPage";
-import { getFlagUrl, hasInducksCookie, formatInducksDate } from "@/lib/utils";
+import { getFlagUrl, imagesAvailable, formatInducksDate } from "@/lib/utils";
 import { parseCredits } from "@/lib/credits";
 import { isModifiedClick } from "@/lib/navigation";
 import { Link } from "@/components/ui/link";
 import { routes } from "@/lib/routes";
+import { creatorPhoto, characterThumb } from "@/lib/imageProxy";
+import { AvatarWithFallback } from "@/components/AvatarWithFallback";
 
 interface AuthorDetailData {
   personcode: string;
@@ -113,7 +115,7 @@ function StoryCredits({ creators }: { creators?: string | null }) {
 
 export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetailProps) {
   const { t, i18n } = useTranslation();
-  const hasCookie = hasInducksCookie();
+  const hasCookie = imagesAvailable();
   const [author, setAuthor] = useState<AuthorDetailData | null>(null);
   const [aliases, setAliases] = useState<any[]>([]);
   const [urls, setUrls] = useState<any[]>([]);
@@ -249,20 +251,14 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
       {/* Header Info */}
       <div className="flex flex-col md:flex-row gap-6 items-start justify-between bg-surface-2/30 border border-border-subtle p-6 rounded-3xl">
         <div className="flex gap-6 items-start min-w-0">
-          <div className="w-24 h-32 shrink-0 bg-surface border border-border-subtle rounded-2xl overflow-hidden shadow-sm flex items-center justify-center relative group">
-            {hasCookie ? (
-              <img
-                src={`/api/proxy-image?url=${encodeURIComponent('https://inducks.org/b/creator/' + author.personcode + '.jpg')}`}
-                alt={author.fullname}
-                className="w-full h-full object-cover transition-opacity duration-300"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <User className="w-10 h-10 text-muted-foreground/30 hidden fallback-icon absolute" />
-          </div>
+          <AvatarWithFallback
+            src={hasCookie && creatorPhoto(author.personcode) ? creatorPhoto(author.personcode)! : ""}
+            name={author.fullname || author.personcode}
+            sizeClasses="w-24 h-32"
+            square={true}
+            textClasses="text-2xl"
+            className="rounded-2xl shadow-sm"
+          />
           
           <div className="space-y-3 min-w-0">
             <div className="space-y-1">
@@ -415,20 +411,12 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                   {coAuthors.map((coa) => (
                     <div key={coa.copersoncode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
-                           {hasCookie ? (
-                             <img
-                               src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${coa.copersoncode.replace(/ /g, "_")}.jpg`)}`}
-                               alt={coa.fullname}
-                               className="w-full h-full object-cover"
-                               onError={(e) => {
-                                 e.currentTarget.style.display = 'none';
-                                 e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                               }}
-                             />
-                           ) : null}
-                           <User className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
-                        </div>
+                        <AvatarWithFallback
+                          src={hasCookie && creatorPhoto(coa.copersoncode) ? creatorPhoto(coa.copersoncode)! : ""}
+                          name={coa.fullname || coa.copersoncode}
+                          sizeClasses="w-8 h-8"
+                          textClasses="text-[12px]"
+                        />
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground truncate">{coa.fullname}</p>
                           <p className="text-[10px] text-muted-foreground">{coa.yearrange}</p>
@@ -456,20 +444,12 @@ export default function AuthorDetail({ personcode, onSelectStory }: AuthorDetail
                   {favCharacters.map((char) => (
                     <div key={char.charactercode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
-                           {hasCookie ? (
-                             <img
-                               src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${char.charactercode}`)}`}
-                               alt={char.charactername}
-                               className="w-full h-full object-cover"
-                               onError={(e) => {
-                                 e.currentTarget.style.display = 'none';
-                                 e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                               }}
-                             />
-                           ) : null}
-                           <Cat className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
-                        </div>
+                        <AvatarWithFallback
+                          src={hasCookie && characterThumb(char.charactercode) ? characterThumb(char.charactercode)! : ""}
+                          name={char.charactername || char.charactercode}
+                          sizeClasses="w-8 h-8"
+                          textClasses="text-[12px]"
+                        />
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground truncate">{char.charactername}</p>
                           <p className="text-[10px] text-muted-foreground">{char.yearrange}</p>

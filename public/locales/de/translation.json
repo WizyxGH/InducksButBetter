@@ -374,7 +374,8 @@
     "translations": "Translations",
     "cookie_save_error": "Could not save the cookie.",
     "contact_title": "Kontakt & Vorschläge",
-    "contact_desc": "Teile eine Idee oder melde einen Fehler"
+    "contact_desc": "Teile eine Idee oder melde einen Fehler",
+    "cookie_saved_no_proxy": "Gespeichert, aber der lokale Bild-Proxy läuft nicht (pnpm dev:images)."
   },
   "localDb": {
     "title": "Inducks-Datenbank importieren",

@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { navigate } from "@/lib/navigation";
 import { DetailNotFound } from "@/components/Layout/DetailPage";
 import { routes } from "@/lib/routes";
-import { hasInducksCookie } from "@/lib/utils";
+import { imagesAvailable } from "@/lib/utils";
+import { creatorPhoto, characterThumb } from "@/lib/imageProxy";
+import { AvatarWithFallback } from "@/components/AvatarWithFallback";
 import { useMetadata } from "@/hooks/useMetadata";
 
 interface CharacterDetailData {
@@ -47,7 +49,7 @@ interface CharacterDetailProps {
 export default function CharacterDetail({ charactercode, onSelectStory }: CharacterDetailProps) {
   const { t, i18n } = useTranslation();
   const { meta } = useMetadata();
-  const hasCookie = hasInducksCookie();
+  const hasCookie = imagesAvailable();
   const [character, setCharacter] = useState<CharacterDetailData | null>(null);
   const [names, setNames] = useState<CharName[]>([]);
   const [urls, setUrls] = useState<any[]>([]);
@@ -217,20 +219,13 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
       {/* Header Info */}
       <div className="flex flex-col md:flex-row gap-6 items-start justify-between bg-surface-2/30 border border-border-subtle p-6 rounded-3xl">
         <div className="flex gap-6 items-start min-w-0">
-          <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-surface border border-border-subtle rounded-full overflow-hidden shadow-sm flex items-center justify-center relative group">
-            {hasCookie ? (
-              <img
-                src={`/api/proxy-image?url=${encodeURIComponent('https://inducks.org/characterthumb.php?c=' + character.charactercode)}`}
-                alt={displayName}
-                className="w-full h-full object-cover transition-opacity duration-300"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <Cat className="w-10 h-10 text-muted-foreground/30 hidden fallback-icon absolute" />
-          </div>
+          <AvatarWithFallback
+            src={hasCookie && characterThumb(character.charactercode) ? characterThumb(character.charactercode)! : ""}
+            name={displayName || character.charactercode}
+            sizeClasses="w-20 h-20 md:w-24 md:h-24"
+            textClasses="text-2xl"
+            className="shadow-sm"
+          />
           <div className="space-y-3 min-w-0">
             <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -377,20 +372,12 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                   {creators.map((c) => (
                     <div key={c.personcode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
-                           {hasCookie ? (
-                             <img
-                               src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${c.personcode.replace(/ /g, "_")}.jpg`)}`}
-                               alt={c.fullname}
-                               className="w-full h-full object-cover"
-                               onError={(e) => {
-                                 e.currentTarget.style.display = 'none';
-                                 e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                               }}
-                             />
-                           ) : null}
-                           <User className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
-                        </div>
+                        <AvatarWithFallback
+                          src={hasCookie && creatorPhoto(c.personcode) ? creatorPhoto(c.personcode)! : ""}
+                          name={c.fullname || c.personcode}
+                          sizeClasses="w-8 h-8"
+                          textClasses="text-[12px]"
+                        />
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground truncate">{c.fullname}</p>
                           <p className="text-[10px] text-muted-foreground">{c.yearrange}</p>
@@ -418,20 +405,12 @@ export default function CharacterDetail({ charactercode, onSelectStory }: Charac
                   {coCharacters.map((cc) => (
                     <div key={cc.cocharactercode} className="flex justify-between items-center p-2.5 rounded-xl bg-surface-2/20 border border-border-subtle text-xs">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface border border-border-subtle flex items-center justify-center relative group-avatar">
-                           {hasCookie ? (
-                             <img
-                               src={`/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${cc.cocharactercode}`)}`}
-                               alt={cc.cocharactername}
-                               className="w-full h-full object-cover"
-                               onError={(e) => {
-                                 e.currentTarget.style.display = 'none';
-                                 e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                               }}
-                             />
-                           ) : null}
-                           <Cat className="w-4 h-4 text-muted-foreground/30 hidden fallback-icon absolute" />
-                        </div>
+                        <AvatarWithFallback
+                          src={hasCookie && characterThumb(cc.cocharactercode) ? characterThumb(cc.cocharactercode)! : ""}
+                          name={cc.cocharactername || cc.cocharactercode}
+                          sizeClasses="w-8 h-8"
+                          textClasses="text-[12px]"
+                        />
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground truncate">{cc.cocharactername}</p>
                           <p className="text-[10px] text-muted-foreground">{cc.yearrange}</p>

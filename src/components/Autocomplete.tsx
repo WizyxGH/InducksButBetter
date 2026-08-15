@@ -2,7 +2,7 @@ import * as React from "react"
 import { Check, ChevronDown, LibraryBig, Loader2, User, X, BookOpen, Search } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { AvatarWithFallback } from "./AvatarWithFallback"
-import { cn, hasInducksCookie } from "@/lib/utils"
+import { cn, imagesAvailable } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { handleDbError } from "@/lib/utils"
@@ -176,7 +176,7 @@ export function Autocomplete({ placeholder, emptyMessage, fetchOptions, onSelect
                     name = id;
                   }
                   
-                  const hasCookie = hasInducksCookie();
+                  const hasCookie = imagesAvailable();
                   
                   if (hasCookie) {
                     if (item.personcode) {

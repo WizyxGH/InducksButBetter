@@ -1,5 +1,5 @@
 import * as React from "react"
-import { hasInducksCookie, formatInducksDate } from "@/lib/utils"
+import { imagesAvailable, formatInducksDate } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
 import { ResultCardThumb } from "@/components/ResultCard/ResultCardThumb"
 import { thumbUrls } from "@/components/ResultCard/thumbUrl"
@@ -57,7 +57,7 @@ export function IssueResultCard({ row, onSelect }: IssueResultCardProps) {
     }
   };
 
-  const hasCookie = React.useMemo(() => hasInducksCookie(), []);
+  const hasCookie = React.useMemo(() => imagesAvailable(), []);
 
   return (
     <Link to={targetHref}

@@ -4,6 +4,9 @@ import { BookOpen, LibraryBig, User, Cat, Database as DbIcon } from "lucide-reac
 import { TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
+/** The tabs that make up the advanced search — the only pages this bar serves. */
+export const SEARCH_TABS = ["stories", "publications", "authors", "characters", "sql"]
+
 interface NavigationTabsProps {
   activeTab: string
   isDetailPage?: boolean
@@ -12,16 +15,11 @@ interface NavigationTabsProps {
 export function NavigationTabs({ activeTab, isDetailPage }: NavigationTabsProps) {
   const { t } = useTranslation()
 
-  // Tabs are only shown on the main search pages, not on
-  // home/settings/countries/subseries or detail pages
-  if (
-    activeTab === "settings" ||
-    activeTab === "countries" ||
-    activeTab === "home" ||
-    activeTab === "subseries" ||
-    activeTab === "universes" ||
-    isDetailPage
-  ) {
+  // This bar belongs to the advanced search and nowhere else, so it lists the
+  // tabs it serves rather than the ones it must avoid. The previous denylist
+  // meant every page added later ("suggestions", …) inherited the bar until
+  // someone remembered to exclude it.
+  if (!SEARCH_TABS.includes(activeTab) || isDetailPage) {
     return null
   }
 

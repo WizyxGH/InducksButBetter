@@ -399,6 +399,8 @@ function App() {
                         countrycode={selectedCountrycode}
                         onBack={() => navigateBack(() => setSelectedCountrycode(null))}
                         onSelectPublication={(code) => {
+                          setSelectedIssuecode(null);
+                          setSelectedIndexercode(null);
                           setSelectedPublicationcode(code);
                           setActiveTab("publications"); // go back to publications to show details
                         }}

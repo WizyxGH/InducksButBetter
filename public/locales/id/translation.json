@@ -374,7 +374,8 @@
     "translations": "Translations",
     "cookie_save_error": "Could not save the cookie.",
     "contact_title": "Kontak & saran",
-    "contact_desc": "Bagikan ide atau laporkan bug"
+    "contact_desc": "Bagikan ide atau laporkan bug",
+    "cookie_saved_no_proxy": "Tersimpan, tetapi proxy gambar lokal tidak berjalan (pnpm dev:images)."
   },
   "localDb": {
     "title": "Import Inducks database",

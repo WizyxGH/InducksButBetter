@@ -1,5 +1,6 @@
 import { executeQuery } from "../db";
 import { pickReferenceVersion } from "../storyVersion";
+import { storyThumbByVersionSql, coverThumbSql } from "../search/thumbnailSql";
 
 export async function getStoryDetail(storycode: string, lang: string = "fr") {
   // 1. Core story info
@@ -100,7 +101,8 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
         c.countryname,
         e.position,
         e.title as entry_title,
-        i.oldestdate
+        i.oldestdate,
+        ${coverThumbSql('i.issuecode')} as issue_thumb
       FROM inducks_entry e
       JOIN inducks_issue i ON e.issuecode = i.issuecode
       JOIN inducks_publication p ON i.publicationcode = p.publicationcode

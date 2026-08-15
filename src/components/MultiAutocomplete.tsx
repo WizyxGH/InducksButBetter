@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Check, ChevronDown, LibraryBig, Loader2, User, X, Search } from "lucide-react"
-import { cn, hasInducksCookie } from "@/lib/utils"
+import { cn, imagesAvailable } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { FilterChip } from "@/components/FilterChip"
 import {
@@ -107,7 +107,7 @@ export function MultiAutocomplete({
         >
           <div className="flex flex-wrap gap-1.5 flex-1 text-left min-w-0">
             {selected.slice(0, maxDisplay).map((id) => {
-              const showAvatar = type === "characters" && hasInducksCookie();
+              const showAvatar = type === "characters" && imagesAvailable();
               const avatarUrl = showAvatar 
                 ? `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${id}`)}` 
                 : null;
@@ -182,7 +182,7 @@ export function MultiAutocomplete({
                 const id = item.charactercode || item.personcode || item.storycode || item.publisherid;
                 const name = item.charactername || item.fullname || item.storyname || item.publishername || item.storycode;
                 
-                const hasCookie = hasInducksCookie();
+                const hasCookie = imagesAvailable();
                 let imageUrl = "";
                 if (hasCookie && item.personcode) {
                   const formattedCode = item.personcode.replace(/ /g, "_");

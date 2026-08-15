@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn, hasInducksCookie } from "@/lib/utils"
+import { cn, imagesAvailable } from "@/lib/utils"
 
 interface AvatarWithFallbackProps {
   src: string
@@ -9,6 +9,7 @@ interface AvatarWithFallbackProps {
   sizeClasses?: string
   textClasses?: string
   square?: boolean
+  fallbackOverride?: string
 }
 
 export function AvatarWithFallback({
@@ -18,10 +19,11 @@ export function AvatarWithFallback({
   className,
   sizeClasses = "w-8 h-8",
   textClasses = "text-[12px]",
-  square = false
+  square = false,
+  fallbackOverride
 }: AvatarWithFallbackProps) {
-  // Extract initials (up to 2 letters)
-  const initials = name
+  // Extract initials (up to 2 letters) if no override
+  const initials = fallbackOverride || name
     .split(' ')
     .filter(Boolean)
     .map(n => n[0])
@@ -29,7 +31,7 @@ export function AvatarWithFallback({
     .substring(0, 2)
     .toUpperCase();
 
-  const shouldShowImage = hasInducksCookie() && Boolean(src);
+  const shouldShowImage = imagesAvailable() && Boolean(src);
 
   return (
     <div 
