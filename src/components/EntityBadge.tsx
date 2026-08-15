@@ -16,6 +16,7 @@ interface EntityBadgeProps {
 
 import { routes } from "@/lib/routes"
 import { Link } from "@/components/ui/link"
+import { characterThumb, creatorPhoto, proxiedImage } from "@/lib/imageProxy"
 
 export const EntityBadge = React.memo(function EntityBadge({
   type,
@@ -36,10 +37,10 @@ export const EntityBadge = React.memo(function EntityBadge({
   let photoUrl = ""
   if (isCharacter) {
     photoUrl = url
-      ? `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/hr.php?normalsize=1&image=https://outducks.org/webusers/${url.startsWith('/') ? url.substring(1) : url}`)}`
-      : `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/characterthumb.php?c=${code}`)}`
+      ? proxiedImage(`https://inducks.org/hr.php?normalsize=1&image=https://outducks.org/webusers/${url.startsWith('/') ? url.substring(1) : url}`) || ""
+      : characterThumb(code) || ""
   } else {
-    photoUrl = `/api/proxy-image?url=${encodeURIComponent(`https://inducks.org/creators/photos/${code.replace(/ /g, "_")}.jpg`)}`
+    photoUrl = creatorPhoto(code) || ""
   }
 
   const targetHref = isCharacter ? routes.character(code) : routes.author(code)

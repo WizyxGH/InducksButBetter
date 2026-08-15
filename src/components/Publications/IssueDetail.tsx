@@ -464,7 +464,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                         <div className="flex items-center gap-3 shrink-0">
                           {story.thumb && hasCookie && (
                             <img
-                              src={thumbUrl(story.thumb)}
+                              src={thumbUrl(story.thumb) ?? undefined}
                               alt=""
                               loading="lazy"
                               className="w-12 h-16 object-cover rounded shadow-sm border border-border-subtle hover:scale-150 origin-top-left transition-transform duration-300"
