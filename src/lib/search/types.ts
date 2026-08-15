@@ -18,6 +18,7 @@ export interface SearchFilters {
   panelsperstrip?: string;
   stripsperpage?: string;
   language?: string[] | string;
+  excludeLanguage?: string[] | string;
   country?: string[] | string;
   herocode?: string[] | string;
   onlyCollection?: boolean;

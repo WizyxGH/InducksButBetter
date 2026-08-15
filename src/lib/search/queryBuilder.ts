@@ -364,6 +364,12 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     svWhereParams.push(...languages);
   }
 
+  const excludedLanguages = normalizeList(filters.excludeLanguage);
+  if (excludedLanguages.length > 0) {
+    where.push(`s.storycode NOT IN (SELECT sv_exl.storycode FROM inducks_entry e_exl JOIN inducks_issue i_exl ON e_exl.issuecode = i_exl.issuecode JOIN inducks_publication p_exl ON i_exl.publicationcode = p_exl.publicationcode JOIN inducks_storyversion sv_exl ON e_exl.storyversioncode = sv_exl.storyversioncode WHERE p_exl.languagecode IN (${excludedLanguages.map(() => "?").join(",")}))`);
+    whereParams.push(...excludedLanguages);
+  }
+
   if (filters.hasImage && filters.hasImage !== 'all') {
     const existsClause = `EXISTS (SELECT 1 FROM inducks_entry e_img JOIN inducks_entryurl eu ON e_img.entrycode = eu.entrycode WHERE e_img.storyversioncode = sv.storyversioncode AND eu.url IS NOT NULL AND eu.url != '' AND eu.sitecode IN ('webusers', 'thumbnails'))`;
     if (filters.hasImage === 'yes') {

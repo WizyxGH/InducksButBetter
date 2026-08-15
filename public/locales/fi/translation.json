@@ -100,7 +100,9 @@
     "results_found_one": "{{count, number}} tulos löytyi",
     "results_found_other": "{{count, number}} tulosta löytyi",
     "publications_found_one": "{{count, number}} publications found",
-    "publications_found_other": "{{count, number}} publications found"
+    "publications_found_other": "{{count, number}} publications found",
+    "exclude_language": "Not published in language",
+    "exclude_language_placeholder": "Exclude a language..."
   },
   "roles": {
     "any": "Any",

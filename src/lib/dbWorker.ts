@@ -281,17 +281,23 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         const isGzipped = firstChunk.length >= 2 && firstChunk[0] === 0x1f && firstChunk[1] === 0x8b;
 
         // Reconstruct the stream
+        let isFirst = true;
         const rawStream = new ReadableStream<Uint8Array>({
-          async start(controller) {
-            controller.enqueue(firstChunk);
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) {
-                controller.close();
-                break;
-              }
-              controller.enqueue(value);
+          async pull(controller) {
+            if (isFirst) {
+              isFirst = false;
+              controller.enqueue(firstChunk);
+              return;
             }
+            const { done, value } = await reader.read();
+            if (done) {
+              controller.close();
+              return;
+            }
+            controller.enqueue(value);
+          },
+          cancel(reason) {
+            reader.cancel(reason);
           }
         });
 

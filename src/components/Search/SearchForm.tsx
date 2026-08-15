@@ -398,6 +398,20 @@ export function SearchForm({
               />
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground text-red-600">
+                {t("search.exclude_language")}
+              </Label>
+              <SearchableMultiSelect
+                options={languageOptions}
+                selected={(filters.excludeLanguage || []) as string[]}
+                onChange={(vals) => updateFilters({ excludeLanguage: vals })}
+                placeholder={t("search.exclude_language_placeholder")}
+                searchPlaceholder={t("search.search_language")}
+                emptyMessage={t("common.no_data")}
+              />
+            </div>
+
             {/* ── Authors (dynamic list) ────────────────────────────────────── */}
             <div className="col-span-1 md:col-span-2 space-y-3 pt-2">
               <Label className="text-sm font-medium text-foreground">{t("search.authors")}</Label>

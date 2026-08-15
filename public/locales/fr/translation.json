@@ -110,7 +110,9 @@
     "results_found_one": "{{count, number}} résultat trouvé",
     "results_found_other": "{{count, number}} résultats trouvés",
     "publications_found_one": "{{count, number}} publication trouvée",
-    "publications_found_other": "{{count, number}} publications trouvées"
+    "publications_found_other": "{{count, number}} publications trouvées",
+    "exclude_language": "Non publié dans la langue",
+    "exclude_language_placeholder": "Exclure une langue..."
   },
   "roles": {
     "any": "N'importe",
