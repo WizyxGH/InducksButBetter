@@ -200,7 +200,9 @@
     "page": "page",
     "refers_to_creator": "Refers to creator",
     "strips_per_page_one": "{{count}} strip per page",
-    "strips_per_page_other": "{{count}} strips per page"
+    "strips_per_page_other": "{{count}} strips per page",
+    "parts": "Parts",
+    "part_of": "Part {{part}} of"
   },
   "kinds": {
     "c": "Cover",
