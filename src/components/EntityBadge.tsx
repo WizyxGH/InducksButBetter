@@ -54,12 +54,13 @@ export const EntityBadge = React.memo(function EntityBadge({
   }
 
   const renderAvatar = (className: string, textSize: string) => (
-    <AvatarWithFallback 
-      src={photoUrl} 
+    <AvatarWithFallback
+      src={photoUrl}
       name={name}
       fallbackOverride={isCharacter ? code : undefined}
       sizeClasses={className}
       textClasses={textSize}
+      decorative
     />
   )
 

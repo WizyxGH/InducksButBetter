@@ -200,7 +200,9 @@
     "page": "page",
     "refers_to_creator": "Référence au créateur",
     "strips_per_page_one": "{{count}} bande par page",
-    "strips_per_page_other": "{{count}} bandes par page"
+    "strips_per_page_other": "{{count}} bandes par page",
+    "parts": "Parties",
+    "part_of": "Partie {{part}} de"
   },
   "kinds": {
     "k": "Bandes quotidienne, hebdomadaire",
@@ -401,7 +403,8 @@
     "translations": "Traductions",
     "cookie_save_error": "Erreur lors de la sauvegarde du cookie.",
     "contact_title": "Contact & suggestions",
-    "contact_desc": "Partagez une idée ou signalez un bug"
+    "contact_desc": "Partagez une idée ou signalez un bug",
+    "cookie_saved_no_proxy": "Enregistré, mais le proxy d'images local ne tourne pas (pnpm dev:images)."
   },
   "localDb": {
     "title": "Stockage local de l'application",
@@ -650,7 +653,9 @@
     "error_generic": "Erreur du microphone : {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexé par"
+    "indexed_by": "Indexé par",
+    "collections": "Regroupe",
+    "reprints": "Réédité dans"
   },
   "entry": {
     "comment": "Commentaire",

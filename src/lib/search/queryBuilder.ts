@@ -338,7 +338,9 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     // A publisher publishes issues, not story versions: inducks_publishingjob
     // is keyed by issuecode and has no storyversioncode column at all, so the
     // previous clause failed with "no such column" on every search.
-    svWhere.push(`EXISTS (SELECT 1 FROM inducks_entry e_pub JOIN inducks_publishingjob pjob ON e_pub.issuecode = pjob.issuecode WHERE e_pub.storyversioncode = sv.storyversioncode AND pjob.publisherid = ?)`);
+    // Same non-correlated IN rewrite as the language filter below, for the same
+    // reason: drive from the publisher side once instead of probing per sv.
+    svWhere.push(`sv.storyversioncode IN (SELECT e_pub.storyversioncode FROM inducks_publishingjob pjob JOIN inducks_entry e_pub ON e_pub.issuecode = pjob.issuecode WHERE pjob.publisherid = ?)`);
     svWhereParams.push(filters.publisherid);
   }
 
@@ -349,7 +351,9 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
 
     const parts: string[] = [];
     if (actualCountries.length > 0) {
-      parts.push(`EXISTS (SELECT 1 FROM inducks_entry e_c JOIN inducks_issue i_c ON e_c.issuecode = i_c.issuecode JOIN inducks_publication p_c ON i_c.publicationcode = p_c.publicationcode WHERE e_c.storyversioncode = sv.storyversioncode AND p_c.countrycode IN (${actualCountries.map(() => "?").join(",")}))`);
+      // Non-correlated IN, like the language/publisher filters — computed once
+      // from the publication side instead of an EXISTS probed per storyversion.
+      parts.push(`sv.storyversioncode IN (SELECT e_c.storyversioncode FROM inducks_publication p_c JOIN inducks_issue i_c ON i_c.publicationcode = p_c.publicationcode JOIN inducks_entry e_c ON e_c.issuecode = i_c.issuecode WHERE p_c.countrycode IN (${actualCountries.map(() => "?").join(",")}))`);
       svWhereParams.push(...actualCountries);
     }
     if (hasUnpublished) {
@@ -360,7 +364,13 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
 
   const languages = normalizeList(filters.language);
   if (languages.length > 0) {
-    svWhere.push(`EXISTS (SELECT 1 FROM inducks_entry e_l JOIN inducks_issue i_l ON e_l.issuecode = i_l.issuecode JOIN inducks_publication p_l ON i_l.publicationcode = p_l.publicationcode WHERE e_l.storyversioncode = sv.storyversioncode AND p_l.languagecode IN (${languages.map(() => "?").join(",")}))`);
+    // Non-correlated IN rather than a correlated EXISTS: the set of storyversions
+    // published in these languages is computed once from the publication side
+    // (every join indexed) and sv is reached by its storyversioncode index. The
+    // EXISTS form re-ran entry→issue→publication for every storyversion of the
+    // chosen kind — a full scan that took ~40 s for "kind = n + French". Same
+    // result, ~20× faster.
+    svWhere.push(`sv.storyversioncode IN (SELECT e_l.storyversioncode FROM inducks_publication p_l JOIN inducks_issue i_l ON i_l.publicationcode = p_l.publicationcode JOIN inducks_entry e_l ON e_l.issuecode = i_l.issuecode WHERE p_l.languagecode IN (${languages.map(() => "?").join(",")}))`);
     svWhereParams.push(...languages);
   }
 

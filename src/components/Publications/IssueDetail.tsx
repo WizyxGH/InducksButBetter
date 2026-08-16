@@ -5,7 +5,7 @@ import { getIssueDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { getFlagUrl, formatInducksDate } from "@/lib/utils"
+import { getFlagUrl, formatInducksDate, imagesAvailable } from "@/lib/utils"
 import { toast } from "sonner"
 import { KindBadge } from "@/components/KindBadge"
 import { Link } from "@/components/ui/link"
@@ -151,7 +151,9 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   const [loading, setLoading] = useState(true)
   const [issue, setIssue] = useState<any>(null)
   const [isContentExpanded, setIsContentExpanded] = useState(true)
-  const hasCookie = useMemo(() => !!localStorage.getItem("inducks_cookie"), [])
+  // Covers show when a proxy can serve them, not when a cookie string exists —
+  // that value gated nothing and left covers hidden even with the proxy up.
+  const hasCookie = useMemo(() => imagesAvailable(), [])
 
   useEffect(() => {
     async function fetchDetails() {
@@ -323,7 +325,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                   <div className="flex items-center gap-3 text-xs text-text-body">
                     <DollarSign className="w-4 h-4 text-primary shrink-0 opacity-0" />
                     <div className="-ml-7">
-                      <p className="font-bold">{t("circulation")}</p>
+                      <p className="font-bold">{t("publication.circulation")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.printrun}</p>
                     </div>
                   </div>

@@ -1,23 +1,21 @@
 import DedicatedDbWorker from './dbWorker?worker';
-import SharedDbWorker from './dbWorker?sharedworker';
 
 /**
  * Client side of the SQLite worker.
  *
- * A **SharedWorker** is used whenever the browser supports it: the OPFS
- * SAH-pool VFS takes exclusive access handles on its files, so two tabs each
- * running their own dedicated worker cannot open the same database — the
- * second tab silently ends up with no data. Routing every tab through one
- * shared worker keeps a single owner of those handles.
- *
- * Browsers without SharedWorker (notably Chrome on Android) fall back to a
- * dedicated worker, which works fine as long as only one tab is open.
+ * The OPFS SAH-pool VFS takes *exclusive* access handles on its files, so two
+ * tabs each running their own dedicated worker cannot open the same database —
+ * the second silently ends up with no data. A single owner of those handles is
+ * elected with the Web Locks API: one tab holds the `inducks-db-leader` lock,
+ * owns the only worker, and serves every other tab's requests over a
+ * `BroadcastChannel`. When a browser lacks either API, the client falls back to
+ * a plain dedicated worker, which is correct as long as only one tab is open.
  */
 
 interface WorkerChannel {
   post: (message: any) => void;
   dispose: () => void;
-  /** True for the SharedWorker channel, which may still fall back. */
+  /** True for a follower channel that relays to the leader over BroadcastChannel. */
   shared: boolean;
 }
 

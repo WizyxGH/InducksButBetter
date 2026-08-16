@@ -17,7 +17,9 @@ describe('publisher filter', () => {
   });
 
   it('still ties the result back to the story version', () => {
-    expect(build().countQuery).toContain('e_pub.storyversioncode = sv.storyversioncode');
+    // Non-correlated IN rather than a correlated EXISTS (≈20× faster): the
+    // publisher's storyversions are gathered once, then matched against sv.
+    expect(build().countQuery).toContain('sv.storyversioncode IN (SELECT e_pub.storyversioncode');
   });
 
   it('binds the publisher id', () => {

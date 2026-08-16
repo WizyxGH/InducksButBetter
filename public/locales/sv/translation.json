@@ -190,7 +190,9 @@
     "page": "page",
     "refers_to_creator": "Referens till upphovsmannen",
     "strips_per_page_one": "{{count}} remsa per sida",
-    "strips_per_page_other": "{{count}} remsor per sida"
+    "strips_per_page_other": "{{count}} remsor per sida",
+    "parts": "Delar",
+    "part_of": "Del {{part}} av"
   },
   "kinds": {
     "c": "Cover",
@@ -651,7 +653,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Samlar",
+    "reprints": "Omtryckt i"
   },
   "entry": {
     "comment": "Comment",

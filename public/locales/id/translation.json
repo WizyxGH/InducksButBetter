@@ -190,7 +190,9 @@
     "page": "page",
     "refers_to_creator": "Referensi ke pembuat",
     "strips_per_page_one": "{{count}} strip per halaman",
-    "strips_per_page_other": "{{count}} strip per halaman"
+    "strips_per_page_other": "{{count}} strip per halaman",
+    "parts": "Bagian",
+    "part_of": "Bagian {{part}} dari"
   },
   "kinds": {
     "c": "Cover",
@@ -651,7 +653,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Mengelompokkan",
+    "reprints": "Dicetak ulang di"
   },
   "entry": {
     "comment": "Comment",

@@ -190,7 +190,9 @@
     "page": "page",
     "refers_to_creator": "Riferimento all'autore",
     "strips_per_page_one": "{{count}} striscia per pagina",
-    "strips_per_page_other": "{{count}} strisce per pagina"
+    "strips_per_page_other": "{{count}} strisce per pagina",
+    "parts": "Parti",
+    "part_of": "Parte {{part}} di"
   },
   "kinds": {
     "c": "Copertina",
@@ -651,7 +653,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Raggruppa",
+    "reprints": "Ristampato in"
   },
   "entry": {
     "comment": "Comment",

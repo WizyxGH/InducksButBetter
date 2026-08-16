@@ -46,12 +46,6 @@ interface SearchFormProps {
   setPagesSliderMoved: React.Dispatch<React.SetStateAction<boolean>>;
   selectedLabels: Record<string, string>;
   setSelectedLabels: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  isSettingsOpen: boolean;
-  setIsSettingsOpen: (open: boolean) => void;
-  cookieValue: string;
-  setCookieValue: (value: string) => void;
-  isSavingCookie: boolean;
-  saveCookie: () => Promise<void>;
   addSelection: (key: CharacterKey, value: string, label: string) => void;
   removeSelection: (key: CharacterKey, value: string) => void;
   handleClearFilters: () => void;
@@ -71,12 +65,6 @@ export function SearchForm({
   setPagesSliderMoved,
   selectedLabels,
   setSelectedLabels,
-  isSettingsOpen,
-  setIsSettingsOpen,
-  cookieValue,
-  setCookieValue,
-  isSavingCookie,
-  saveCookie,
   addSelection,
   removeSelection,
   handleClearFilters,

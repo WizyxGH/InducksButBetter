@@ -190,7 +190,9 @@
     "page": "page",
     "refers_to_creator": "Referência ao autor",
     "strips_per_page_one": "{{count}} tira por página",
-    "strips_per_page_other": "{{count}} tiras por página"
+    "strips_per_page_other": "{{count}} tiras por página",
+    "parts": "Partes",
+    "part_of": "Parte {{part}} de"
   },
   "kinds": {
     "c": "Capa",
@@ -651,7 +653,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Agrupa",
+    "reprints": "Reimpresso em"
   },
   "entry": {
     "comment": "Comment",

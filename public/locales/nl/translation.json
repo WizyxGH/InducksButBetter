@@ -190,7 +190,9 @@
     "page": "page",
     "refers_to_creator": "Verwijzing naar de maker",
     "strips_per_page_one": "{{count}} strook per pagina",
-    "strips_per_page_other": "{{count}} stroken per pagina"
+    "strips_per_page_other": "{{count}} stroken per pagina",
+    "parts": "Delen",
+    "part_of": "Deel {{part}} van"
   },
   "kinds": {
     "c": "Cover",
@@ -651,7 +653,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Bundelt",
+    "reprints": "Herdrukt in"
   },
   "entry": {
     "comment": "Comment",

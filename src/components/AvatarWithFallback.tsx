@@ -10,6 +10,13 @@ interface AvatarWithFallbackProps {
   textClasses?: string
   square?: boolean
   fallbackOverride?: string
+  /**
+   * Hides the whole avatar from assistive tech. Set it where the avatar sits
+   * beside a visible name (EntityBadge): otherwise the image alt and the
+   * initials both fold into the link's accessible name, reading it as
+   * "Roberto Moscato Roberto Moscato".
+   */
+  decorative?: boolean
 }
 
 export function AvatarWithFallback({
@@ -20,7 +27,8 @@ export function AvatarWithFallback({
   sizeClasses = "w-8 h-8",
   textClasses = "text-[12px]",
   square = false,
-  fallbackOverride
+  fallbackOverride,
+  decorative = false
 }: AvatarWithFallbackProps) {
   // Extract initials (up to 2 letters) if no override
   const initials = fallbackOverride || name
@@ -34,7 +42,8 @@ export function AvatarWithFallback({
   const shouldShowImage = imagesAvailable() && Boolean(src);
 
   return (
-    <div 
+    <div
+      aria-hidden={decorative || undefined}
       className={cn(
         square ? "rounded-md" : "rounded-full",
         "overflow-hidden border border-border-subtle bg-zinc-100 dark:bg-zinc-800 shrink-0 relative flex items-center justify-center",

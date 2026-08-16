@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "deploy": "pnpm build",
     "test": "vitest run",
-    "dev:images": "node scripts/image-proxy.mjs"
+    "dev:images": "node scripts/image-proxy.mjs",
+    "db:build": "tsx scripts/generate-db.ts",
+    "db:release": "node scripts/db-release.mjs"
   },
   "dependencies": {
     "@codemirror/lang-sql": "^6.10.0",

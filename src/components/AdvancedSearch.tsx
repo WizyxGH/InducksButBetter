@@ -36,14 +36,8 @@ export function AdvancedSearch({
     setPagesSliderMoved,
     selectedLabels,
     setSelectedLabels,
-    cookieValue,
-    setCookieValue,
-    isSavingCookie,
-    isSettingsOpen,
-    setIsSettingsOpen,
     addSelection,
     removeSelection,
-    saveCookie,
     handleClearFilters,
   } = useSearchFilters();
 
@@ -154,12 +148,6 @@ export function AdvancedSearch({
           setPagesSliderMoved={setPagesSliderMoved}
           selectedLabels={selectedLabels}
           setSelectedLabels={setSelectedLabels}
-          isSettingsOpen={isSettingsOpen}
-          setIsSettingsOpen={setIsSettingsOpen}
-          cookieValue={cookieValue}
-          setCookieValue={setCookieValue}
-          isSavingCookie={isSavingCookie}
-          saveCookie={saveCookie}
           addSelection={addSelection}
           removeSelection={removeSelection}
           handleClearFilters={handleClearFilters}

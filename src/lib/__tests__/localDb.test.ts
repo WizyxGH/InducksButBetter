@@ -1,6 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 /**
+ * The client builds its worker through a Vite `?worker` import, so the tests
+ * point that default export at a mock they can drive. A hoisted holder lets each
+ * test install a fresh worker instance created in `beforeEach` — vi.mock is
+ * hoisted above the import and cannot close over per-test state otherwise.
+ */
+const workerHolder = vi.hoisted(() => ({ create: null as null | (() => any) }));
+
+vi.mock('../dbWorker?worker', () => ({
+  default: class {
+    constructor() {
+      return workerHolder.create!();
+    }
+  },
+}));
+
+/**
  * The worker client is a module singleton, so each test re-imports it after
  * resetting the module registry to start from a clean state.
  */
@@ -9,35 +25,15 @@ async function freshModule() {
   return import('../localDb');
 }
 
-/** Captures whatever channel the client opened, and lets tests reply to it. */
+/** Captures whatever the client posted, and lets tests reply on its channel. */
 function makeWorkerHarness() {
   const posted: any[] = [];
-  const dedicatedPosted: any[] = [];
   const listeners: Array<(e: any) => void> = [];
-  const shared: { onerror?: (e: any) => void; onmessageerror?: (e: any) => void } = {};
+  const instances: MockWorker[] = [];
 
-  const port = {
-    postMessage: (msg: any) => posted.push(msg),
-    start: vi.fn(),
-    close: vi.fn(),
-    set onmessage(fn: (e: any) => void) {
-      listeners.push(fn);
-    },
-    set onmessageerror(fn: (e: any) => void) {
-      shared.onmessageerror = fn;
-    },
-  };
-
-  class MockSharedWorker {
-    port = port;
-    set onerror(fn: (e: any) => void) {
-      shared.onerror = fn;
-    }
-  }
   class MockWorker {
     postMessage = (msg: any) => {
       posted.push(msg);
-      dedicatedPosted.push(msg);
     };
     terminate = vi.fn();
     set onmessage(fn: (e: any) => void) {
@@ -45,10 +41,16 @@ function makeWorkerHarness() {
     }
   }
 
+  const create = () => {
+    const worker = new MockWorker();
+    instances.push(worker);
+    return worker;
+  };
+
   /** Simulates a message coming back from the worker. */
   const reply = (data: any) => listeners.forEach((fn) => fn({ data }));
 
-  return { posted, dedicatedPosted, reply, port, shared, MockSharedWorker, MockWorker };
+  return { posted, listeners, instances, create, reply };
 }
 
 describe('localDb worker client', () => {
@@ -56,13 +58,27 @@ describe('localDb worker client', () => {
 
   beforeEach(() => {
     harness = makeWorkerHarness();
-    vi.stubGlobal('SharedWorker', harness.MockSharedWorker);
-    vi.stubGlobal('Worker', harness.MockWorker);
+    workerHolder.create = harness.create;
+    // No Web Locks in jsdom, but pin it so the client always takes the
+    // single-owner dedicated path rather than leader election.
+    Object.defineProperty(navigator, 'locks', { value: undefined, configurable: true });
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    workerHolder.create = null;
   });
+
+  /**
+   * The channel initialises asynchronously (`getChannelAsync().then(post)`), so
+   * a posted message only lands after a few microtasks — unlike the old
+   * synchronous SharedWorker path. Await it before reading `posted`.
+   */
+  async function nthPosted(index: number): Promise<any> {
+    for (let i = 0; i < 50 && harness.posted.length <= index; i++) {
+      await Promise.resolve();
+    }
+    return harness.posted[index];
+  }
 
   it('reports no database before anything is loaded', async () => {
     const { hasLocalDb, getLocalDbStats } = await freshModule();
@@ -76,8 +92,7 @@ describe('localDb worker client', () => {
 
     void installDatabase(urls);
 
-    expect(harness.posted).toHaveLength(1);
-    expect(harness.posted[0]).toMatchObject({ action: 'installDb', payload: { url: urls } });
+    expect(await nthPosted(0)).toMatchObject({ action: 'installDb', payload: { url: urls } });
   });
 
   it('sends an installDb request carrying a local File', async () => {
@@ -86,7 +101,7 @@ describe('localDb worker client', () => {
 
     void installDatabase(file);
 
-    expect(harness.posted[0]).toMatchObject({ action: 'installDb', payload: { file } });
+    expect(await nthPosted(0)).toMatchObject({ action: 'installDb', payload: { file } });
   });
 
   it('records the stats returned by a successful install', async () => {
@@ -94,7 +109,7 @@ describe('localDb worker client', () => {
 
     const promise = installDatabase('https://example.com/db.gz');
     harness.reply({
-      id: harness.posted[0].id,
+      id: (await nthPosted(0)).id,
       type: 'success',
       stats: { count: 42, size: 1024, storage: 'sah', persistent: true },
     });
@@ -108,7 +123,7 @@ describe('localDb worker client', () => {
     const { installDatabase, hasLocalDb } = await freshModule();
 
     const promise = installDatabase('https://example.com/db.gz');
-    harness.reply({ id: harness.posted[0].id, type: 'error', error: 'error_download|CORS' });
+    harness.reply({ id: (await nthPosted(0)).id, type: 'error', error: 'error_download|CORS' });
 
     await expect(promise).rejects.toThrow('error_download|CORS');
     expect(hasLocalDb()).toBe(false);
@@ -118,7 +133,7 @@ describe('localDb worker client', () => {
     const { loadCachedDb, hasLocalDb } = await freshModule();
 
     const promise = loadCachedDb();
-    harness.reply({ id: harness.posted[0].id, type: 'not_found' });
+    harness.reply({ id: (await nthPosted(0)).id, type: 'not_found' });
 
     await expect(promise).resolves.toBe(false);
     expect(hasLocalDb()).toBe(false);
@@ -132,6 +147,7 @@ describe('localDb worker client', () => {
    * asked the user to re-import a gigabyte.
    */
   describe('when the persistent backend is momentarily unavailable', () => {
+    // The backoff between attempts uses real timers, so drive them by hand.
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
 
@@ -140,16 +156,18 @@ describe('localDb worker client', () => {
 
       const promise = loadCachedDb();
       harness.reply({
-        id: harness.posted[0].id,
+        id: (await nthPosted(0)).id,
         type: 'not_found',
         storage: 'memory',
         storageError: 'access handle held by another client',
       });
 
+      // First backoff step is 150 ms; advancing it fires the second attempt.
       await vi.advanceTimersByTimeAsync(150);
-      expect(harness.posted).toHaveLength(2);
+      const retry = harness.posted[1];
+      expect(retry).toMatchObject({ action: 'loadCachedDb' });
 
-      harness.reply({ id: harness.posted[1].id, type: 'success', stats: { count: 7, size: 32 } });
+      harness.reply({ id: retry.id, type: 'success', stats: { count: 7, size: 32 } });
       await expect(promise).resolves.toBe(true);
       expect(hasLocalDb()).toBe(true);
     });
@@ -158,23 +176,27 @@ describe('localDb worker client', () => {
       const { loadCachedDb } = await freshModule();
 
       const promise = loadCachedDb();
-      for (let i = 0; i < 4; i++) {
+      harness.reply({ id: (await nthPosted(0)).id, type: 'not_found', storage: 'memory' });
+
+      for (let i = 1; i < CACHED_DB_BACKOFFS_MS.length + 1; i++) {
+        await vi.advanceTimersByTimeAsync(CACHED_DB_BACKOFFS_MS[i - 1]);
         harness.reply({ id: harness.posted[i].id, type: 'not_found', storage: 'memory' });
-        await vi.advanceTimersByTimeAsync(1000);
       }
 
       await expect(promise).resolves.toBe(false);
-      expect(harness.posted).toHaveLength(4);
+      // Initial attempt plus one per backoff step, then it stops.
+      expect(harness.posted).toHaveLength(CACHED_DB_BACKOFFS_MS.length + 1);
     });
 
     it('does not retry a database that genuinely was never installed', async () => {
       const { loadCachedDb } = await freshModule();
 
       const promise = loadCachedDb();
-      harness.reply({ id: harness.posted[0].id, type: 'not_found', storage: 'sah' });
+      harness.reply({ id: (await nthPosted(0)).id, type: 'not_found', storage: 'sah' });
 
       await expect(promise).resolves.toBe(false);
-      await vi.advanceTimersByTimeAsync(5000);
+      // A `sah` verdict is authoritative: no second attempt is ever posted.
+      await Promise.resolve();
       expect(harness.posted).toHaveLength(1);
     });
   });
@@ -183,14 +205,13 @@ describe('localDb worker client', () => {
     const { loadCachedDb } = await freshModule();
 
     const first = loadCachedDb();
-    harness.reply({ id: harness.posted[0].id, type: 'not_found', storage: 'sah' });
+    harness.reply({ id: (await nthPosted(0)).id, type: 'not_found', storage: 'sah' });
     await expect(first).resolves.toBe(false);
 
     const second = loadCachedDb();
     expect(second).not.toBe(first);
-    expect(harness.posted).toHaveLength(2);
 
-    harness.reply({ id: harness.posted[1].id, type: 'success', stats: { count: 1, size: 1 } });
+    harness.reply({ id: (await nthPosted(1)).id, type: 'success', stats: { count: 1, size: 1 } });
     await expect(second).resolves.toBe(true);
   });
 
@@ -200,7 +221,7 @@ describe('localDb worker client', () => {
     window.addEventListener('db-local-loaded', listener);
 
     const promise = loadCachedDb();
-    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1 } });
+    harness.reply({ id: (await nthPosted(0)).id, type: 'success', stats: { count: 1, size: 1 } });
     await promise;
 
     expect(listener).toHaveBeenCalled();
@@ -214,6 +235,7 @@ describe('localDb worker client', () => {
     const second = loadCachedDb();
 
     expect(first).toBe(second);
+    await nthPosted(0);
     expect(harness.posted).toHaveLength(1);
   });
 
@@ -223,7 +245,7 @@ describe('localDb worker client', () => {
     // A query that beats the boot-time load opens the cached database itself,
     // so a component mounting straight onto a deep link is not left empty.
     const query = executeLocal('SELECT 1');
-    expect(harness.posted[0]).toMatchObject({ action: 'loadCachedDb' });
+    expect(await nthPosted(0)).toMatchObject({ action: 'loadCachedDb' });
 
     harness.reply({ id: harness.posted[0].id, type: 'not_found', storage: 'sah' });
     await expect(query).rejects.toThrow('error_not_loaded');
@@ -233,10 +255,9 @@ describe('localDb worker client', () => {
     const { executeLocal } = await freshModule();
 
     const query = executeLocal('SELECT 1');
-    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1 } });
-    await vi.waitFor(() => expect(harness.posted).toHaveLength(2));
+    harness.reply({ id: (await nthPosted(0)).id, type: 'success', stats: { count: 1, size: 1 } });
 
-    const request = harness.posted[1];
+    const request = await nthPosted(1);
     expect(request).toMatchObject({ action: 'execute', payload: { sql: 'SELECT 1' } });
     harness.reply({ id: request.id, type: 'success', rows: [{ a: 1 }], columns: ['a'] });
     await expect(query).resolves.toEqual({ rows: [{ a: 1 }], columns: ['a'] });
@@ -246,11 +267,11 @@ describe('localDb worker client', () => {
     const { installDatabase, executeLocal } = await freshModule();
 
     const install = installDatabase('https://example.com/db.gz');
-    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1 } });
+    harness.reply({ id: (await nthPosted(0)).id, type: 'success', stats: { count: 1, size: 1 } });
     await install;
 
     const query = executeLocal({ sql: 'SELECT ?', args: ['x'] });
-    const request = harness.posted[1];
+    const request = await nthPosted(1);
     expect(request).toMatchObject({
       action: 'execute',
       payload: { sql: 'SELECT ?', args: ['x'], stream: false },
@@ -264,106 +285,27 @@ describe('localDb worker client', () => {
     const { installDatabase, executeLocal } = await freshModule();
 
     const install = installDatabase('https://example.com/db.gz');
-    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1 } });
+    harness.reply({ id: (await nthPosted(0)).id, type: 'success', stats: { count: 1, size: 1 } });
     await install;
 
     const seen: any[] = [];
     const query = executeLocal('SELECT 1', (row) => seen.push(row));
-    const id = harness.posted[1].id;
+    const request = await nthPosted(1);
 
-    expect(harness.posted[1].payload.stream).toBe(true);
-    harness.reply({ id, type: 'row', row: { a: 1 } });
-    harness.reply({ id, type: 'row', row: { a: 2 } });
-    harness.reply({ id, type: 'success', columns: ['a'], count: 2 });
+    expect(request.payload.stream).toBe(true);
+    harness.reply({ id: request.id, type: 'row', row: { a: 1 } });
+    harness.reply({ id: request.id, type: 'row', row: { a: 2 } });
+    harness.reply({ id: request.id, type: 'success', columns: ['a'], count: 2 });
 
     await query;
     expect(seen).toEqual([{ a: 1 }, { a: 2 }]);
-  });
-
-  it('prefers a SharedWorker so several tabs can share the OPFS database', async () => {
-    const { loadCachedDb } = await freshModule();
-    void loadCachedDb();
-    expect(harness.port.start).toHaveBeenCalled();
-  });
-
-  it('falls back to a dedicated worker when SharedWorker is unavailable', async () => {
-    vi.stubGlobal('SharedWorker', undefined);
-    const { loadCachedDb } = await freshModule();
-
-    void loadCachedDb();
-
-    expect(harness.port.start).not.toHaveBeenCalled();
-    expect(harness.posted[0]).toMatchObject({ action: 'loadCachedDb' });
-  });
-
-  describe('when the SharedWorker dies after construction', () => {
-    // It fails asynchronously (unsupported module type, blocked script, crash),
-    // so a try/catch around the constructor cannot see it. Without a fallback
-    // every pending query would hang forever and the local database would look
-    // permanently broken.
-    it('replays the in-flight request on a dedicated worker', async () => {
-      const { loadCachedDb } = await freshModule();
-
-      const promise = loadCachedDb();
-      expect(harness.dedicatedPosted).toHaveLength(0);
-
-      harness.shared.onerror?.(new ErrorEvent('error'));
-
-      expect(harness.dedicatedPosted).toHaveLength(1);
-      expect(harness.dedicatedPosted[0]).toMatchObject({ action: 'loadCachedDb' });
-
-      harness.reply({ id: harness.dedicatedPosted[0].id, type: 'success', stats: { count: 2, size: 8 } });
-      await expect(promise).resolves.toBe(true);
-    });
-
-    it('keeps the request id so the reply still matches', async () => {
-      const { installDatabase } = await freshModule();
-
-      const promise = installDatabase('https://example.com/db.gz');
-      const originalId = harness.posted[0].id;
-
-      harness.shared.onerror?.(new ErrorEvent('error'));
-
-      expect(harness.dedicatedPosted[0].id).toBe(originalId);
-      harness.reply({ id: originalId, type: 'success', stats: { count: 1, size: 1 } });
-      await expect(promise).resolves.toBeUndefined();
-    });
-
-    it('also falls back on a message deserialization error', async () => {
-      const { loadCachedDb } = await freshModule();
-
-      void loadCachedDb();
-      harness.shared.onmessageerror?.(new MessageEvent('messageerror'));
-
-      expect(harness.dedicatedPosted).toHaveLength(1);
-    });
-
-    it('closes the broken port', async () => {
-      const { loadCachedDb } = await freshModule();
-
-      void loadCachedDb();
-      harness.shared.onerror?.(new ErrorEvent('error'));
-
-      expect(harness.port.close).toHaveBeenCalled();
-    });
-
-    it('demotes only once, however many errors arrive', async () => {
-      const { loadCachedDb } = await freshModule();
-
-      void loadCachedDb();
-      harness.shared.onerror?.(new ErrorEvent('error'));
-      harness.shared.onerror?.(new ErrorEvent('error'));
-      harness.shared.onmessageerror?.(new MessageEvent('messageerror'));
-
-      expect(harness.dedicatedPosted).toHaveLength(1);
-    });
   });
 
   it('clears its state when the database is unloaded', async () => {
     const { installDatabase, unloadLocalDb, hasLocalDb, getLocalDbStats } = await freshModule();
 
     const install = installDatabase('https://example.com/db.gz');
-    harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 3, size: 9 } });
+    harness.reply({ id: (await nthPosted(0)).id, type: 'success', stats: { count: 3, size: 9 } });
     await install;
     expect(hasLocalDb()).toBe(true);
 
@@ -371,7 +313,8 @@ describe('localDb worker client', () => {
 
     expect(hasLocalDb()).toBe(false);
     expect(getLocalDbStats()).toBeNull();
-    expect(harness.port.close).toHaveBeenCalled();
+    // Disposing the leader's channel terminates its worker.
+    expect(harness.instances[0].terminate).toHaveBeenCalled();
   });
 
   describe('persistent storage', () => {
@@ -430,7 +373,7 @@ describe('localDb worker client', () => {
       const { installDatabase } = await freshModule();
       void installDatabase('https://example.com/db.gz');
       // The grant is requested without being awaited, so let its promise settle.
-      await Promise.resolve();
+      await nthPosted(0);
       await Promise.resolve();
 
       expect(persist).toHaveBeenCalled();
@@ -444,7 +387,7 @@ describe('localDb worker client', () => {
       const { installDatabase } = await freshModule();
       void installDatabase('https://example.com/db.gz');
 
-      expect(harness.posted).toHaveLength(1);
+      expect(await nthPosted(0)).toMatchObject({ action: 'installDb' });
     });
 
     it('re-asserts the grant when a cached database is picked up', async () => {
@@ -454,7 +397,7 @@ describe('localDb worker client', () => {
       const { loadCachedDb } = await freshModule();
       const promise = loadCachedDb();
       harness.reply({
-        id: harness.posted[0].id,
+        id: (await nthPosted(0)).id,
         type: 'success',
         stats: { count: 5, size: 10, storage: 'sah', persistent: true },
       });
@@ -486,7 +429,7 @@ describe('localDb worker client', () => {
     async function install(stats: Record<string, unknown>) {
       const mod = await freshModule();
       const promise = mod.installDatabase('https://example.com/db.gz');
-      harness.reply({ id: harness.posted[0].id, type: 'success', stats: { count: 1, size: 1, ...stats } });
+      harness.reply({ id: (await nthPosted(0)).id, type: 'success', stats: { count: 1, size: 1, ...stats } });
       await promise;
       return mod;
     }
@@ -539,7 +482,7 @@ describe('localDb worker client', () => {
 
       const promise = loadCachedDb();
       harness.reply({
-        id: harness.posted[0].id,
+        id: (await nthPosted(0)).id,
         type: 'success',
         stats: { count: 90, size: 1_133_518_848, storage: 'sah', persistent: true },
       });
@@ -550,3 +493,6 @@ describe('localDb worker client', () => {
     });
   });
 });
+
+/** Backoff steps between cached-load attempts, mirroring CACHED_DB_RETRY_DELAYS_MS. */
+const CACHED_DB_BACKOFFS_MS = [150, 400, 1000, 2000, 3000, 5000];

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import readline from 'readline';
+import { execFileSync } from 'child_process';
 import sqlite3 from 'sqlite3';
 import { DEFAULT_DB_SCHEMA } from '../src/lib/defaultSchema';
 
@@ -153,15 +154,56 @@ async function importIsvFile(db: sqlite3.Database, tableName: string, columns: s
   console.log(`  Imported ${count} rows into ${tableName}`);
 }
 
+/**
+ * Unpacks an Inducks `isv.tgz` into `destDir`.
+ *
+ * The archive nests everything under `isv/`, which `--strip-components=1`
+ * removes so the caller gets a flat directory of `.isv` files. GNU tar is
+ * present on the GitHub runners and on Git for Windows alike, and shelling out
+ * avoids pulling a tar dependency in for one call.
+ */
+function extractArchive(archivePath: string, destDir: string) {
+  if (!fs.existsSync(archivePath)) {
+    throw new Error(`Archive not found: ${archivePath}`);
+  }
+  fs.mkdirSync(destDir, { recursive: true });
+  console.log(`Extracting ${path.basename(archivePath)} (this takes a minute)...`);
+  // --force-local: GNU tar otherwise reads the "C:" in a Windows path as a
+  // remote host (host:file syntax) and tries to connect to it.
+  execFileSync('tar', ['--force-local', '-xzf', archivePath, '-C', destDir, '--strip-components=1'], {
+    stdio: 'inherit',
+  });
+  const count = fs.readdirSync(destDir).filter((f) => f.endsWith('.isv')).length;
+  if (count === 0) {
+    throw new Error(`No .isv files found in ${archivePath}`);
+  }
+  console.log(`  Extracted ${count} ISV files.`);
+}
+
 async function main() {
   const args = process.argv.slice(2);
-  const dirArgIndex = args.indexOf('--dir');
-  let isvDir = dirArgIndex !== -1 ? args[dirArgIndex + 1] : null;
+  const valueOf = (flag: string) => {
+    const i = args.indexOf(flag);
+    return i !== -1 ? args[i + 1] : null;
+  };
+
+  let isvDir = valueOf('--dir');
+  const archivePath = valueOf('--archive');
 
   const tempDir = path.join(process.cwd(), 'temp_isv');
   let tempCreated = false;
 
   try {
+    // `--archive` wins: it is the only source that is actually fresh. Inducks
+    // sits behind Anubis, so isv.tgz cannot be fetched unattended — download it
+    // from https://inducks.org/inducks/isv.tgz in a browser and pass the path.
+    if (archivePath) {
+      if (fs.existsSync(tempDir)) fs.rmSync(tempDir, { recursive: true, force: true });
+      tempCreated = true;
+      extractArchive(archivePath, tempDir);
+      isvDir = tempDir;
+    }
+
     if (!isvDir) {
       if (fs.existsSync(tempDir) && fs.readdirSync(tempDir).filter(f => f.endsWith('.isv')).length > 0) {
         console.log('Using existing cached ISV files in temp_isv...');

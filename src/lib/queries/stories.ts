@@ -139,6 +139,34 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
     args: [lang, storycode, lang, storycode]
   });
 
+  // 7. Multi-part story links, the way Inducks lays them out.
+  //
+  // inducks_substory ties each part (its own storycode) to the whole under
+  // `superstorycode`, numbered by `part`. A story can be either end of that:
+  // the assembled whole (YC 6601 → 24 parts) or one instalment. `part` is a
+  // string in the dump, so it is ordered numerically.
+  const partsResult = await executeQuery({
+    sql: `
+      SELECT sub.storycode, sub.part, sub.firstpublicationdate,
+        COALESCE(NULLIF(sub.title, ''), NULLIF(s.title, '')) as title
+      FROM inducks_substory sub
+      LEFT JOIN inducks_story s ON s.storycode = sub.storycode
+      WHERE sub.superstorycode = ?
+      ORDER BY CAST(sub.part AS INTEGER) ASC, sub.part ASC
+    `,
+    args: [storycode]
+  });
+
+  const partOfResult = await executeQuery({
+    sql: `
+      SELECT superstorycode, part
+      FROM inducks_substory
+      WHERE storycode = ?
+      LIMIT 1
+    `,
+    args: [storycode]
+  });
+
   return {
     ...story,
     ...version,
@@ -146,6 +174,8 @@ export async function getStoryDetail(storycode: string, lang: string = "fr") {
     characters: charactersResult.rows,
     descriptions: descriptionsResult.rows,
     publications: publicationsResult.rows,
-    xrefs: xrefsResult.rows
+    xrefs: xrefsResult.rows,
+    parts: partsResult.rows,
+    partOf: partOfResult.rows[0] ?? null
   };
 }

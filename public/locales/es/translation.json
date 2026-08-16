@@ -190,7 +190,9 @@
     "page": "page",
     "refers_to_creator": "Referencia al autor",
     "strips_per_page_one": "{{count}} tira por página",
-    "strips_per_page_other": "{{count}} tiras por página"
+    "strips_per_page_other": "{{count}} tiras por página",
+    "parts": "Partes",
+    "part_of": "Parte {{part}} de"
   },
   "kinds": {
     "c": "Portada",
@@ -651,7 +653,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Agrupa",
+    "reprints": "Reeditado en"
   },
   "entry": {
     "comment": "Comment",

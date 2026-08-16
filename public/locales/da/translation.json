@@ -190,7 +190,9 @@
     "page": "page",
     "refers_to_creator": "Reference til skaberen",
     "strips_per_page_one": "{{count}} stribe pr. side",
-    "strips_per_page_other": "{{count}} striber pr. side"
+    "strips_per_page_other": "{{count}} striber pr. side",
+    "parts": "Dele",
+    "part_of": "Del {{part}} af"
   },
   "kinds": {
     "c": "Cover",
@@ -651,7 +653,9 @@
     "error_generic": "Microphone error: {{error}}"
   },
   "issue": {
-    "indexed_by": "Indexed by"
+    "indexed_by": "Indexed by",
+    "collections": "Samler",
+    "reprints": "Genoptrykt i"
   },
   "entry": {
     "comment": "Comment",

@@ -406,6 +406,53 @@ export function StoryDetail({ storycode, onBack, onSelectIssue, onSelectCharacte
               </Card>
             </div>
           )}
+
+          {/* Multi-part story: the code of every part, the way Inducks lists
+              them. A story is either the assembled whole (shows its parts) or
+              one instalment (shows which whole it belongs to). */}
+          {story.partOf && (
+            <div
+              onClick={() => navigate(routes.story(story.partOf.superstorycode))}
+              className="flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-surface-2 p-1 -m-1 rounded-md transition-colors cursor-pointer w-fit"
+            >
+              <AlignJustify className="w-4 h-4" />
+              {t("story.part_of", { part: story.partOf.part })}
+              <span className="ml-1">{story.partOf.superstorycode}</span>
+            </div>
+          )}
+
+          {story.parts && story.parts.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <AlignJustify className="w-4 h-4 text-primary" />
+                {t("story.parts")} ({story.parts.length})
+              </h3>
+              <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex flex-wrap gap-x-3 gap-y-2">
+                    {story.parts.map((part: any, idx: number) => (
+                      <div key={idx} className="flex items-center">
+                        <span
+                          onClick={() => navigate(routes.story(part.storycode))}
+                          className="flex items-center gap-1.5 hover:bg-surface-2 p-1 -m-1 rounded-md transition-colors cursor-pointer text-xs font-medium text-primary"
+                        >
+                          <span className="text-text-secondary font-normal">{part.part}.</span>
+                          {part.title ? (
+                            <>
+                              {part.title} <span className="text-text-secondary font-normal ml-1">({part.storycode})</span>
+                            </>
+                          ) : (
+                            part.storycode
+                          )}
+                        </span>
+                        {idx < story.parts.length - 1 && <span className="text-sm text-text-secondary ml-1.5">,</span>}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 

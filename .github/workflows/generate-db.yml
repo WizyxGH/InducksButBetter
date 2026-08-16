@@ -1,8 +1,16 @@
 name: Generate SQLite Database
 
+# Manual only. The weekly schedule was removed because it could not do what its
+# name promised: `generate-db.ts` with no arguments pulls the .isv files from
+# this very release, so each run recompiled the same frozen dataset and
+# published it as if it were fresh.
+#
+# Refreshing for real needs https://inducks.org/inducks/isv.tgz, which sits
+# behind Anubis (HTTP 403 for any unattended client), so a runner cannot fetch
+# it. Use `pnpm db:build -- --archive <path>` locally against a browser-
+# downloaded archive, then upload inducks.sqlite.gz to the `datas` release —
+# or run this workflow to rebuild from whatever ISVs the release already holds.
 on:
-  schedule:
-    - cron: '0 0 * * 0' # Every Sunday at midnight
   workflow_dispatch: # Manual trigger
 
 permissions:

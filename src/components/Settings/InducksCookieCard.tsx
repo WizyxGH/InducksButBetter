@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { sendCookieToProxy } from "@/lib/imageProxy"
 export function InducksCookieCard() {
   const { t } = useTranslation()
@@ -49,6 +49,22 @@ export function InducksCookieCard() {
         <CardTitle className="text-base flex items-center gap-2">
           <Monitor className="w-4 h-4 text-primary" />
           {t("settings.inducks_cookie")}
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="ml-auto rounded-full p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label={t("settings.cookie_help")}
+              >
+                <Info className="w-4 h-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="end" className="w-80 text-xs leading-relaxed">
+              <p className="whitespace-pre-line text-muted-foreground">
+                {t("settings.cookie_help")}
+              </p>
+            </PopoverContent>
+          </Popover>
         </CardTitle>
         <CardDescription>
           {t("settings.cookie_desc")}
@@ -56,19 +72,9 @@ export function InducksCookieCard() {
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="inducks-cookie" className="text-xs font-semibold">
-              Cookie (coa-session, etc.)
-            </Label>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-sm">{t("settings.cookie_help")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          <Label htmlFor="inducks-cookie" className="text-xs font-semibold">
+            Cookie (coa-session, etc.)
+          </Label>
           <Input
             id="inducks-cookie"
             placeholder={t("common.example", { value: "coa-session=..." })}

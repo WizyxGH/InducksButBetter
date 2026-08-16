@@ -17,6 +17,11 @@ import React from 'react'
 const wrap = (ui: React.ReactElement) =>
   render(<TooltipProvider>{ui}</TooltipProvider>)
 
+// The avatar is decorative (aria-hidden) so it stays out of the link's
+// accessible name, which means it has no "img" role — query the DOM element.
+const avatarImgs = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll('img'))
+
 describe('EntityBadge', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => localStorage.clear())
@@ -43,12 +48,14 @@ describe('EntityBadge', () => {
     expect(link).toHaveAttribute('href', '/characters/Uncle+Scrooge')
   })
 
-  // ── Avatar images (only shown when inducks_cookie is set) ────────────────
+  // ── Avatar images ────────────────────────────────────────────────────────
+  // Images are gated on proxy availability (imagesAvailable(), true under the
+  // test env's DEV flag), no longer on a cookie string in localStorage — that
+  // value was never sent anywhere.
 
   it('shows character proxy-image URL via characterthumb when no url prop', () => {
-    localStorage.setItem('inducks_cookie', 'tok')
-    wrap(<EntityBadge type="character" code="Donald" name="Donald Duck" />)
-    const imgs = screen.queryAllByRole('img')
+    const { container } = wrap(<EntityBadge type="character" code="Donald" name="Donald Duck" />)
+    const imgs = avatarImgs(container)
     expect(imgs.length).toBeGreaterThan(0)
     expect(imgs[0]).toHaveAttribute(
       'src',
@@ -57,9 +64,8 @@ describe('EntityBadge', () => {
   })
 
   it('shows creator proxy-image URL with underscores replacing spaces', () => {
-    localStorage.setItem('inducks_cookie', 'tok')
-    wrap(<EntityBadge type="creator" code="Carl Barks" name="Carl Barks" />)
-    const imgs = screen.queryAllByRole('img')
+    const { container } = wrap(<EntityBadge type="creator" code="Carl Barks" name="Carl Barks" />)
+    const imgs = avatarImgs(container)
     expect(imgs.length).toBeGreaterThan(0)
     expect(imgs[0]).toHaveAttribute(
       'src',
@@ -67,9 +73,10 @@ describe('EntityBadge', () => {
     )
   })
 
-  it('renders NO avatar images when inducks_cookie is absent', () => {
-    wrap(<EntityBadge type="character" code="Donald" name="Donald Duck" />)
-    expect(screen.queryAllByRole('img')).toHaveLength(0)
+  it('renders images regardless of any stored cookie value', () => {
+    // The old gate suppressed images without a cookie; the proxy gate ignores it.
+    const { container } = wrap(<EntityBadge type="character" code="Donald" name="Donald Duck" />)
+    expect(avatarImgs(container).length).toBeGreaterThan(0)
   })
 
   // ── onSelect callback ────────────────────────────────────────────────────

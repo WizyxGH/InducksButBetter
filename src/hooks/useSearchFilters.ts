@@ -43,9 +43,6 @@ export function useSearchFilters() {
   const [filters, setFilters] = useState<SearchFilters>(initialFilters);
   const [pagesSliderMoved, setPagesSliderMoved] = useState(false);
   const [selectedLabels, setSelectedLabels] = useState<Record<string, string>>({});
-  const [cookieValue, setCookieValue] = useState("");
-  const [isSavingCookie, setIsSavingCookie] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { i18n } = useTranslation();
 
   useEffect(() => {
@@ -73,18 +70,6 @@ export function useSearchFilters() {
     setFilters({ ...filters, [key]: (filters[key] as string[]).filter((v: string) => v !== value) });
   };
 
-  const saveCookie = async () => {
-    setIsSavingCookie(true);
-    try {
-      localStorage.setItem("inducks_cookie", cookieValue);
-      setIsSettingsOpen(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSavingCookie(false);
-    }
-  };
-
   const handleClearFilters = () => {
     setFilters(initialFilters);
     setSelectedLabels({});
@@ -98,14 +83,8 @@ export function useSearchFilters() {
     setPagesSliderMoved,
     selectedLabels,
     setSelectedLabels,
-    cookieValue,
-    setCookieValue,
-    isSavingCookie,
-    isSettingsOpen,
-    setIsSettingsOpen,
     addSelection,
     removeSelection,
-    saveCookie,
     handleClearFilters,
   };
 }
