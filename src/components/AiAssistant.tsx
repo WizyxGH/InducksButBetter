@@ -7,13 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { useWebLLM, DEFAULT_MODEL } from "@/lib/useWebLLM"
+import { useWebLLM, WEBLLM_MODELS, MODEL_STORAGE_KEY, getPreferredModel } from "@/lib/useWebLLM"
 import { buildSystemPrompt, buildUserPrompt, buildRepairPrompt } from "@/lib/sqlAssistant/prompt"
 import { guardSql, type GuardResult } from "@/lib/sqlAssistant/sqlGuard"
 import { ChatBubble } from "@/components/ChatBubble"
 import { SqlCodeBlock } from "@/components/SqlCodeBlock"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { MicButton } from "@/components/MicButton"
+import { speechLocale } from "@/lib/speechLocale"
 
 interface Message {
   role: "user" | "assistant"
@@ -43,7 +44,7 @@ export function AiAssistant({ onCopyToEditor }: AiAssistantProps) {
   const shouldAutoScroll = useRef(true)
 
   useEffect(() => {
-    setModelName(DEFAULT_MODEL)
+    setModelName(getPreferredModel())
   }, [])
 
   useEffect(() => {
@@ -91,7 +92,7 @@ export function AiAssistant({ onCopyToEditor }: AiAssistantProps) {
     if (!isSpeakingEnabled) return
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text.replace(/```sql[\s\S]*?```/g, ""))
-    utterance.lang = i18n.language === "fr" ? "fr-FR" : "en-US"
+    utterance.lang = speechLocale(i18n.language)
     window.speechSynthesis.speak(utterance)
   }
 
@@ -106,10 +107,14 @@ export function AiAssistant({ onCopyToEditor }: AiAssistantProps) {
     systemPrompt: string,
     onStream: (text: string) => void
   ): Promise<GuardResult> => {
+    // Tuned for Qwen 2.5 3B (default since 2026-08-22): it likes to open a
+    // ```sql fence despite the rules, so the fence is NOT a stop sequence
+    // (it would end generation on the very first token) - extractSql strips
+    // it instead. Joins on Inducks get long, hence the larger token budget.
     const raw = await generate(turns, systemPrompt, onStream, {
       temperature: 0,
-      maxTokens: 260,
-      stop: ["\n\n", "```", "Question:", "Explanation:"],
+      maxTokens: 400,
+      stop: ["\n\n", "Question:", "Explanation:"],
     })
     return guardSql(raw)
   }
@@ -253,22 +258,29 @@ export function AiAssistant({ onCopyToEditor }: AiAssistantProps) {
                 <h3 className="text-lg font-bold text-foreground mb-2">{t("ai.activate_title")}</h3>
                 <p className="text-sm text-zinc-400 mb-8 max-w-[250px]">
                   {t("ai.activate_desc", { 
-                    size: modelName === 'Llama-3.2-3B-Instruct-q4f32_1-MLC' ? '(~1.8 Go) ' : 
-                          modelName === 'TinyLlama-1.1B-Chat-v1.0-q4f32_1-MLC' ? '(~600 Mo) ' : 
-                          modelName === 'Llama-3.2-1B-Instruct-q4f32_1-MLC' ? '(~850 Mo) ' :
-                          ''
+                    size: (WEBLLM_MODELS.find((m) => m.id === modelName)?.size ?? '') + ' '
                   })}
                 </p>
                 {!hasStartedDownload ? (
+                  <>
+                  {/* Model choice: heavier models answer better but need a recent GPU. */}
+                  <select
+                    value={modelName ?? ''}
+                    onChange={(e) => { localStorage.setItem(MODEL_STORAGE_KEY, e.target.value); setModelName(e.target.value) }}
+                    className="w-full mb-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-200 outline-none focus:border-blue-500"
+                  >
+                    {WEBLLM_MODELS.map((m) => <option key={m.id} value={m.id}>{m.label} · {m.size} · {m.note}</option>)}
+                  </select>
                   <Button 
                     className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] transition-all duration-300 hover:-translate-y-0.5 rounded-xl"
                     onClick={() => {
                       setHasStartedDownload(true)
-                      init()
+                      init(modelName ?? undefined)
                     }}
                   >
                     {t("ai.activate_btn")}
                   </Button>
+                  </>
                 ) : (
                   <div className="w-full flex flex-col gap-3 animate-in slide-in-from-bottom-2 fade-in duration-500">
                     <div className="flex justify-between items-center text-xs font-medium text-zinc-300">

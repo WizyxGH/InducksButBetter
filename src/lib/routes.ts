@@ -26,6 +26,7 @@ const segments = (...parts: string[]) => parts.filter(Boolean).map(encode).join(
 export const routes = {
   // Main tabs
   home: () => `/home`,
+  collection: () => `/collection`,
   settings: () => `/settings`,
   suggestions: () => `/suggestions`,
   sql: () => `/sql`,

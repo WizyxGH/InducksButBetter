@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { LibraryBig, FileText, Globe, BookOpen } from "lucide-react";
+import { LibraryBig, FileText, Globe, BookOpen, ImageOff, BookmarkCheck } from "lucide-react";
 import { executeQuery } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useMetadata } from "@/hooks/useMetadata";
 import { buildIssueSections, issueDisplayNumber, type IssueRange } from "@/lib/publications";
 import { DetailBackButton, DetailLoading } from "@/components/Layout/DetailPage";
 import { coverThumbSql } from "@/lib/search/thumbnailSql";
+import { useCollection } from "@/hooks/useCollection";
 
 interface PublicationDetailData {
   publicationcode: string;
@@ -39,13 +40,25 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [visibleSections, setVisibleSections] = useState(5);
+  // "Where can I contribute?": keep only the issues with at least one entry
+  // lacking a scan in Inducks' public dump (first page of each entry).
+  const [onlyMissingScans, setOnlyMissingScans] = useState(false);
+  const { hasIssue, issueSet } = useCollection();
+  const ownedCount = useMemo(
+    () => issues.filter((iss: any) => hasIssue(iss.issuecode)).length,
+    [issues, issueSet, hasIssue]
+  );
+  const shownIssues = useMemo(
+    () => (onlyMissingScans ? issues.filter((i) => i.entry_count > 0 && i.scanned_count < i.entry_count) : issues),
+    [issues, onlyMissingScans]
+  );
 
   // Publications Inducks splits into `h2` issue ranges (fr/SPGHS and friends)
   // are shown range by range, like the reference site; the others keep the
   // year grouping.
   const sections = useMemo(
-    () => buildIssueSections(issues, ranges, t("story.unknown_date")),
-    [issues, ranges, t]
+    () => buildIssueSections(shownIssues, ranges, t("story.unknown_date")),
+    [shownIssues, ranges, t]
   );
   const groupedByRange = ranges.length > 0 && issues.some((i) => !!i.issuerangecode);
 
@@ -145,6 +158,12 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
               SELECT i.issuecode, i.issuenumber, i.issuerangecode, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
                      p.title as series_title, p.countrycode, p.publicationcode,
                      (SELECT pub.publishername FROM inducks_publishingjob pj JOIN inducks_publisher pub ON pj.publisherid = pub.publisherid WHERE pj.issuecode = i.issuecode LIMIT 1) as publishername,
+                     -- Entries shorter than one page (quarter-page gags, illustrations) are not worth a scan: skipped.
+                     (SELECT COUNT(*) FROM inducks_entry e JOIN inducks_storyversion sv ON sv.storyversioncode = e.storyversioncode
+                        WHERE e.issuecode = i.issuecode AND CAST(sv.entirepages AS INTEGER) >= 1) as entry_count,
+                     (SELECT COUNT(*) FROM inducks_entry e JOIN inducks_storyversion sv ON sv.storyversioncode = e.storyversioncode
+                        WHERE e.issuecode = i.issuecode AND CAST(sv.entirepages AS INTEGER) >= 1
+                        AND EXISTS(SELECT 1 FROM inducks_entryurl u WHERE u.entrycode = e.entrycode AND u.sitecode NOT LIKE 'thumbnails%')) as scanned_count,
                      ${coverThumbSql('i.issuecode')} as issue_thumb
               FROM inducks_issue i
               JOIN inducks_publication p ON i.publicationcode = p.publicationcode
@@ -161,6 +180,12 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
             sql: `
               SELECT i.issuecode, i.issuenumber, i.issuerangecode, i.title as issue_title, i.pages, i.price, i.oldestdate, i.size, i.attached,
                      ? as series_title, ? as countrycode, ? as publicationcode,
+                     -- Entries shorter than one page (quarter-page gags, illustrations) are not worth a scan: skipped.
+                     (SELECT COUNT(*) FROM inducks_entry e JOIN inducks_storyversion sv ON sv.storyversioncode = e.storyversioncode
+                        WHERE e.issuecode = i.issuecode AND CAST(sv.entirepages AS INTEGER) >= 1) as entry_count,
+                     (SELECT COUNT(*) FROM inducks_entry e JOIN inducks_storyversion sv ON sv.storyversioncode = e.storyversioncode
+                        WHERE e.issuecode = i.issuecode AND CAST(sv.entirepages AS INTEGER) >= 1
+                        AND EXISTS(SELECT 1 FROM inducks_entryurl u WHERE u.entrycode = e.entrycode AND u.sitecode NOT LIKE 'thumbnails%')) as scanned_count,
                      ${coverThumbSql('i.issuecode')} as issue_thumb
               FROM inducks_issue i
               WHERE i.publicationcode = ? OR i.issuecode LIKE ? || ' %'
@@ -334,9 +359,33 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                   <BookOpen className="w-4 h-4 text-primary" />
                   {t("publication.issues")}
                 </span>
-                <Badge variant="secondary" className="font-bold text-xs">
-                  {t("publication.issue_count", { count: issues.length })}
-                </Badge>
+                <span className="flex items-center gap-2">
+                  <Button
+                    variant={onlyMissingScans ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 rounded-lg text-[11px] font-semibold gap-1.5"
+                    title={t("scans.hint")}
+                    onClick={() => setOnlyMissingScans((v) => !v)}
+                  >
+                    <ImageOff className="w-3.5 h-3.5" />
+                    {t("scans.filter_missing")}
+                  </Button>
+                  {ownedCount > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="border-primary/40 bg-primary/10 text-primary text-[11px] font-semibold gap-1"
+                      title={t("collection.publication_ownership_title", { owned: ownedCount, total: issues.length })}
+                    >
+                      <BookmarkCheck className="w-3.5 h-3.5" />
+                      <span>
+                        {ownedCount}/{issues.length} ({Math.round((ownedCount * 100) / issues.length)}%)
+                      </span>
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="font-bold text-xs">
+                    {t("publication.issue_count", { count: shownIssues.length })}
+                  </Badge>
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 flex-1 overflow-y-auto min-h-0">
@@ -383,18 +432,42 @@ export function PublicationDetail({ publicationcode, onBack, onSelectIssue }: Pu
                           // Inside a range the ISV files keep the range prefix
                           // in `issuenumber`; Inducks strips it before display.
                           const label = issueDisplayNumber(issue.issuecode, issue.issuerangecode, issue.issuenumber);
+                          const isOwned = hasIssue(issue.issuecode);
                           return (
                             <button
                               key={issue.issuecode}
                               onClick={() => onSelectIssue(issue.issuecode)}
-                              className="p-2 border border-border-subtle rounded-xl bg-surface hover:bg-surface-2 hover:border-primary/50 transition-colors flex flex-col items-center justify-center text-center gap-1 group"
+                              className={cn(
+                                "relative p-2 border rounded-xl bg-surface hover:bg-surface-2 hover:border-primary/50 transition-colors flex flex-col items-center justify-center text-center gap-1 group",
+                                isOwned
+                                  ? "border-primary/50 bg-primary/5 shadow-sm"
+                                  : "border-border-subtle"
+                              )}
                               title={issue.issue_title ? `${label} - ${issue.issue_title}` : label}
                             >
+                              {isOwned && (
+                                <BookmarkCheck className="w-3.5 h-3.5 text-primary absolute top-1.5 right-1.5 pointer-events-none" />
+                              )}
                               <span className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-1">
                                 {label}
                               </span>
                               {preciseDate && (
                                 <span className="text-[10px] text-muted-foreground">{preciseDate}</span>
+                              )}
+                              {issue.entry_count > 0 && (
+                                <span
+                                  className={cn(
+                                    "text-[9px] font-mono font-semibold px-1 rounded",
+                                    issue.scanned_count === 0
+                                      ? "bg-red-500/10 text-red-600"
+                                      : issue.scanned_count < issue.entry_count
+                                        ? "bg-amber-500/10 text-amber-600"
+                                        : "text-muted-foreground/70"
+                                  )}
+                                  title={t("scans.coverage", { scanned: issue.scanned_count, total: issue.entry_count })}
+                                >
+                                  {issue.scanned_count}/{issue.entry_count}
+                                </span>
                               )}
                             </button>
                           );

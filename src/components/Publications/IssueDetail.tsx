@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp , UserCheck} from "lucide-react"
+import { ArrowLeft, BookOpen, Calendar, DollarSign, Ruler, Layers, Link as LinkIcon, Loader2, ChevronDown, ChevronUp, UserCheck, TrendingUp, Bookmark, BookmarkCheck } from "lucide-react"
 import { getIssueDetail } from "@/lib/dataService"
 import { Button } from "@/components/ui/button"
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { getFlagUrl, formatInducksDate, imagesAvailable } from "@/lib/utils"
+import { getFlagUrl, formatInducksDate, imagesAvailable, cn } from "@/lib/utils"
+import { useCollection } from "@/hooks/useCollection"
 import { toast } from "sonner"
 import { KindBadge } from "@/components/KindBadge"
 import { Link } from "@/components/ui/link"
@@ -15,6 +16,7 @@ import { getEntryAnnotations, hasEntryAnnotations } from "@/lib/entryNotes"
 import { thumbUrl } from "@/components/ResultCard/thumbUrl"
 import { formatStoryPages } from "@/lib/storyPages"
 import { parseCredits } from "@/lib/credits"
+import { getQuotation, QUOTATION_SOURCE_LABEL, QUOTATION_SOURCE_URL, type Quotation } from "@/lib/quotations"
 
 interface IssueDetailProps {
   issuecode: string
@@ -151,9 +153,26 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
   const [loading, setLoading] = useState(true)
   const [issue, setIssue] = useState<any>(null)
   const [isContentExpanded, setIsContentExpanded] = useState(true)
+  const { hasIssue, toggleIssue } = useCollection()
+  const inCollection = hasIssue(issuecode)
+
+  const handleToggleCollection = () => {
+    const added = toggleIssue(issuecode)
+    toast.success(
+      added ? t("collection.issue_added") : t("collection.issue_removed")
+    )
+  }
   // Covers show when a proxy can serve them, not when a cookie string exists —
   // that value gated nothing and left covers hidden even with the proxy up.
   const hasCookie = useMemo(() => imagesAvailable(), [])
+  // Argus value from apps/cotation (static JSON, loaded lazily); null when no source quotes this issue.
+  const [quotation, setQuotation] = useState<Quotation | null>(null)
+  useEffect(() => {
+    let alive = true
+    setQuotation(null)
+    getQuotation(issuecode).then((q) => { if (alive) setQuotation(q) })
+    return () => { alive = false }
+  }, [issuecode])
 
   useEffect(() => {
     async function fetchDetails() {
@@ -219,10 +238,31 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4 lg:p-8 space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-4">
         <Button onClick={onBack} variant="outline" size="sm" className="rounded-xl gap-1.5 h-9">
           <ArrowLeft className="w-4 h-4" />
           {t("common.back")}
+        </Button>
+        <Button
+          onClick={handleToggleCollection}
+          variant={inCollection ? "secondary" : "outline"}
+          size="sm"
+          className={cn(
+            "rounded-xl gap-1.5 h-9 transition-colors",
+            inCollection && "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+          )}
+        >
+          {inCollection ? (
+            <>
+              <BookmarkCheck className="w-4 h-4 text-primary" />
+              <span>{t("collection.in_collection")}</span>
+            </>
+          ) : (
+            <>
+              <Bookmark className="w-4 h-4" />
+              <span>{t("collection.add_to_collection")}</span>
+            </>
+          )}
         </Button>
       </div>
 
@@ -317,6 +357,26 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                     <div>
                       <p className="font-bold">{t("search.price")}</p>
                       <p className="text-[10px] text-muted-foreground">{issue.price}</p>
+                    </div>
+                  </div>
+                )}
+
+                {quotation && (
+                  <div className="flex items-center gap-3 text-xs text-text-body" title={quotation.date ? t("issue.quotation_date", { date: quotation.date }) : undefined}>
+                    <TrendingUp className="w-4 h-4 text-primary shrink-0" />
+                    <div>
+                      <p className="font-bold">{t("issue.quotation")}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {quotation.min === quotation.max
+                          ? `${quotation.min.toLocaleString(i18n.language)} €`
+                          : `${quotation.min.toLocaleString(i18n.language)} – ${quotation.max.toLocaleString(i18n.language)} €`}
+                        {" · "}
+                        {QUOTATION_SOURCE_URL[quotation.source] ? (
+                          <a href={QUOTATION_SOURCE_URL[quotation.source]} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">
+                            {QUOTATION_SOURCE_LABEL[quotation.source] ?? quotation.source}
+                          </a>
+                        ) : (QUOTATION_SOURCE_LABEL[quotation.source] ?? quotation.source)}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -437,7 +497,7 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                 {t("publication.content")} 
                 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">
-                  {t("publication.entry", { count: issue.stories?.length || 0 })}
+                  {t("publication.entry", { count: issue.stories?.length || 0 })}{(() => { const scannable = (issue.stories || []).filter((s: any) => Number(s.entirepages) >= 1); return scannable.length ? ` · ${t("scans.coverage", { scanned: scannable.filter((s: any) => s.has_scan).length, total: scannable.length })}` : ""; })()}
                 </span>
               </h3>
               <div className="p-1 rounded-md hover:bg-surface-2 transition-colors">
@@ -487,11 +547,18 @@ export function IssueDetail({ issuecode, onBack, onSelectStory }: IssueDetailPro
                                   : title;
                               })()}
                             </p>
-                            {formatStoryPages(story) && (
-                              <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono shrink-0">
-                                {formatStoryPages(story)!.label} {t("story.pages_short")}
-                              </span>
-                            )}
+                            <span className="flex items-center gap-1.5 shrink-0">
+                              {!story.has_scan && Number(story.entirepages) >= 1 && (
+                                <span className="text-[10px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded font-semibold" title={t("scans.hint")}>
+                                  {t("scans.none")}
+                                </span>
+                              )}
+                              {formatStoryPages(story) && (
+                                <span className="text-[10px] bg-surface-2 text-text-secondary px-1.5 py-0.5 rounded font-bold font-mono">
+                                  {formatStoryPages(story)!.label} {t("story.pages_short")}
+                                </span>
+                              )}
+                            </span>
                           </div>
 
                           {/* Subseries membership: small link below the title.

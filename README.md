@@ -67,6 +67,50 @@ The app runs on a pre-compiled SQLite copy of the Inducks database, stored persi
 - **Vite bundle optimization**: The app uses Vite with code-splitting and PWA support to keep the experience fast and cache-friendly.
 - **Local-first data handling**: The pre-compiled SQLite database is downloaded once (or supplied locally) and persisted in OPFS for repeated searches and offline browsing.
 
+## Data scripts
+
+The database has **one home**: `public/datas/inducks.sqlite.gz`. The deploy workflow
+downloads the release asset there, the browser fetches `<base>/datas/<file>`,
+`issue-scans:export` reads it and `apps/transcript` opens it. Nothing writes a second copy.
+
+- `pnpm db:build` — rebuilds `public/datas/inducks.sqlite.gz` from the ISV dump in
+  `inducks_extracted/`. `--dir <path>` picks the dump; the paths are anchored to the app,
+  so the command behaves the same from any directory. Add `--keep-sqlite` to leave the
+  uncompressed 1.2 GB file next to it — **apps/transcript needs it** (better-sqlite3 cannot
+  open a `.gz`), otherwise it warns and falls back to `data/coa.sqlite`.
+- `pnpm db:release -- --archive <isv.tgz>` — build, upload to the `datas` release, trigger the
+  Pages deploy. `--local-only` stops after the build. Getting `isv.tgz` past Anubis is the one
+  manual step: download it from `https://inducks.org/inducks/isv.tgz` in a browser.
+- `pnpm issue-scans:export` — scan coverage per issue, for the InducksScanUploader extension.
+- `pnpm pg-index all` — page numbering and alphabetical character index (below).
+
+### `pnpm pg-index`
+
+Some issues carry their printed page range in `inducks_entry.entrycomment` as `[pg;12-21]` (plus the legacy
+`[pg. 12-21]`). That tag exists on only 7.6 % of the 2 025 902 entries, over 12 445 of the 251 278 issues.
+This script reports where it is, recovers what is recoverable, and builds the per-letter character index.
+No AI, no OCR — the ranges come from `storyversion.entirepages` and the tagged anchors.
+
+```bash
+pnpm pg-index detect      # report only
+pnpm pg-index complete    # + data/pg-completed.json — every recovered range, with its source
+pnpm pg-index index       # + data/pg-charindex.json — characters per issue, grouped by letter
+pnpm pg-index all
+pnpm pg-index detect --issue "fi/AA1970-01" [--limit N] [--json]
+```
+
+Latest run: **6 377 issues complete**, 6 068 partial, 238 833 untagged. A range is only ever filled three ways —
+`tagged` (already present), `cumulative` (sum of `entirepages`, accepted only when it reproduces every tagged
+range of the issue), `bracketed` (a gap whose two tagged neighbours enclose it exactly). Everything else stays
+`unresolved`: a wrong page range in a published index is worse than a missing one.
+
+9 728 issues carry an upstream inconsistency (`entirepages` sum ≠ `issue.pages`, a range overflowing the issue,
+`part` entries). These are listed and left alone — the fix belongs in the dump, not in a guess.
+
+Scans are **not** part of this: `inducks_entryurl.pagenumber` is `1` on all 2 711 470 rows, so the dump knows
+only page 1 of each entry. Mapping scans to pages requires the issue page itself (`?pg=1`), which
+`apps/InducksScanUploader` already does.
+
 ## Credits
 
 - **Luis Bärenfaller**: German, Italian, Portuguese and Spanish translation contributions.

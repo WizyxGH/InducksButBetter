@@ -15,3 +15,11 @@ export { getStoryDetail } from "./queries/stories";
 export { resolveIssue, getIssueDetail } from "./queries/issues";
 export { getSubseriesList, getSubseriesDetail } from "./queries/subseries";
 export { getUniverseList, getUniverseDetail } from "./queries/universes";
+export {
+  getCollectionPublicationStats,
+  getPublicationIssuesForCollection,
+} from "./queries/collection";
+export type {
+  CollectionPublicationStat,
+  PublicationIssueItem,
+} from "./queries/collection";

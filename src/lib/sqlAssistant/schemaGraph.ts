@@ -59,6 +59,7 @@ export const RELATIONS: Relation[] = [
   { from: "inducks_publishingjob", fromColumn: "publisherid", to: "inducks_publisher", toColumn: "publisherid" },
   { from: "inducks_issuejob", fromColumn: "issuecode", to: "inducks_issue", toColumn: "issuecode" },
   { from: "inducks_issueprice", fromColumn: "issuecode", to: "inducks_issue", toColumn: "issuecode" },
+  { from: "inducks_quotation", fromColumn: "issuecode", to: "inducks_issue", toColumn: "issuecode" },
 
   // Subseries
   { from: "inducks_storysubseries", fromColumn: "storycode", to: "inducks_story", toColumn: "storycode" },
@@ -78,6 +79,14 @@ export const RELATIONS: Relation[] = [
  * strips diacritics before matching, so "héros" finds "heros".
  */
 export const CONCEPTS: Array<{ tables: string[]; terms: string[] }> = [
+  {
+    tables: ["inducks_quotation", "inducks_issue", "inducks_publication"],
+    terms: [
+      "quotation", "quotations", "cote", "cotes", "cotation", "cotations", "argus", "estimation",
+      "value", "valeur", "worth", "expensive", "cher", "chers", "wert", "sammlerwert", "quotazione",
+      "cotizacion", "waarde", "varde", "samlarvarde", "keräilyarvo", "rare", "rarest", "valuable",
+    ],
+  },
   {
     tables: ["inducks_story", "inducks_storyversion", "inducks_storyheader"],
     terms: [

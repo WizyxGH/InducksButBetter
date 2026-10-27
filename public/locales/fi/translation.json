@@ -102,7 +102,14 @@
     "publications_found_one": "{{count, number}} publications found",
     "publications_found_other": "{{count, number}} publications found",
     "exclude_language": "Not published in language",
-    "exclude_language_placeholder": "Exclude a language..."
+    "exclude_language_placeholder": "Exclude a language...",
+    "ocr_text": "Skannausten teksti (OCR)",
+    "ocr_badge": "paikallinen palvelin",
+    "ocr_placeholder": "Sana tai lause puhekuplissa…",
+    "ocr_hint": "Vaatii transcript-palvelimen (portti 3001)",
+    "ocr_unavailable": "Transcript-palvelin ei ole käytettävissä — OCR-suodatin ohitettu",
+    "keywords_all_words": "Kaikki sanat",
+    "include_foreign_languages": "Mukaan lukien vieraat kielet"
   },
   "roles": {
     "any": "Any",
@@ -655,7 +662,9 @@
   "issue": {
     "indexed_by": "Indexed by",
     "collections": "Kokoaa",
-    "reprints": "Julkaistu uudelleen"
+    "reprints": "Julkaistu uudelleen",
+    "quotation": "Keräilyarvo",
+    "quotation_date": "Kirjattu {{date}}"
   },
   "entry": {
     "comment": "Comment",
@@ -714,5 +723,11 @@
     "count_other": "{{count}} universumia",
     "character_count_one": "{{count}} hahmo",
     "character_count_other": "{{count}} hahmoa"
+  },
+  "scans": {
+    "none": "Ei skannausta",
+    "coverage": "{{scanned}}/{{total}} merkintää skannattu",
+    "filter_missing": "Puuttuvat skannaukset",
+    "hint": "Paikallisen Inducks-tietokannan mukaan: vain kunkin merkinnän ensimmäinen sivu. Punainen: ei skannausta, oranssi: osa merkinnöistä puuttuu."
   }
 }

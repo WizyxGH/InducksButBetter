@@ -32,6 +32,7 @@ export function parseRoutePath(pathPart: string): ParsedRoute {
   const root = parts[0];
 
   if (root === "home") return { tab: "home" };
+  if (root === "collection") return { tab: "collection" };
   if (root === "settings") return { tab: "settings" };
   if (root === "sql") return { tab: "sql" };
   if (root === "suggestions") return { tab: "suggestions" };

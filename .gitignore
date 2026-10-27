@@ -15,6 +15,7 @@ scratch
 *.sqlite3
 *.sqlite.gz
 /public/datas/
+/public/db/
 
 
 # Local image proxy cache (scripts/image-proxy.mjs)
@@ -24,3 +25,6 @@ scratch
 inducks_extracted/
 *.sqlite.bak
 temp_isv/
+
+.turbo/
+data/

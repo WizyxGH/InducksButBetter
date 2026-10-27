@@ -6,6 +6,8 @@ import { getLocalizedCharacterNames } from "@/lib/dataService";
 export const initialFilters: SearchFilters = {
   title: "",
   keywords: "",
+  keywordsAllWords: true,
+  includeForeignLanguages: false,
   description: "",
   includeComments: false,
   storycode: "",
@@ -37,6 +39,7 @@ export const initialFilters: SearchFilters = {
   multipleParts: false,
   hasImage: 'all',
   excludeIndirectCreators: false,
+  ocrText: "",
 };
 
 export function useSearchFilters() {

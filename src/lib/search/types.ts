@@ -2,6 +2,10 @@ export interface SearchFilters {
   title?: string;
   /** Free-text query against inducks_storyversion.keywordsummary. */
   keywords?: string;
+  /** Whether all words must match (AND) or any word (OR). Defaults to true (AND). */
+  keywordsAllWords?: boolean | string;
+  /** Search keywords in all foreign language titles and descriptions too. */
+  includeForeignLanguages?: boolean | string;
   description?: string;
   includeComments?: boolean | string;
   storycode?: string;
@@ -36,6 +40,11 @@ export interface SearchFilters {
   excludeIndirectCreators?: boolean | string;
   hasImage?: 'all' | 'yes' | 'no';
   lang?: string;
+  ocrText?: string;
+  /** Entrycodes returned by the OCR pre-filter (injected by useSearchExecution, not a user filter). */
+  ocrEntrycodes?: string[];
+  /** Issuecodes returned by the OCR pre-filter for indexed query performance. */
+  ocrIssuecodes?: string[];
 }
 
 export interface PublicationsSearchFilters {

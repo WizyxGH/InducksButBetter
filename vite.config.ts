@@ -120,6 +120,19 @@ export default defineConfig({
         clientsClaim: true,
       },
     }),
+    {
+      name: 'redirect-root-to-base',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url === '/' || req.url === '') {
+            res.writeHead(302, { Location: '/InducksButBetter/' });
+            res.end();
+            return;
+          }
+          next();
+        });
+      },
+    },
   ],
   resolve: {
     alias: {
@@ -129,6 +142,13 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      '/api/transcript': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/transcript/, '/api'),
+        timeout: 2000,
+        proxyTimeout: 2000,
+      },
       '/api': {
         target: 'http://127.0.0.1:3000',
         changeOrigin: true,

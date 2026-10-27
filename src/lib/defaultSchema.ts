@@ -1,4 +1,6 @@
 export const DEFAULT_DB_SCHEMA: Record<string, string[]> = {
+  // Argus quotations (EUR) built from public/datas/quotations.json, see lib/quotationsTable.ts
+  inducks_quotation: ["issuecode", "estimationmin", "estimationmax", "source", "scrapedate"],
   inducks_appearance: [
     "storyversioncode",
     "charactercode",

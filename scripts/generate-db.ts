@@ -3,11 +3,25 @@ import path from 'path';
 import zlib from 'zlib';
 import readline from 'readline';
 import { execFileSync } from 'child_process';
+import { fileURLToPath } from 'url';
 import sqlite3 from 'sqlite3';
 import { DEFAULT_DB_SCHEMA } from '../src/lib/defaultSchema';
 
 const DB_FILENAME = 'inducks.sqlite';
 const COMPRESSED_FILENAME = 'inducks.sqlite.gz';
+
+/**
+ * Where the database lives: `public/datas/` is the ONE place every app reads.
+ * The deploy workflow downloads the release asset there, the browser fetches
+ * `<base>/datas/<file>`, `export-issue-scans.mjs` reads it and apps/transcript
+ * opens it. It used to be written to `process.cwd()`, which left a second copy
+ * at the app root that nothing read — and left the export reading a stale
+ * database after a real dump refresh. Paths are anchored to this file, not the
+ * working directory, so `pnpm db:build` behaves the same from anywhere.
+ */
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const DATAS_DIR = path.join(ROOT, 'public', 'datas');
+const COMPRESSED_PATH = path.join(DATAS_DIR, COMPRESSED_FILENAME);
 
 const INDEXES_TO_CREATE: Record<string, string[]> = {
   inducks_story: ["storycode", "storyheadercode", "firstpublicationdate"],
@@ -158,9 +172,14 @@ async function importIsvFile(db: sqlite3.Database, tableName: string, columns: s
  * Unpacks an Inducks `isv.tgz` into `destDir`.
  *
  * The archive nests everything under `isv/`, which `--strip-components=1`
- * removes so the caller gets a flat directory of `.isv` files. GNU tar is
- * present on the GitHub runners and on Git for Windows alike, and shelling out
- * avoids pulling a tar dependency in for one call.
+ * removes so the caller gets a flat directory of `.isv` files. `tar` is present
+ * on the GitHub runners, Git for Windows, and Windows itself — but which one
+ * answers depends on the shell, so this normalises for both:
+ *
+ *  - forward-slash paths: mingw GNU tar mangles a backslash `-C` directory, and
+ *    bsdtar accepts either; passing "/" keeps both happy;
+ *  - `--force-local` only for GNU tar: it stops GNU tar reading the "C:" drive
+ *    letter as a remote host, but bsdtar rejects the flag outright.
  */
 function extractArchive(archivePath: string, destDir: string) {
   if (!fs.existsSync(archivePath)) {
@@ -168,9 +187,17 @@ function extractArchive(archivePath: string, destDir: string) {
   }
   fs.mkdirSync(destDir, { recursive: true });
   console.log(`Extracting ${path.basename(archivePath)} (this takes a minute)...`);
-  // --force-local: GNU tar otherwise reads the "C:" in a Windows path as a
-  // remote host (host:file syntax) and tries to connect to it.
-  execFileSync('tar', ['--force-local', '-xzf', archivePath, '-C', destDir, '--strip-components=1'], {
+
+  const isGnuTar = /GNU tar/i.test(
+    (() => {
+      try { return execFileSync('tar', ['--version'], { encoding: 'utf8' }); }
+      catch { return ''; }
+    })()
+  );
+  const fwd = (p: string) => p.replace(/\\/g, '/');
+  const flags = isGnuTar ? ['--force-local'] : [];
+
+  execFileSync('tar', [...flags, '-xzf', fwd(archivePath), '-C', fwd(destDir), '--strip-components=1'], {
     stdio: 'inherit',
   });
   const count = fs.readdirSync(destDir).filter((f) => f.endsWith('.isv')).length;
@@ -190,7 +217,9 @@ async function main() {
   let isvDir = valueOf('--dir');
   const archivePath = valueOf('--archive');
 
-  const tempDir = path.join(process.cwd(), 'temp_isv');
+  // Anchored to the app, not the shell: a `temp_isv` created relative to wherever the
+    // command happened to run is a directory nobody finds again.
+    const tempDir = path.join(ROOT, 'temp_isv');
   let tempCreated = false;
 
   try {
@@ -233,10 +262,14 @@ async function main() {
       }
     }
 
-    const dbPath = path.join(process.cwd(), DB_FILENAME);
-    if (fs.existsSync(dbPath)) {
-      fs.unlinkSync(dbPath);
-    }
+    // The working database lives beside its compressed twin, in the one directory every
+        // app reads. `--keep-sqlite` is what apps/transcript needs: better-sqlite3 cannot open
+        // a .gz, so it needs the uncompressed file to still be there afterwards.
+        const dbPath = path.join(DATAS_DIR, DB_FILENAME);
+        fs.mkdirSync(DATAS_DIR, { recursive: true });
+        if (fs.existsSync(dbPath)) {
+          fs.unlinkSync(dbPath);
+        }
 
     console.log(`Creating database at: ${dbPath}...`);
     const db = new sqlite3.Database(dbPath);
@@ -295,10 +328,11 @@ async function main() {
 
     // Compress database file
     console.log('Compressing database to gzip format...');
-    const compressedPath = path.join(process.cwd(), COMPRESSED_FILENAME);
-    if (fs.existsSync(compressedPath)) {
-      fs.unlinkSync(compressedPath);
-    }
+    const compressedPath = COMPRESSED_PATH;
+        fs.mkdirSync(path.dirname(compressedPath), { recursive: true });
+        if (fs.existsSync(compressedPath)) {
+          fs.unlinkSync(compressedPath);
+        }
 
     await new Promise<void>((resolve, reject) => {
       const rawStream = fs.createReadStream(dbPath);
@@ -316,6 +350,23 @@ async function main() {
     const compSize = fs.statSync(compressedPath).size;
     console.log(`Compression ratio: ${Math.round(compSize / origSize * 100)}% (${Math.round(origSize / 1024 / 1024 * 10) / 10} MB -> ${Math.round(compSize / 1024 / 1024 * 10) / 10} MB)`);
     console.log(`Success! Compressed file saved at: ${compressedPath}`);
+
+    // The app only ships the gzip: the 1.2 GB uncompressed database is removed (pass
+        // --keep-sqlite to keep it — apps/transcript needs it, better-sqlite3 cannot read a .gz).
+        if (process.argv.includes('--keep-sqlite')) {
+          console.log(`Uncompressed database kept at: ${dbPath} (--keep-sqlite)`);
+        } else {
+          fs.unlinkSync(dbPath);
+          console.log('Uncompressed database removed (use --keep-sqlite to keep it).');
+        }
+
+        // Older builds wrote the compressed database to the app root, which nothing read: a
+        // 300 MB duplicate that also made people think a refresh had happened when it hadn't.
+        const legacyGz = path.join(ROOT, COMPRESSED_FILENAME);
+        if (fs.existsSync(legacyGz)) {
+          fs.unlinkSync(legacyGz);
+          console.log(`Removed the stale copy at ${legacyGz}.`);
+        }
 
   } catch (error: any) {
     console.error('Error during database generation:', error.message);

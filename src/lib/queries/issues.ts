@@ -100,6 +100,9 @@ export async function getIssueDetail(issuecode: string, lang: string = "fr") {
         e.sideways,
         e.printedcode,
         e.includedinentrycode,
+        -- Inducks' public dump lists the first page scan of each entry
+        -- ('webusers' / country sites); 'thumbnails*' rows only derive from it.
+        EXISTS(SELECT 1 FROM inducks_entryurl u WHERE u.entrycode = e.entrycode AND u.sitecode NOT LIKE 'thumbnails%') as has_scan,
         ${storyThumbByVersionSql('e.storyversioncode')} as thumb,
         -- One row per job, deduplicated on the client by person code. Two
         -- plain GROUP_CONCATs listed anyone credited under two roles of the

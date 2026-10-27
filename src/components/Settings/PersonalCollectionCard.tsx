@@ -1,47 +1,46 @@
-import React, { useState, useEffect } from "react"
-import { useTranslation } from "react-i18next"
-import { Database, Save } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { parseCollection } from "@/lib/collection"
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { BookmarkCheck, ExternalLink, Save } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { parseCollection, formatCollectionExport } from "@/lib/collection";
+import { useCollection } from "@/hooks/useCollection";
+import { Link } from "@/components/ui/link";
+import { routes } from "@/lib/routes";
 
 export function PersonalCollectionCard() {
-  const { t } = useTranslation()
-  const [collectionText, setCollectionText] = useState("")
-  const [collectionCount, setCollectionCount] = useState(0)
+  const { t } = useTranslation();
+  const { issues, count, saveCollection } = useCollection();
+  const [collectionText, setCollectionText] = useState("");
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("inducks_collection_issues")
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
-          setCollectionText(parsed.join("\n"))
-          setCollectionCount(parsed.length)
-        }
-      }
-    } catch (e) {
-      console.error("Failed to load collection", e)
-    }
-  }, [])
+    setCollectionText(formatCollectionExport(issues));
+  }, [issues]);
 
   const handleSaveCollection = () => {
-    const issues = parseCollection(collectionText)
-
-    localStorage.setItem("inducks_collection_issues", JSON.stringify(issues))
-    setCollectionText(issues.join("\n"))
-    setCollectionCount(issues.length)
-    toast.success(t("collection.saved_success"))
+    const parsed = parseCollection(collectionText);
+    saveCollection(parsed);
+    setCollectionText(formatCollectionExport(parsed));
+    toast.success(t("collection.saved_success"));
   };
 
   return (
     <Card className="rounded-2xl border-border-subtle bg-surface shadow-sm flex flex-col h-full">
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Database className="w-4 h-4 text-primary" />
-          {t("collection.title")}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BookmarkCheck className="w-4 h-4 text-primary" />
+            {t("collection.title")}
+          </CardTitle>
+          <Link
+            to={routes.collection()}
+            className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
+          >
+            <span>{t("collection.open_full_page")}</span>
+            <ExternalLink className="w-3 h-3" />
+          </Link>
+        </div>
         <CardDescription>
           {t("collection.description")}
         </CardDescription>
@@ -53,18 +52,24 @@ export function PersonalCollectionCard() {
           value={collectionText}
           onChange={(e) => setCollectionText(e.target.value)}
         />
-        {collectionCount > 0 && (
-          <div className="text-xs text-text-secondary bg-surface-2/60 p-2 rounded-lg border border-border-subtle">
-            {t("collection.saved_count", { count: collectionCount })}
+        {count > 0 && (
+          <div className="text-xs text-text-secondary bg-surface-2/60 p-2 rounded-lg border border-border-subtle flex items-center justify-between">
+            <span>{t("collection.saved_count", { count })}</span>
+            <Link
+              to={routes.collection()}
+              className="text-primary hover:underline font-semibold"
+            >
+              {t("collection.view_stats")}
+            </Link>
           </div>
         )}
-        <div className="mt-auto pt-4">
-          <Button onClick={handleSaveCollection} className="w-full gap-2 rounded-xl">
+        <div className="mt-auto pt-4 flex gap-2">
+          <Button onClick={handleSaveCollection} className="flex-1 gap-2 rounded-xl">
             <Save className="w-4 h-4" />
             {t("collection.save")}
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

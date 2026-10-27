@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
+import { speechLocale } from "@/lib/speechLocale"
 
 export function useSpeechToText() {
   const { t, i18n } = useTranslation()
@@ -15,7 +16,7 @@ export function useSpeechToText() {
     const recognition = new SpeechRecognition()
     recognition.continuous = true
     recognition.interimResults = true
-    recognition.lang = i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US'
+    recognition.lang = speechLocale(i18n.language)
 
     recognition.onstart = () => {
       setIsRecording(true)

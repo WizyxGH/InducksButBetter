@@ -102,7 +102,14 @@
     "publications_found_one": "{{count, number}} publications found",
     "publications_found_other": "{{count, number}} publications found",
     "exclude_language": "Not published in language",
-    "exclude_language_placeholder": "Exclude a language..."
+    "exclude_language_placeholder": "Exclude a language...",
+    "ocr_text": "Testo nelle scansioni (OCR)",
+    "ocr_badge": "server locale",
+    "ocr_placeholder": "Parola o frase nei balloon…",
+    "ocr_hint": "Richiede il server transcript (porta 3001)",
+    "ocr_unavailable": "Server transcript non disponibile — filtre OCR ignorato",
+    "keywords_all_words": "Tutte le parole",
+    "include_foreign_languages": "Incl. lingue straniere"
   },
   "roles": {
     "any": "Any",
@@ -655,7 +662,9 @@
   "issue": {
     "indexed_by": "Indexed by",
     "collections": "Raggruppa",
-    "reprints": "Ristampato in"
+    "reprints": "Ristampato in",
+    "quotation": "Quotazione",
+    "quotation_date": "Rilevata il {{date}}"
   },
   "entry": {
     "comment": "Comment",
@@ -714,5 +723,11 @@
     "count_other": "{{count}} universi",
     "character_count_one": "{{count}} personaggio",
     "character_count_other": "{{count}} personaggi"
+  },
+  "scans": {
+    "none": "Nessuna scansione",
+    "coverage": "{{scanned}}/{{total}} voci con scansione",
+    "filter_missing": "Scansioni mancanti",
+    "hint": "Dal database Inducks locale: solo la prima pagina di ogni voce. Rosso: nessuna scansione, arancione: mancano alcune voci."
   }
 }

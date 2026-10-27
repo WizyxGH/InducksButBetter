@@ -155,7 +155,14 @@ export function LocalDatabaseCard() {
       </CardHeader>
 
       <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
-        {isActiveDb && (
+        {isActiveDb && dbStats?.storage === "remote" && (
+          <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-700 dark:text-sky-300 text-xs">
+            <p className="font-semibold">{t("localDb.remote_active")}</p>
+            <p className="mt-1 opacity-90">{t("localDb.remote_active_desc")}</p>
+          </div>
+        )}
+
+        {isActiveDb && dbStats?.storage !== "remote" && (
           <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs">
             <p className="font-semibold">
               {t("localDb.already_imported")}

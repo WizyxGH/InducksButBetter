@@ -1,6 +1,6 @@
 import React from "react"
 import { useTranslation } from "react-i18next"
-import { Layers, LibraryBig, Orbit, Search, Settings as SettingsIcon } from "lucide-react"
+import { BookmarkCheck, Layers, LibraryBig, Orbit, Search, Settings as SettingsIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/components/ui/link"
 import { SEARCH_TABS } from "@/components/Layout/NavigationTabs"
@@ -91,6 +91,21 @@ export function AppHeader({ activeTab, setActiveTab }: AppHeaderProps) {
           >
             <Orbit className="w-5 h-5" />
             <span className="hidden sm:inline">{t('universes.list_title')}</span>
+          </Button>
+
+          {/* Collection shortcut */}
+          <Button
+            variant="ghost"
+            onClick={() => setActiveTab("collection")}
+            aria-current={activeTab === "collection" ? "page" : undefined}
+            className={cn(
+              "text-text-secondary hover:text-text-body hover:bg-surface-2 rounded-xl transition-all gap-2 border border-transparent",
+              activeTab === "collection" && "border-border-subtle bg-surface-2 text-primary"
+            )}
+            title={t("collection.nav_title")}
+          >
+            <BookmarkCheck className="w-5 h-5" />
+            <span className="hidden sm:inline">{t('collection.nav_title')}</span>
           </Button>
 
           {/* Settings shortcut */}

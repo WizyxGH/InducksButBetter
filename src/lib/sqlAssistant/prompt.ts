@@ -78,7 +78,8 @@ RULES:
 3. Use only the tables and columns listed above. If a column is not listed, it does not exist — never invent one.
 4. Story titles live in inducks_storyheader.title, not in inducks_story.
 5. Match names with LIKE '%...%' — the data is not normalised.
-6. Always end with LIMIT 100 unless the question asks for a single count.`;
+6. Always end with LIMIT 100 unless the question asks for a single count.
+7. Issue values (argus, EUR) live in inducks_quotation (estimationmin, estimationmax, source) joined on inducks_issue.issuecode.`;
 }
 
 /** The user turn: the question, restated so the model cannot drift into chat. */

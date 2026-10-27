@@ -263,27 +263,70 @@ export function SearchForm({
                 onChange={(e) => updateFilters({ keywords: e.target.value })}
               />
               <div className="flex flex-col gap-2 pt-1">
-                <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
-                  <Checkbox
-                    id="comments"
-                    checked={filters.includeComments === true}
-                    onCheckedChange={(checked) => updateFilters({ includeComments: checked === true })}
-                  />
-                  <label htmlFor="comments" className="text-xs text-text-secondary cursor-pointer leading-snug">
-                    {t("search.include_comments")}
-                  </label>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
+                    <Checkbox
+                      id="keywords-all-words"
+                      checked={filters.keywordsAllWords !== false}
+                      onCheckedChange={(checked) => updateFilters({ keywordsAllWords: checked === true })}
+                    />
+                    <label htmlFor="keywords-all-words" className="text-xs text-text-secondary cursor-pointer leading-snug">
+                      {t("search.keywords_all_words", "Tous les mots")}
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
+                    <Checkbox
+                      id="foreign-languages"
+                      checked={filters.includeForeignLanguages === true}
+                      onCheckedChange={(checked) => updateFilters({ includeForeignLanguages: checked === true })}
+                    />
+                    <label htmlFor="foreign-languages" className="text-xs text-text-secondary cursor-pointer leading-snug">
+                      {t("search.include_foreign_languages", "Dont langues étrangères")}
+                    </label>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
-                  <Checkbox
-                    id="multiple-parts"
-                    checked={filters.multipleParts === true}
-                    onCheckedChange={(checked) => updateFilters({ multipleParts: checked === true })}
-                  />
-                  <label htmlFor="multiple-parts" className="text-xs text-text-secondary cursor-pointer leading-snug">
-                    {t("search.multiple_parts")}
-                  </label>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
+                    <Checkbox
+                      id="comments"
+                      checked={filters.includeComments === true}
+                      onCheckedChange={(checked) => updateFilters({ includeComments: checked === true })}
+                    />
+                    <label htmlFor="comments" className="text-xs text-text-secondary cursor-pointer leading-snug">
+                      {t("search.include_comments")}
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2 transition-opacity hover:opacity-100 opacity-80">
+                    <Checkbox
+                      id="multiple-parts"
+                      checked={filters.multipleParts === true}
+                      onCheckedChange={(checked) => updateFilters({ multipleParts: checked === true })}
+                    />
+                    <label htmlFor="multiple-parts" className="text-xs text-text-secondary cursor-pointer leading-snug">
+                      {t("search.multiple_parts")}
+                    </label>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            {/* ── OCR text search ─────────────────────────────────────────────── */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                {t("search.ocr_text", "Texte dans les scans (OCR)")}
+                <span className="text-[10px] font-normal text-text-secondary bg-surface-2 px-1.5 py-0.5 rounded-md">
+                  {t("search.ocr_badge", "serveur local")}
+                </span>
+              </Label>
+              <Input
+                variant="search"
+                placeholder={t("search.ocr_placeholder", "Mot ou phrase dans les bulles…")}
+                value={filters.ocrText ?? ""}
+                onChange={(e) => updateFilters({ ocrText: e.target.value })}
+              />
+              <p className="text-[11px] text-text-secondary leading-snug opacity-70">
+                {t("search.ocr_hint", "Nécessite le serveur transcript (port 3001)")}
+              </p>
             </div>
 
             {/* ── Content type & Image presence ─────────────────────────────── */}

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { parseCollection } from '../collection'
+import {
+  parseCollection,
+  formatCollectionExport,
+  isIssueInCollection,
+  normalizeIssuecode,
+} from '../collection'
 
 describe('parseCollection', () => {
   it('joins country and entrycode into an issuecode', () => {
@@ -50,5 +55,33 @@ describe('parseCollection', () => {
     expect(codes).not.toContain('be')
     expect(codes).not.toContain('fr')
     expect(codes).not.toContain('de')
+  })
+})
+
+describe('formatCollectionExport', () => {
+  it('formats issuecodes into standard Inducks export lines', () => {
+    const issues = ['fr/JM  272', 'be/MMN   8']
+    expect(formatCollectionExport(issues)).toEqual('fr^JM  272^^\nbe^MMN   8^^')
+  })
+
+  it('handles empty collection', () => {
+    expect(formatCollectionExport([])).toEqual('')
+  })
+})
+
+describe('isIssueInCollection', () => {
+  it('matches exact and space-normalized issuecodes', () => {
+    const collection = ['fr/PM  272', 'it/TL 1']
+    expect(isIssueInCollection('fr/PM  272', collection)).toBe(true)
+    expect(isIssueInCollection('fr/PM 272', collection)).toBe(true)
+    expect(isIssueInCollection('it/TL 1', collection)).toBe(true)
+    expect(isIssueInCollection('it/TL 2', collection)).toBe(false)
+  })
+
+  it('works with a Set', () => {
+    const set = new Set(['fr/PM  272', 'it/TL 1'])
+    expect(isIssueInCollection('fr/PM  272', set)).toBe(true)
+    expect(isIssueInCollection('fr/PM 272', set)).toBe(true)
+    expect(isIssueInCollection('fr/OTHER 1', set)).toBe(false)
   })
 })

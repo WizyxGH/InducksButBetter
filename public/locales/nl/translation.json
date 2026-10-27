@@ -102,7 +102,14 @@
     "publications_found_one": "{{count, number}} publications found",
     "publications_found_other": "{{count, number}} publications found",
     "exclude_language": "Not published in language",
-    "exclude_language_placeholder": "Exclude a language..."
+    "exclude_language_placeholder": "Exclude a language...",
+    "ocr_text": "Tekst in scans (OCR)",
+    "ocr_badge": "lokale server",
+    "ocr_placeholder": "Woord of zin in tekstballonnen…",
+    "ocr_hint": "Vereist de transcript-server (poort 3001)",
+    "ocr_unavailable": "Transcript-server niet beschikbaar — OCR-filter genegeerd",
+    "keywords_all_words": "Alle woorden",
+    "include_foreign_languages": "Incl. vreemde talen"
   },
   "roles": {
     "any": "Any",
@@ -655,7 +662,9 @@
   "issue": {
     "indexed_by": "Indexed by",
     "collections": "Bundelt",
-    "reprints": "Herdrukt in"
+    "reprints": "Herdrukt in",
+    "quotation": "Waarde",
+    "quotation_date": "Opgenomen op {{date}}"
   },
   "entry": {
     "comment": "Comment",
@@ -714,5 +723,11 @@
     "count_other": "{{count}} universa",
     "character_count_one": "{{count}} personage",
     "character_count_other": "{{count}} personages"
+  },
+  "scans": {
+    "none": "Geen scan",
+    "coverage": "{{scanned}}/{{total}} items met scan",
+    "filter_missing": "Ontbrekende scans",
+    "hint": "Volgens de lokale Inducks-database: alleen de eerste pagina van elk item. Rood: geen scan, oranje: sommige items ontbreken nog."
   }
 }

@@ -1,9 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
 import { CreateWebWorkerMLCEngine, InitProgressCallback, MLCEngineInterface, ChatCompletionMessageParam, hasModelInCache } from '@mlc-ai/web-llm';
 
-// Reverted to Llama-3.2-1B f32. The 3B model is too heavy for the GPU
-// and causes a complete WebGPU crash at the browser level!
-export const DEFAULT_MODEL = 'Llama-3.2-1B-Instruct-q4f32_1-MLC';
+// Default: Qwen 2.5 3B (f16) - better multilingual reasoning than Llama 1B,
+// chosen by the maintainer (2026-08-22). The f16 build uses about half the VRAM
+// of the Llama-3B *f32* build that once crashed WebGPU; the 1B fallback stays
+// available in the picker (stored in localStorage).
+export const WEBLLM_MODELS = [
+  { id: 'Qwen2.5-3B-Instruct-q4f16_1-MLC', label: 'Qwen 2.5 3B (f16)', size: '~1.9 Go', note: 'recommandé, GPU récent' },
+  { id: 'Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC', label: 'Qwen 2.5 Coder 1.5B', size: '~1 Go', note: 'orienté SQL, plus léger' },
+  { id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', label: 'Qwen 2.5 1.5B', size: '~1 Go', note: 'léger' },
+  { id: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', label: 'Llama 3.2 1B', size: '~850 Mo', note: 'ancien défaut, compatible partout' },
+  { id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC', label: 'Llama 3.2 3B (f16)', size: '~1.8 Go', note: 'GPU récent' },
+];
+export const MODEL_STORAGE_KEY = 'ibb_webllm_model';
+export const DEFAULT_MODEL = 'Qwen2.5-3B-Instruct-q4f16_1-MLC';
+export const getPreferredModel = () =>
+  (typeof localStorage !== 'undefined' && localStorage.getItem(MODEL_STORAGE_KEY)) || DEFAULT_MODEL;
 
 export interface GenerateOptions {
   /** Defaults to 0: deterministic, which is what SQL generation wants. */
@@ -22,10 +34,10 @@ export function useWebLLM() {
   const [isCached, setIsCached] = useState(false);
 
   useEffect(() => {
-    hasModelInCache(DEFAULT_MODEL).then((cached) => setIsCached(cached)).catch(() => setIsCached(false));
+    hasModelInCache(getPreferredModel()).then((cached) => setIsCached(cached)).catch(() => setIsCached(false));
   }, []);
 
-  const init = useCallback(async (modelId: string = DEFAULT_MODEL) => {
+  const init = useCallback(async (modelId: string = getPreferredModel()) => {
     if (engine) return;
     setLoading(true);
     setProgressText('Initialisation...');

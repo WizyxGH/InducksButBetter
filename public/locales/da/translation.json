@@ -102,7 +102,14 @@
     "publications_found_one": "{{count, number}} publications found",
     "publications_found_other": "{{count, number}} publications found",
     "exclude_language": "Not published in language",
-    "exclude_language_placeholder": "Exclude a language..."
+    "exclude_language_placeholder": "Exclude a language...",
+    "ocr_text": "Tekst i scanninger (OCR)",
+    "ocr_badge": "lokal server",
+    "ocr_placeholder": "Ord eller sætning i talebobler…",
+    "ocr_hint": "Kræver transcript-serveren (port 3001)",
+    "ocr_unavailable": "Transcript-server ikke tilgængelig — OCR-filter ignoreret",
+    "keywords_all_words": "Alle ord",
+    "include_foreign_languages": "Inkl. fremmedsprog"
   },
   "roles": {
     "any": "Any",
@@ -655,7 +662,9 @@
   "issue": {
     "indexed_by": "Indexed by",
     "collections": "Samler",
-    "reprints": "Genoptrykt i"
+    "reprints": "Genoptrykt i",
+    "quotation": "Samlerværdi",
+    "quotation_date": "Registreret {{date}}"
   },
   "entry": {
     "comment": "Comment",
@@ -714,5 +723,11 @@
     "count_other": "{{count}} universer",
     "character_count_one": "{{count}} figur",
     "character_count_other": "{{count}} figurer"
+  },
+  "scans": {
+    "none": "Ingen scanning",
+    "coverage": "{{scanned}}/{{total}} poster med scanning",
+    "filter_missing": "Manglende scanninger",
+    "hint": "Ifølge den lokale Inducks-database: kun første side af hver post. Rød: ingen scanning, orange: nogle poster mangler stadig."
   }
 }

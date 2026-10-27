@@ -239,26 +239,48 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   // `s.` columns must be reached through correlated subqueries: these clauses
   // are re-applied inside the BestVersions CTE where `s` is out of scope.
   const searchComments = filters.includeComments === "true" || filters.includeComments === true;
-  for (const word of tokenizeKeywords(filters.keywords ? String(filters.keywords) : "")) {
-    const fields = [
-      "sv.keywordsummary LIKE ?",
-      "sv.plotsummary LIKE ?",
-      "EXISTS (SELECT 1 FROM inducks_storydescription sd_kw WHERE sd_kw.storyversioncode = sv.storyversioncode AND sd_kw.desctext LIKE ?)",
-      "EXISTS (SELECT 1 FROM inducks_story s_kw WHERE s_kw.storycode = sv.storycode AND s_kw.title LIKE ?)",
-      "EXISTS (SELECT 1 FROM inducks_entry e_kw WHERE e_kw.storyversioncode = sv.storyversioncode AND e_kw.title LIKE ?)",
-    ];
-    if (searchComments) {
-      fields.push(
-        "EXISTS (SELECT 1 FROM inducks_story s_kwc WHERE s_kwc.storycode = sv.storycode AND s_kwc.storycomment LIKE ?)"
-      );
+  const matchAllWords = filters.keywordsAllWords === undefined || filters.keywordsAllWords === true || filters.keywordsAllWords === "true";
+  const searchForeign = filters.includeForeignLanguages === "true" || filters.includeForeignLanguages === true;
+  
+  const tokenizedWords = tokenizeKeywords(filters.keywords ? String(filters.keywords) : "");
+  if (tokenizedWords.length > 0) {
+    const wordClauses: string[] = [];
+    for (const word of tokenizedWords) {
+      const fields = [
+        "sv.keywordsummary LIKE ?",
+        "sv.plotsummary LIKE ?",
+        "EXISTS (SELECT 1 FROM inducks_storydescription sd_kw WHERE sd_kw.storyversioncode = sv.storyversioncode AND sd_kw.desctext LIKE ?)",
+        "EXISTS (SELECT 1 FROM inducks_story s_kw WHERE s_kw.storycode = sv.storycode AND s_kw.title LIKE ?)",
+        "EXISTS (SELECT 1 FROM inducks_entry e_kw WHERE e_kw.storyversioncode = sv.storyversioncode AND e_kw.title LIKE ?)",
+      ];
+      if (searchForeign) {
+        // Also search in all descriptions and entries across any version of the story
+        fields.push(
+          "EXISTS (SELECT 1 FROM inducks_storyversion sv_all JOIN inducks_storydescription sd_all ON sd_all.storyversioncode = sv_all.storyversioncode WHERE sv_all.storycode = sv.storycode AND sd_all.desctext LIKE ?)",
+          "EXISTS (SELECT 1 FROM inducks_storyversion sv_all JOIN inducks_entry e_all ON e_all.storyversioncode = sv_all.storyversioncode WHERE sv_all.storycode = sv.storycode AND e_all.title LIKE ?)"
+        );
+      }
+      if (searchComments) {
+        fields.push(
+          "EXISTS (SELECT 1 FROM inducks_story s_kwc WHERE s_kwc.storycode = sv.storycode AND s_kwc.storycomment LIKE ?)"
+        );
+      }
+
+      const clauses: string[] = [];
+      for (const variant of keywordLikeVariants(word)) {
+        clauses.push(...fields);
+        svWhereParams.push(...fields.map(() => `%${variant}%`));
+      }
+      wordClauses.push(`(${clauses.join(" OR ")})`);
     }
 
-    const clauses: string[] = [];
-    for (const variant of keywordLikeVariants(word)) {
-      clauses.push(...fields);
-      svWhereParams.push(...fields.map(() => `%${variant}%`));
+    if (matchAllWords) {
+      // AND all words
+      svWhere.push(...wordClauses);
+    } else {
+      // OR between words
+      svWhere.push(`(${wordClauses.join(" OR ")})`);
     }
-    svWhere.push(`(${clauses.join(" OR ")})`);
   }
 
   const kinds = normalizeList(filters.kind);
@@ -453,6 +475,35 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
   if (subseriesCodes.length > 0) {
     where.push(`s.storycode IN (SELECT ss.storycode FROM inducks_storysubseries ss WHERE ss.subseriescode IN (${subseriesCodes.map(() => "?").join(",")}))`);
     whereParams.push(...subseriesCodes);
+  }
+
+  // OCR pre-filter: restrict to entries returned by the transcript server.
+  // When issuecodes are present, we filter by issuecode AND entrycode so SQLite
+  // uses the idx_inducks_entry_issuecode index, replacing an expensive 1.5M row scan with a fast lookup.
+  if (filters.ocrEntrycodes && filters.ocrEntrycodes.length > 0) {
+    const entryPlaceholders = filters.ocrEntrycodes.map(() => '?').join(',');
+    const issuePlaceholders = filters.ocrIssuecodes && filters.ocrIssuecodes.length > 0
+      ? filters.ocrIssuecodes.map(() => '?').join(',')
+      : null;
+
+    if (issuePlaceholders) {
+      where.push(`s.storycode IN (
+        SELECT sv_ocr.storycode
+        FROM inducks_storyversion sv_ocr
+        JOIN inducks_entry e_ocr ON e_ocr.storyversioncode = sv_ocr.storyversioncode
+        WHERE e_ocr.issuecode IN (${issuePlaceholders})
+          AND e_ocr.entrycode IN (${entryPlaceholders})
+      )`);
+      whereParams.push(...filters.ocrIssuecodes!, ...filters.ocrEntrycodes);
+    } else {
+      where.push(`s.storycode IN (
+        SELECT sv_ocr.storycode
+        FROM inducks_storyversion sv_ocr
+        JOIN inducks_entry e_ocr ON e_ocr.storyversioncode = sv_ocr.storyversioncode
+        WHERE e_ocr.entrycode IN (${entryPlaceholders})
+      )`);
+      whereParams.push(...filters.ocrEntrycodes);
+    }
   }
 
   if (svWhere.length > 0) {

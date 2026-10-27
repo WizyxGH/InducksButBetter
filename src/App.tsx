@@ -15,6 +15,7 @@ import { Toaster } from "sonner"
 import { useRouteMetadata } from "@/hooks/useRouteMetadata"
 import { incrementHistoryCount, navigateBack } from "@/lib/utils"
 import { loadCachedDb, hasLocalDb } from "@/lib/localDb"
+import { ensureQuotationTable } from "@/lib/quotationsTable"
 import { OnboardingModal } from "@/components/OnboardingModal"
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt"
 
@@ -38,6 +39,7 @@ const SubseriesDetail = lazy(() => import("@/components/Search/SubseriesDetail")
 const SubseriesList = lazy(() => import("@/components/Search/SubseriesList").then(module => ({ default: module.SubseriesList })))
 const UniverseList = lazy(() => import("@/components/Characters/UniverseList").then(module => ({ default: module.UniverseList })))
 const UniverseDetail = lazy(() => import("@/components/Characters/UniverseDetail").then(module => ({ default: module.UniverseDetail })))
+const CollectionStats = lazy(() => import("@/components/Collection/CollectionStats").then(module => ({ default: module.CollectionStats })))
 
 import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton"
 
@@ -87,6 +89,11 @@ function App() {
     // persisted is evicted under storage pressure — the cause of spurious
     // re-imports) and announces `db-local-loaded` itself.
     if (!hasLocalDb()) void loadCachedDb();
+    // Quotations become a SQL table (inducks_quotation) once the database is up.
+    const onLoaded = () => { void ensureQuotationTable() };
+    if (hasLocalDb()) onLoaded();
+    window.addEventListener('db-local-loaded', onLoaded);
+    return () => window.removeEventListener('db-local-loaded', onLoaded);
   }, []);
 
   useEffect(() => {
@@ -446,6 +453,23 @@ function App() {
                       setSelectedCharactercode={setSelectedCharactercode}
                     />
                   )}
+                </Suspense>
+              )}
+            </TabsContent>
+
+            <TabsContent value="collection" className="h-full m-0 p-0 border-none outline-none overflow-y-auto">
+              {activeTab === "collection" && (
+                <Suspense fallback={<TabFallback />}>
+                  <CollectionStats
+                    onSelectPublication={(code) => {
+                      setSelectedPublicationcode(code);
+                      setActiveTab("publications");
+                    }}
+                    onSelectIssue={(code) => {
+                      setSelectedIssuecode(code);
+                      setActiveTab("publications");
+                    }}
+                  />
                 </Suspense>
               )}
             </TabsContent>

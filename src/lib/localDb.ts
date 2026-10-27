@@ -198,8 +198,8 @@ function request(payload: Record<string, any>, onRow?: (row: any) => void): Prom
 export interface LocalDbStats {
   count: number;
   size: number;
-  /** Backend the database lives on: only `opfs`/`sah` survive a reload. */
-  storage: 'opfs' | 'sah' | 'memory';
+  /** Backend the database lives on: only `opfs`/`sah` survive a reload; `remote` needs none. */
+  storage: 'opfs' | 'sah' | 'memory' | 'remote';
   /** False when the database is held in memory and will die with the tab. */
   persistent: boolean;
   /** Why the persistent backend was unavailable, when it was. */
@@ -406,6 +406,18 @@ export async function executeLocal(
 
   return request({ action: 'execute', payload: { sql, args, stream: !!onRow } }, onRow);
 }
+
+/**
+ * Network cost of the remote database since the last call: chunk requests, compressed
+ * bytes, memory-cache hits. Null when the database is installed locally.
+ */
+export async function takeRemoteIoStats(): Promise<{ requests: number; bytes: number; hits: number } | null> {
+  const data = await request({ action: 'ioStats', payload: {} });
+  return data?.rows?.[0] ?? null;
+}
+
+// Dev-only handle, so a smoke test can measure what each screen costs over the network.
+if (import.meta.env.DEV) (window as any).__ibbIoStats = takeRemoteIoStats;
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {

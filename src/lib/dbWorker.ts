@@ -1,5 +1,7 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { openResumableStream } from "./download";
+import { ChunkReader } from "./remoteDb/chunkReader";
+import { installVfs, VFS_NAME } from "./remoteDb/vfs";
 
 const DB_FILENAME = "/inducks.sqlite3";
 
@@ -13,6 +15,8 @@ const MIN_DB_BYTES = 500 * 1024 * 1024;
 let db: any = null;
 let sqlite3: any = null;
 let poolUtil: any = null;
+/** Set while the active database is the remote one; its I/O counters feed `ioStats`. */
+let remoteReader: ChunkReader | null = null;
 
 /**
  * Which backend the active database lives on.
@@ -22,7 +26,7 @@ let poolUtil: any = null;
  * client) and is reported to the UI so a ~1 GB import that will vanish with
  * the tab is never presented as installed for good.
  */
-type StorageType = "opfs" | "sah" | "memory";
+type StorageType = "opfs" | "sah" | "memory" | "remote";
 
 let storageType: StorageType = "memory";
 
@@ -106,12 +110,41 @@ function collectStats() {
     size: dbSize || 1100000000,
     count,
     storage: storageType,
+    // A remote database is not stored at all, so there is nothing to lose on reload:
+    // it is "persistent" in the only sense the UI checks (no re-import needed).
     persistent: storageType !== "memory",
     storageError: storageError || undefined,
   };
 }
 
+/**
+ * Opens the chunked database published next to the site (scripts/split-db.mjs), so
+ * nothing has to be installed first. Returns false when none is published — a dev
+ * server without `pnpm db:split`, or a deploy that only ships the .gz.
+ */
+async function openRemoteDb(s3: any, baseUrl: string): Promise<boolean> {
+  const manifestUrl = new URL(`${baseUrl}db/manifest.json`, self.location.href).href;
+  let reader: ChunkReader | null = null;
+  try {
+    reader = await ChunkReader.load(manifestUrl);
+  } catch (e) {
+    console.warn("Remote database manifest unreadable:", e);
+  }
+  if (!reader) return false;
+
+  installVfs(s3, reader);
+  remoteReader = reader;
+  db = new s3.oo1.DB({ filename: "inducks.sqlite", flags: "r", vfs: VFS_NAME });
+  // No journal can exist on a read-only remote file; the rest of the read-only tuning
+  // still applies. A modest page cache: each miss costs a network round trip.
+  db.exec("PRAGMA temp_store = MEMORY;");
+  db.exec("PRAGMA cache_size = -16000;");
+  storageType = "remote";
+  return true;
+}
+
 function closeActiveDb() {
+  remoteReader = null;
   if (db) {
     try {
       db.close();
@@ -568,6 +601,13 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         }
 
         if (!found) {
+          // Nothing installed: read the published database remotely instead, so a
+          // first visit works without a ~300 MB install. The local install stays the
+          // offline option and wins whenever it exists.
+          if (payload?.baseUrl && await openRemoteDb(s3, payload.baseUrl)) {
+            port.postMessage({ id, type: "success", stats: collectStats() });
+            break;
+          }
           // The storage verdict travels with the reply: on the memory VFS the
           // persistent backend never opened, so the client must retry rather
           // than conclude that nothing was ever installed.
@@ -609,16 +649,18 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
             stmt.bind(args);
         }
         
-        const columns = stmt.getColumnNames();
+        const columns = stmt.columnCount > 0 ? stmt.getColumnNames() : [];
         const rows = [];
         let count = 0;
         
         while (stmt.step()) {
-          const row = stmt.get({});
-          if (stream) {
-            port.postMessage({ id, type: "row", row, index: count });
-          } else {
-            rows.push(row);
+          if (columns.length > 0) {
+            const row = stmt.get({});
+            if (stream) {
+              port.postMessage({ id, type: "row", row, index: count });
+            } else {
+              rows.push(row);
+            }
           }
           count++;
         }
@@ -628,6 +670,12 @@ const handleMessage = async (e: MessageEvent, port: MessagePort) => {
         break;
       }
       
+      case "ioStats": {
+        // Chunks fetched since the last call — what a screen cost over the network.
+        port.postMessage({ id, type: "success", rows: [remoteReader ? remoteReader.takeStats() : null] });
+        break;
+      }
+
       case "unload": {
         if (db) {
           db.close();

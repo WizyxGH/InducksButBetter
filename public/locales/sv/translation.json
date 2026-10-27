@@ -102,7 +102,14 @@
     "publications_found_one": "{{count, number}} publications found",
     "publications_found_other": "{{count, number}} publications found",
     "exclude_language": "Not published in language",
-    "exclude_language_placeholder": "Exclude a language..."
+    "exclude_language_placeholder": "Exclude a language...",
+    "ocr_text": "Text i skanningar (OCR)",
+    "ocr_badge": "lokal server",
+    "ocr_placeholder": "Ord eller fras i pratbubblor…",
+    "ocr_hint": "Kräver transcript-servern (port 3001)",
+    "ocr_unavailable": "Transcript-server inte tillgänglig — OCR-filter ignorerat",
+    "keywords_all_words": "Alla ord",
+    "include_foreign_languages": "Inkl. främmande språk"
   },
   "roles": {
     "any": "Any",
@@ -655,7 +662,9 @@
   "issue": {
     "indexed_by": "Indexed by",
     "collections": "Samlar",
-    "reprints": "Omtryckt i"
+    "reprints": "Omtryckt i",
+    "quotation": "Samlarvärde",
+    "quotation_date": "Noterat {{date}}"
   },
   "entry": {
     "comment": "Comment",
@@ -714,5 +723,11 @@
     "count_other": "{{count}} universum",
     "character_count_one": "{{count}} figur",
     "character_count_other": "{{count}} figurer"
+  },
+  "scans": {
+    "none": "Ingen skanning",
+    "coverage": "{{scanned}}/{{total}} poster med skanning",
+    "filter_missing": "Saknade skanningar",
+    "hint": "Enligt den lokala Inducks-databasen: endast första sidan av varje post. Röd: ingen skanning, orange: några poster saknas."
   }
 }
