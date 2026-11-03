@@ -52,6 +52,10 @@ jobs:
           VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
           VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
           VITE_GA_MEASUREMENT_ID: "G-YDE0FS0VYY"
+          # Hosted OCR search API (apps/transcript/worker): base URL ending in /api,
+          # and this site's key (created with scripts/api-keys.js, origin-restricted).
+          VITE_TRANSCRIPT_API: ${{ vars.VITE_TRANSCRIPT_API }}
+          VITE_TRANSCRIPT_API_KEY: ${{ secrets.VITE_TRANSCRIPT_API_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

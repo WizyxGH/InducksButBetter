@@ -22,6 +22,7 @@ import { AUTHOR_NATIONALITIES, KIND_LABELS } from "@/lib/constants";
 import { autocompleteStorycode, autocompletePublisher, autocompletePerson, autocompleteCharacter } from "@/lib/dataService";
 import { getFlagUrl } from "@/lib/utils";
 import { useSearchDisabled } from "@/hooks/useSearchDisabled";
+import { ocrHosted } from "@/lib/ocrService";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -314,9 +315,11 @@ export function SearchForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground flex items-center gap-1.5">
                 {t("search.ocr_text", "Texte dans les scans (OCR)")}
-                <span className="text-[10px] font-normal text-text-secondary bg-surface-2 px-1.5 py-0.5 rounded-md">
-                  {t("search.ocr_badge", "serveur local")}
-                </span>
+                {!ocrHosted && (
+                  <span className="text-[10px] font-normal text-text-secondary bg-surface-2 px-1.5 py-0.5 rounded-md">
+                    {t("search.ocr_badge", "serveur local")}
+                  </span>
+                )}
               </Label>
               <Input
                 variant="search"
@@ -324,9 +327,11 @@ export function SearchForm({
                 value={filters.ocrText ?? ""}
                 onChange={(e) => updateFilters({ ocrText: e.target.value })}
               />
-              <p className="text-[11px] text-text-secondary leading-snug opacity-70">
-                {t("search.ocr_hint", "Nécessite le serveur transcript (port 3001)")}
-              </p>
+              {!ocrHosted && (
+                <p className="text-[11px] text-text-secondary leading-snug opacity-70">
+                  {t("search.ocr_hint", "Nécessite le serveur transcript (port 3001)")}
+                </p>
+              )}
             </div>
 
             {/* ── Content type & Image presence ─────────────────────────────── */}

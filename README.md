@@ -60,6 +60,17 @@ The app runs on a pre-compiled SQLite copy of the Inducks database, stored persi
 3. The database is decompressed and saved to the **Origin Private File System (OPFS)** with persistent-storage permission, so it survives restarts and works offline.
 4. All queries then run inside a **SharedWorker** (SQLite WASM), keeping the UI responsive and sharing one database instance across all open tabs.
 
+### 4. OCR text search (optional)
+
+The *Text in the scans (OCR)* filter queries the transcript search API (`apps/transcript`):
+
+| Variable | Default | Role |
+|---|---|---|
+| `VITE_TRANSCRIPT_API` | `/api/transcript` (dev proxy → local server on port 3001) | Base URL of the API, ending in `/api`. Set it to the hosted API (Cloudflare Worker) to search while no local server runs |
+| `VITE_TRANSCRIPT_API_KEY` | *(none)* | Key sent as `X-API-Key`; the hosted API requires one. Create it with `apps/transcript/server/scripts/api-keys.js create <name> --origins <site>` |
+
+The deployment reads them from the repository's GitHub **variable** `VITE_TRANSCRIPT_API` and **secret** `VITE_TRANSCRIPT_API_KEY`. The key ends up in the public bundle: the hosted API only accepts it from the origins it was created for, and it can be revoked. Without a reachable API, the filter is ignored and a warning is shown.
+
 ## Architecture and optimizations
 
 - **Modular React architecture**: Search logic is split into reusable hooks and focused UI components for maintainability.
