@@ -62,6 +62,7 @@ export function SearchResults<TFilters extends { sort?: string; page?: number | 
   const totalPages = Math.ceil(totalCount / rowsPerPage);
 
   const defaultSortOptions = [
+    { value: "rating_desc", labelKey: "sort.rating_desc" },
     { value: "pubdate_desc", labelKey: "sort.pubdate_desc" },
     { value: "pubdate_asc", labelKey: "sort.pubdate_asc" },
     { value: "title_az", labelKey: "sort.title_az" },

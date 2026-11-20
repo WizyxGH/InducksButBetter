@@ -119,6 +119,7 @@
     "i": "Arte-final"
   },
   "sort": {
+    "rating_desc": "Mais votadas (Top Inducks)",
     "pubdate_desc": "Mais recente",
     "pubdate_asc": "Mais antigo",
     "title_az": "Título A-Z",

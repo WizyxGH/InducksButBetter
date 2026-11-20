@@ -63,5 +63,14 @@ describe('queryBuilder', () => {
       expect(result.query).toContain('app_c.charactercode COLLATE NOCASE = ?');
       expect(result.params).toContain('DD');
     });
+
+    it('should support rating_desc sort with inducks_storyrating join', () => {
+      const filters: SearchFilters = { sort: 'rating_desc' };
+      const result = buildAdvancedSearchQuery(filters);
+
+      expect(result.query).toContain('LEFT JOIN inducks_storyrating sr_sort ON s.storycode = sr_sort.storycode');
+      expect(result.query).toContain('sr_sort.rank IS NULL, sr_sort.rank ASC');
+      expect(result.query).toContain('sr.rank as rating_rank');
+    });
   });
 });

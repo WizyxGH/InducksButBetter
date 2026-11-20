@@ -46,7 +46,8 @@ const INDEXES_TO_CREATE: Record<string, string[]> = {
   inducks_publishingjob: ["issuecode", "publisherid"],
   inducks_storycodes: ["storycode", "alternativecode"],
   inducks_issueurl: ["issuecode"],
-  inducks_indexer: ["indexer"]
+  inducks_indexer: ["indexer"],
+  inducks_storyrating: ["rank"]
 };
 
 const GITHUB_RELEASE_API = 'https://api.github.com/repos/WizyxGH/InducksButBetter/releases/tags/datas';
@@ -292,6 +293,27 @@ async function main() {
       const filePath = path.join(isvDir, file);
       console.log(`  Processing ${file}...`);
       await importIsvFile(db, tableName, columns, filePath);
+    }
+
+    const ratingsPath = path.join(DATAS_DIR, 'ratings.json');
+    if (fs.existsSync(ratingsPath)) {
+      console.log('  Processing ratings.json...');
+      try {
+        const ratings = JSON.parse(fs.readFileSync(ratingsPath, 'utf-8'));
+        if (Array.isArray(ratings) && ratings.length > 0) {
+          await runQuery(db, 'CREATE TABLE "inducks_storyrating" ("storycode" TEXT PRIMARY KEY, "rank" INTEGER, "rating" REAL, "votes" INTEGER);');
+          await runQuery(db, 'BEGIN TRANSACTION;');
+          const stmt = db.prepare('INSERT OR REPLACE INTO "inducks_storyrating" VALUES (?, ?, ?, ?)');
+          for (const r of ratings) {
+            stmt.run(r.storycode, r.rank, r.rating, r.votes);
+          }
+          await new Promise<void>((resolve, reject) => stmt.finalize(err => err ? reject(err) : resolve()));
+          await runQuery(db, 'COMMIT;');
+          console.log(`  Imported ${ratings.length} story ratings.`);
+        }
+      } catch (err: any) {
+        console.warn(`  Could not import ratings.json: ${err.message}`);
+      }
     }
 
     // Build indexes

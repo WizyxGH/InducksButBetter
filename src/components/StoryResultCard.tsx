@@ -181,8 +181,19 @@ export function StoryResultCard({ row, onSelect, onSelectCharacter }: StoryResul
                     </>
                   );
                 })()}
-                <div className="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 font-semibold tracking-wider">
-                  {row.storycode}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 font-semibold tracking-wider">
+                    {row.storycode}
+                  </span>
+                  {row.rating_rank != null && (
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60"
+                      title={row.story_votes ? `${row.story_votes} votes` : undefined}
+                    >
+                      ★ Top #{row.rating_rank}
+                      {row.story_rating != null ? ` (${Number(row.story_rating).toFixed(1)}/10)` : ""}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

@@ -119,6 +119,7 @@
     "i": "Inks"
   },
   "sort": {
+    "rating_desc": "Parhaat arviot (Top Inducks)",
     "pubdate_desc": "Most recent",
     "pubdate_asc": "Oldest",
     "title_az": "Title A-Z",

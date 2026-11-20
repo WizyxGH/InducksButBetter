@@ -119,6 +119,7 @@
     "i": "Tinte"
   },
   "sort": {
+    "rating_desc": "Bestbewertet (Top Inducks)",
     "pubdate_desc": "Neuste zuerst",
     "pubdate_asc": "Älteste zuerst",
     "title_az": "Titel A-Z",

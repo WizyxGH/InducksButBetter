@@ -549,6 +549,9 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
     orderBy = "(SELECT COUNT(e_sort.entrycode) FROM inducks_entry e_sort JOIN inducks_storyversion sv_sort ON e_sort.storyversioncode = sv_sort.storyversioncode WHERE sv_sort.storycode = s.storycode) DESC, s.storycode ASC";
   } else if (sort === "published_least") {
     orderBy = "(SELECT COUNT(e_sort.entrycode) FROM inducks_entry e_sort JOIN inducks_storyversion sv_sort ON e_sort.storyversioncode = sv_sort.storyversioncode WHERE sv_sort.storycode = s.storycode) ASC, s.storycode ASC";
+  } else if (sort === "rating_desc") {
+    sortJoins = "LEFT JOIN inducks_storyrating sr_sort ON s.storycode = sr_sort.storycode";
+    orderBy = "sr_sort.rank IS NULL, sr_sort.rank ASC, s.firstpublicationdate ASC";
   }
 
   // When a full story code is typed, the code itself is the ranking the user
@@ -709,10 +712,12 @@ export function buildAdvancedSearchQuery(filters: SearchFilters): SearchQueryRes
        JOIN inducks_character c_h ON app_h.charactercode = c_h.charactercode 
        WHERE app_h.storyversioncode = sv.storyversioncode AND app_h.number = 0 
        ORDER BY app_h.charactercode ASC LIMIT 1) as hero_name,
-      sv.rowsperpage, sv.columnsperpage
+      sv.rowsperpage, sv.columnsperpage,
+      sr.rank as rating_rank, sr.rating as story_rating, sr.votes as story_votes
     FROM StoryIds ids
     JOIN inducks_story s ON ids.storycode = s.storycode
     JOIN BestVersions sv ON s.storycode = sv.storycode
+    LEFT JOIN inducks_storyrating sr ON s.storycode = sr.storycode
     ORDER BY ${orderBy}
   `;
 

@@ -76,6 +76,7 @@ function applyReadOnlyPragmas() {
   db.exec("PRAGMA journal_mode = OFF;");
   db.exec("PRAGMA synchronous = OFF;");
   db.exec("PRAGMA temp_store = MEMORY;");
+  db.exec("PRAGMA cache_size = -32000;"); // 32 MB cache
 }
 
 /**

@@ -119,6 +119,7 @@
     "i": "Inks"
   },
   "sort": {
+    "rating_desc": "Mejor valoradas (Top Inducks)",
     "pubdate_desc": "Más reciente",
     "pubdate_asc": "Más antiguo",
     "title_az": "Título A-Z",

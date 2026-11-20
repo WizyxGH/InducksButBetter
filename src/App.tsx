@@ -16,6 +16,7 @@ import { useRouteMetadata } from "@/hooks/useRouteMetadata"
 import { incrementHistoryCount, navigateBack } from "@/lib/utils"
 import { loadCachedDb, hasLocalDb } from "@/lib/localDb"
 import { ensureQuotationTable } from "@/lib/quotationsTable"
+import { ensureRatingsTable } from "@/lib/ratingsTable"
 import { OnboardingModal } from "@/components/OnboardingModal"
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt"
 
@@ -90,7 +91,10 @@ function App() {
     // re-imports) and announces `db-local-loaded` itself.
     if (!hasLocalDb()) void loadCachedDb();
     // Quotations become a SQL table (inducks_quotation) once the database is up.
-    const onLoaded = () => { void ensureQuotationTable() };
+    const onLoaded = () => {
+      void ensureQuotationTable();
+      void ensureRatingsTable();
+    };
     if (hasLocalDb()) onLoaded();
     window.addEventListener('db-local-loaded', onLoaded);
     return () => window.removeEventListener('db-local-loaded', onLoaded);

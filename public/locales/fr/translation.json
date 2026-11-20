@@ -129,6 +129,7 @@
     "i": "Encrage"
   },
   "sort": {
+    "rating_desc": "Mieux notées (Top Inducks)",
     "pubdate_desc": "Plus récentes",
     "pubdate_asc": "Plus anciennes",
     "title_az": "Titre A-Z",
